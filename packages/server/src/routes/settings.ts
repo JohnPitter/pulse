@@ -1,6 +1,9 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { randomBytes } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { eq } from "drizzle-orm";
 
 import { db } from "../db/index.js";
@@ -177,6 +180,54 @@ router.post("/password", async (req: Request, res: Response) => {
   } catch (err) {
     logger.error("Failed to change password", CONTEXT, { error: String(err) });
     res.status(500).json({ error: "Failed to change password" });
+  }
+});
+
+// --------------------------------------------------------------------------
+// POST /import-cli-token — Import tokens from Claude Code CLI credentials
+// --------------------------------------------------------------------------
+router.post("/import-cli-token", async (_req: Request, res: Response) => {
+  try {
+    const credPath = join(homedir(), ".claude", ".credentials.json");
+    let raw: string;
+    try {
+      raw = await readFile(credPath, "utf-8");
+    } catch {
+      res.status(404).json({
+        error: "Claude CLI credentials not found on server. SSH into the server and run: claude login",
+      });
+      return;
+    }
+
+    const creds = JSON.parse(raw) as {
+      claudeAiOauth?: {
+        accessToken?: string;
+        refreshToken?: string;
+      };
+    };
+
+    const accessToken = creds.claudeAiOauth?.accessToken;
+    if (!accessToken) {
+      res.status(400).json({ error: "No access token found in CLI credentials. Run: claude login" });
+      return;
+    }
+
+    // Encrypt and store
+    const encryptedToken = encrypt(accessToken);
+    await upsertSetting("claude_auth_type", "oauth");
+    await upsertSetting("claude_auth_token", encryptedToken);
+
+    const refreshToken = creds.claudeAiOauth?.refreshToken;
+    if (refreshToken) {
+      const encryptedRefresh = encrypt(refreshToken);
+      await upsertSetting("claude_oauth_refresh", encryptedRefresh);
+    }
+
+    logger.info("Imported Claude auth from CLI credentials", CONTEXT);
+    res.json({ success: true });
+  } catch (err) {
+    logger.error("Failed to import CLI token", CONTEXT, { error: String(err) });
+    res.status(500).json({ error: "Failed to import CLI credentials" });
   }
 });
 

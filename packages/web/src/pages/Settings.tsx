@@ -516,7 +516,7 @@ function OAuthReconfigure({
 }
 
 // --------------------------------------------------------------------------
-// OAuth Token (from CLI) Reconfigure
+// CLI Token Import
 // --------------------------------------------------------------------------
 
 function OAuthTokenReconfigure({
@@ -526,13 +526,42 @@ function OAuthTokenReconfigure({
   onBack: () => void;
   onComplete: () => void;
 }) {
+  const [isImporting, setIsImporting] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const [token, setToken] = useState("");
   const [refreshToken, setRefreshToken] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = async (e: FormEvent) => {
+  // Auto-import from server's ~/.claude/.credentials.json
+  const handleAutoImport = async () => {
+    setIsImporting(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/settings/import-cli-token", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        setError(data.error ?? "Failed to import");
+        setIsImporting(false);
+        return;
+      }
+
+      setSuccess(true);
+      setTimeout(onComplete, 1000);
+    } catch {
+      setError("Connection failed");
+      setIsImporting(false);
+    }
+  };
+
+  // Manual paste fallback
+  const handleManualSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!token.trim() || isSubmitting) return;
 
@@ -570,7 +599,7 @@ function OAuthTokenReconfigure({
     return (
       <div className="flex flex-col items-center gap-3 py-6">
         <CheckCircle2 className="h-10 w-10 text-green-500" />
-        <p className="text-sm font-medium">Token saved successfully</p>
+        <p className="text-sm font-medium">Token imported successfully</p>
       </div>
     );
   }
@@ -585,68 +614,94 @@ function OAuthTokenReconfigure({
         Back
       </button>
 
+      {/* Info box */}
       <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
         <p className="text-xs text-stone-400 leading-relaxed">
-          Get your token from{" "}
-          <code className="rounded bg-stone-700 px-1.5 py-0.5 text-[11px] text-orange-400">
-            ~/.claude/.credentials.json
-          </code>
-          {" "}after running{" "}
+          SSH into the server and run{" "}
           <code className="rounded bg-stone-700 px-1.5 py-0.5 text-[11px] text-orange-400">
             claude login
           </code>
-          {" "}in your terminal.
+          , then click the button below to auto-import.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div>
-          <label htmlFor="oauth-token" className="block text-xs text-stone-400 mb-1.5">
-            Access Token
-          </label>
-          <input
-            id="oauth-token"
-            type="password"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="sk-ant-oat01-..."
-            className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="oauth-refresh" className="block text-xs text-stone-400 mb-1.5">
-            Refresh Token <span className="text-stone-600">(optional)</span>
-          </label>
-          <input
-            id="oauth-refresh"
-            type="password"
-            value={refreshToken}
-            onChange={(e) => setRefreshToken(e.target.value)}
-            placeholder="sk-ant-ort01-..."
-            className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
-          />
-        </div>
-
-        {error && (
-          <div className="flex items-center gap-2 text-sm text-red-400">
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-            <span>{error}</span>
-          </div>
+      {/* Auto-import button */}
+      <button
+        onClick={handleAutoImport}
+        disabled={isImporting}
+        className="w-full rounded-xl bg-orange-500 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+      >
+        {isImporting ? (
+          <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+        ) : (
+          "Import from CLI"
         )}
+      </button>
 
+      {error && (
+        <div className="flex items-center gap-2 text-sm text-red-400">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Manual paste toggle */}
+      {!showManual ? (
         <button
-          type="submit"
-          disabled={isSubmitting || !token.trim()}
-          className="w-full rounded-xl bg-orange-500 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+          onClick={() => { setShowManual(true); setError(null); }}
+          className="w-full text-xs text-stone-500 transition-colors duration-200 hover:text-stone-300"
         >
-          {isSubmitting ? (
-            <Loader2 className="mx-auto h-4 w-4 animate-spin" />
-          ) : (
-            "Save Token"
-          )}
+          Or paste tokens manually
         </button>
-      </form>
+      ) : (
+        <form onSubmit={handleManualSubmit} className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-stone-800" />
+            <span className="text-xs text-stone-500">manual paste</span>
+            <div className="h-px flex-1 bg-stone-800" />
+          </div>
+
+          <div>
+            <label htmlFor="oauth-token" className="block text-xs text-stone-400 mb-1.5">
+              Access Token
+            </label>
+            <input
+              id="oauth-token"
+              type="password"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="sk-ant-oat01-..."
+              className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="oauth-refresh" className="block text-xs text-stone-400 mb-1.5">
+              Refresh Token <span className="text-stone-600">(optional)</span>
+            </label>
+            <input
+              id="oauth-refresh"
+              type="password"
+              value={refreshToken}
+              onChange={(e) => setRefreshToken(e.target.value)}
+              placeholder="sk-ant-ort01-..."
+              className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting || !token.trim()}
+            className="w-full rounded-xl border border-stone-700 bg-stone-800 py-2.5 text-sm text-stone-300 transition-all duration-200 hover:bg-stone-700 hover:text-white active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+          >
+            {isSubmitting ? (
+              <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+            ) : (
+              "Save Token"
+            )}
+          </button>
+        </form>
+      )}
     </div>
   );
 }
