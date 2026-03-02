@@ -5,9 +5,9 @@ const OAUTH_CONTEXT = "oauth";
 
 const AUTH_URL = "https://claude.ai/oauth/authorize";
 const TOKEN_URL = "https://console.anthropic.com/v1/oauth/token";
-const REDIRECT_URI = "https://console.anthropic.com/oauth/code/callback";
+const REDIRECT_URI = "https://platform.claude.com/oauth/code/callback";
 const CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
-const SCOPES = "user:profile user:inference user:sessions:claude_code user:mcp_servers";
+const SCOPES = "org:create_api_key user:profile user:inference user:sessions:claude_code user:mcp_servers";
 
 /**
  * Generates a cryptographically random PKCE code verifier.
