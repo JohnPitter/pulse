@@ -10,7 +10,6 @@ import {
   AlertCircle,
   Loader2,
   Puzzle,
-  ExternalLink,
 } from "lucide-react";
 
 // --------------------------------------------------------------------------
@@ -204,6 +203,8 @@ function ClaudeAuthSection() {
   const [status, setStatus] = useState<AuthStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showReconfigure, setShowReconfigure] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshMsg, setRefreshMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const fetchStatus = async () => {
     try {
@@ -228,6 +229,28 @@ function ClaudeAuthSection() {
   const handleReconfigured = () => {
     setShowReconfigure(false);
     fetchStatus();
+  };
+
+  const handleRefreshToken = async () => {
+    setIsRefreshing(true);
+    setRefreshMsg(null);
+    try {
+      const res = await fetch("/api/settings/claude-auth/refresh", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setRefreshMsg({ type: "success", text: "Token refreshed successfully" });
+        setTimeout(() => setRefreshMsg(null), 3000);
+      } else {
+        const data = (await res.json()) as { error?: string };
+        setRefreshMsg({ type: "error", text: data.error ?? "Refresh failed" });
+      }
+    } catch {
+      setRefreshMsg({ type: "error", text: "Connection failed" });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   if (isLoading) {
@@ -268,19 +291,42 @@ function ClaudeAuthSection() {
         )}
       </div>
 
+      {refreshMsg && (
+        <div className={`flex items-center gap-2 text-sm mb-3 ${refreshMsg.type === "success" ? "text-green-400" : "text-red-400"}`}>
+          {refreshMsg.type === "success" ? (
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+          ) : (
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          )}
+          <span>{refreshMsg.text}</span>
+        </div>
+      )}
+
       {showReconfigure ? (
         <ReconfigureAuth
           onCancel={() => setShowReconfigure(false)}
           onComplete={handleReconfigured}
         />
       ) : (
-        <button
-          onClick={() => setShowReconfigure(true)}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-stone-700 bg-stone-800 py-2.5 text-sm text-stone-300 transition-all duration-200 hover:bg-stone-700 hover:text-white active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          {status?.configured ? "Reconfigure" : "Configure"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowReconfigure(true)}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-stone-700 bg-stone-800 py-2.5 text-sm text-stone-300 transition-all duration-200 hover:bg-stone-700 hover:text-white active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+          >
+            <Key className="h-3.5 w-3.5" />
+            {status?.configured ? "Reconfigure" : "Configure"}
+          </button>
+          {status?.configured && status.type === "oauth" && (
+            <button
+              onClick={handleRefreshToken}
+              disabled={isRefreshing}
+              className="flex items-center justify-center gap-2 rounded-xl border border-stone-700 bg-stone-800 px-4 py-2.5 text-sm text-stone-300 transition-all duration-200 hover:bg-stone-700 hover:text-white active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+              title="Refresh OAuth token"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+            </button>
+          )}
+        </div>
       )}
     </section>
   );
@@ -297,11 +343,7 @@ function ReconfigureAuth({
   onCancel: () => void;
   onComplete: () => void;
 }) {
-  const [method, setMethod] = useState<"oauth" | "oauthtoken" | "apikey" | null>(null);
-
-  if (method === "oauth") {
-    return <OAuthReconfigure onBack={() => setMethod(null)} onComplete={onComplete} />;
-  }
+  const [method, setMethod] = useState<"oauthtoken" | "apikey" | null>(null);
 
   if (method === "oauthtoken") {
     return <OAuthTokenReconfigure onBack={() => setMethod(null)} onComplete={onComplete} />;
@@ -313,14 +355,7 @@ function ReconfigureAuth({
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-3">
-        <button
-          onClick={() => setMethod("oauth")}
-          className="flex flex-col items-center gap-2 rounded-xl border border-stone-700 bg-stone-800 p-4 text-center transition-all duration-200 hover:bg-stone-700 hover:border-stone-600 active:scale-[0.98]"
-        >
-          <Key className="h-5 w-5 text-orange-500" />
-          <span className="text-xs font-medium text-white">OAuth</span>
-        </button>
+      <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => setMethod("oauthtoken")}
           className="flex flex-col items-center gap-2 rounded-xl border border-stone-700 bg-stone-800 p-4 text-center transition-all duration-200 hover:bg-stone-700 hover:border-stone-600 active:scale-[0.98]"
@@ -349,171 +384,6 @@ function ReconfigureAuth({
 // --------------------------------------------------------------------------
 // OAuth Reconfigure
 // --------------------------------------------------------------------------
-
-function OAuthReconfigure({
-  onBack,
-  onComplete,
-}: {
-  onBack: () => void;
-  onComplete: () => void;
-}) {
-  const [oauthUrl, setOauthUrl] = useState<string | null>(null);
-  const [redirectUrl, setRedirectUrl] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingUrl, setIsLoadingUrl] = useState(true);
-  const [authOpened, setAuthOpened] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-
-  // Fetch OAuth URL on mount
-  useEffect(() => {
-    const fetchUrl = async () => {
-      try {
-        const res = await fetch("/api/settings/oauth-url?port=3000", {
-          credentials: "include",
-        });
-        if (res.ok) {
-          const data = (await res.json()) as { url: string };
-          setOauthUrl(data.url);
-        }
-      } catch {
-        setError("Failed to generate OAuth URL");
-      } finally {
-        setIsLoadingUrl(false);
-      }
-    };
-    fetchUrl();
-  }, []);
-
-  // Open OAuth in new tab
-  const handleOpenAuth = () => {
-    if (!oauthUrl) return;
-    window.open(oauthUrl, "_blank");
-    setAuthOpened(true);
-  };
-
-  // Paste redirect URL and exchange code
-  const handleFallbackSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!redirectUrl.trim() || isSubmitting) return;
-
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const res = await fetch("/api/settings/oauth-exchange", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ redirectUrl: redirectUrl.trim() }),
-      });
-
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        setError(data.error ?? "Failed to exchange code");
-        setIsSubmitting(false);
-        return;
-      }
-
-      setSuccess(true);
-      setTimeout(onComplete, 1000);
-    } catch {
-      setError("Connection failed");
-      setIsSubmitting(false);
-    }
-  };
-
-  if (success) {
-    return (
-      <div className="flex flex-col items-center gap-3 py-6">
-        <CheckCircle2 className="h-10 w-10 text-green-500" />
-        <p className="text-sm font-medium">Connected successfully</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <button
-        onClick={onBack}
-        className="flex items-center gap-1.5 text-xs text-stone-400 transition-colors duration-200 hover:text-white"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Back
-      </button>
-
-      {isLoadingUrl ? (
-        <div className="flex items-center justify-center py-6">
-          <Loader2 className="h-5 w-5 animate-spin text-stone-500" />
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {/* Step 1: Open auth */}
-          <div className="flex items-center gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-500/20 text-xs font-bold text-orange-400">
-              1
-            </span>
-            <p className="text-xs text-stone-400">
-              Click below to authorize with Claude in a new tab.
-            </p>
-          </div>
-
-          <button
-            onClick={handleOpenAuth}
-            disabled={!oauthUrl}
-            className="flex items-center justify-center gap-2 w-full rounded-xl bg-orange-500 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
-          >
-            <ExternalLink className="h-4 w-4" />
-            {authOpened ? "Open Again" : "Authorize with Claude"}
-          </button>
-
-          {/* Step 2: Paste URL */}
-          {authOpened && (
-            <>
-              <div className="flex items-center gap-3">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-500/20 text-xs font-bold text-orange-400">
-                  2
-                </span>
-                <p className="text-xs text-stone-400">
-                  After authorizing, copy the full URL from your browser and paste it below.
-                </p>
-              </div>
-
-              <form onSubmit={handleFallbackSubmit} className="space-y-3">
-                <input
-                  type="text"
-                  value={redirectUrl}
-                  onChange={(e) => setRedirectUrl(e.target.value)}
-                  placeholder="https://platform.claude.com/oauth/code/callback?code=..."
-                  className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
-                />
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !redirectUrl.trim()}
-                  className="w-full rounded-xl border border-stone-700 bg-stone-800 py-2.5 text-sm text-stone-300 transition-all duration-200 hover:bg-stone-700 hover:text-white active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="mx-auto h-4 w-4 animate-spin" />
-                  ) : (
-                    "Exchange Code"
-                  )}
-                </button>
-              </form>
-            </>
-          )}
-        </div>
-      )}
-
-      {error && (
-        <div className="flex items-center gap-2 text-sm text-red-400">
-          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // --------------------------------------------------------------------------
 // CLI Token Import

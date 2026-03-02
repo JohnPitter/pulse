@@ -17,6 +17,7 @@ import { authRouter } from "./routes/auth.js";
 import { createAgentRouter } from "./routes/agents.js";
 import { settingsRouter, getSetting, upsertSetting, deleteSetting } from "./routes/settings.js";
 import { setupSocket } from "./socket/index.js";
+import { initTokenRefresh, startAutoRefresh } from "./services/token-refresh.js";
 
 const config = loadConfig();
 
@@ -156,6 +157,10 @@ setupSocket(io, agentManager);
 
 server.listen(config.port, () => {
   logger.info(`Pulse server running on port ${config.port}`, "server");
+
+  // Start OAuth token auto-refresh
+  initTokenRefresh(getSetting, upsertSetting);
+  startAutoRefresh();
 });
 
 export { app, server, io };

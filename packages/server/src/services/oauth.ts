@@ -55,6 +55,8 @@ export function buildAuthUrl(codeChallenge: string, state: string, redirectUri: 
   return url;
 }
 
+export { CLIENT_ID, TOKEN_URL };
+
 export interface TokenResponse {
   accessToken: string;
   refreshToken?: string;

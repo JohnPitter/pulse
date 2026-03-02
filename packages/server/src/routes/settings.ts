@@ -18,6 +18,7 @@ import {
   buildAuthUrl,
   buildRedirectUri,
 } from "../services/oauth.js";
+import { refreshNow } from "../services/token-refresh.js";
 
 const CONTEXT = "settings";
 
@@ -133,6 +134,23 @@ router.get("/claude-auth/status", async (_req: Request, res: Response) => {
   } catch (err) {
     logger.error("Failed to get Claude auth status", CONTEXT, { error: String(err) });
     res.status(500).json({ error: "Failed to get auth status" });
+  }
+});
+
+// --------------------------------------------------------------------------
+// POST /claude-auth/refresh — Manually trigger token refresh
+// --------------------------------------------------------------------------
+router.post("/claude-auth/refresh", async (_req: Request, res: Response) => {
+  try {
+    const ok = await refreshNow();
+    if (ok) {
+      res.json({ success: true });
+    } else {
+      res.status(400).json({ error: "Refresh failed. Ensure OAuth is configured with a valid refresh token." });
+    }
+  } catch (err) {
+    logger.error("Manual token refresh failed", CONTEXT, { error: String(err) });
+    res.status(500).json({ error: "Failed to refresh token" });
   }
 });
 
