@@ -2,5 +2,6 @@ node_modules/
 dist/
 *.db
 *.sqlite
+data/
 .env
 .env.local
