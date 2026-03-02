@@ -243,7 +243,10 @@ export function AgentView() {
       ) : (
         <>
           <ChatPanel messages={messages} />
-          <ChatInput onSend={handleSend} />
+          <ChatInput
+            onSend={handleSend}
+            placeholder={isRunning ? "Type a message..." : "Send a message to start the agent..."}
+          />
         </>
       )}
     </div>

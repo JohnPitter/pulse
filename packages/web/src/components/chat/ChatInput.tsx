@@ -4,9 +4,10 @@ import { Send } from "lucide-react";
 interface ChatInputProps {
   onSend: (content: string) => void;
   disabled?: boolean;
+  placeholder?: string;
 }
 
-export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
+export function ChatInput({ onSend, disabled = false, placeholder = "Type a message..." }: ChatInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -44,7 +45,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          placeholder="Type a message..."
+          placeholder={placeholder}
           rows={1}
           className="flex-1 resize-none rounded-xl border border-stone-700 bg-stone-800 px-4 py-2.5 text-[14px] text-white placeholder-stone-500 outline-none transition-colors duration-200 focus:border-orange-500 disabled:opacity-50"
         />

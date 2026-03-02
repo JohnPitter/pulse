@@ -38,6 +38,16 @@ export function setupChatHandlers(
         timestamp: new Date().toISOString(),
       });
 
+      // Auto-start agent if no active terminal session
+      const agent = await agentManager.getAgent(data.agentId);
+      if (agent && agent.status !== "running" && agent.status !== "waiting") {
+        logger.info("Auto-starting agent before sending message", CONTEXT, {
+          agentId: data.agentId,
+          previousStatus: agent.status,
+        });
+        await agentManager.startAgent(data.agentId, io);
+      }
+
       // Send to agent stdin
       agentManager.sendMessage(data.agentId, data.content);
     } catch (err) {

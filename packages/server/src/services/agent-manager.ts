@@ -163,8 +163,16 @@ export class AgentManager {
       throw new Error(`Agent not found: ${id}`);
     }
 
-    if (agent.status === "running") {
-      throw new Error(`Agent is already running: ${id}`);
+    // If DB says running but no terminal session exists (e.g. server restart),
+    // reset status and allow re-start
+    if (agent.status === "running" || agent.status === "waiting") {
+      const existingSession = getTerminalSession(id);
+      if (existingSession) {
+        logger.info(`Agent already running with active session`, CONTEXT, { agentId: id });
+        return;
+      }
+      logger.warn(`Agent status is '${agent.status}' but no terminal session found — resetting`, CONTEXT, { agentId: id });
+      await this.updateAgent(id, { status: "stopped", pid: null, tmuxSession: null });
     }
 
     const command = this.buildClaudeCommand({
