@@ -1,0 +1,12 @@
+node_modules
+dist
+data
+*.db
+*.sqlite
+.env
+.env.local
+.git
+.gitignore
+*.md
+tests
+docs

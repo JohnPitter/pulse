@@ -1,3 +1,5 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import { createServer } from "node:http";
@@ -44,6 +46,11 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
+// --- Serve frontend static files in production ---
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const webDistPath = path.join(__dirname, "../../web/dist");
+app.use(express.static(webDistPath));
+
 // --- Routes ---
 
 app.get("/api/health", (_req: Request, res: Response) => {
@@ -53,6 +60,11 @@ app.get("/api/health", (_req: Request, res: Response) => {
 app.use("/api/auth", authRouter);
 app.use("/api/agents", createAgentRouter(agentManager));
 app.use("/api/settings", settingsRouter);
+
+// --- SPA fallback (must come after API routes, before error handler) ---
+app.get("*", (_req: Request, res: Response) => {
+  res.sendFile(path.join(webDistPath, "index.html"));
+});
 
 // --- Error handler (Express 5 requires 4 params) ---
 
