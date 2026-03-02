@@ -1,0 +1,22 @@
+{
+  "name": "pulse",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:web\"",
+    "dev:server": "npm -w packages/server run dev",
+    "dev:web": "npm -w packages/web run dev",
+    "build": "npm -w packages/web run build && npm -w packages/server run build",
+    "start": "npm -w packages/server run start",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
