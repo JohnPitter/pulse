@@ -347,7 +347,7 @@ function OAuthReconfigure({
   onComplete: () => void;
 }) {
   const [oauthUrl, setOauthUrl] = useState<string | null>(null);
-  const [token, setToken] = useState("");
+  const [code, setCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingUrl, setIsLoadingUrl] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -374,22 +374,22 @@ function OAuthReconfigure({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!token.trim() || isSubmitting) return;
+    if (!code.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const res = await fetch("/api/settings/claude-auth", {
+      const res = await fetch("/api/settings/oauth-exchange", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ type: "oauth", token: token.trim() }),
+        body: JSON.stringify({ code: code.trim() }),
       });
 
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        setError(data.error ?? "Failed to save token");
+        setError(data.error ?? "Failed to exchange code");
         setIsSubmitting(false);
         return;
       }
@@ -430,24 +430,34 @@ function OAuthReconfigure({
           <div className="rounded-xl border border-stone-700 bg-white p-3">
             <QRCodeSVG value={oauthUrl} size={140} />
           </div>
-          <p className="text-xs text-stone-500 text-center">
-            Scan with your phone or paste the token below
+          <p className="text-xs text-stone-500 text-center max-w-[280px]">
+            1. Open link or scan QR code{"\n"}
+            2. Authorize on Claude{"\n"}
+            3. Copy the code shown and paste below
           </p>
+          <a
+            href={oauthUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-orange-400 underline transition-colors duration-200 hover:text-orange-300"
+          >
+            Open authorization page
+          </a>
         </div>
       ) : null}
 
       <div className="flex items-center gap-3">
         <div className="h-px flex-1 bg-stone-800" />
-        <span className="text-xs text-stone-500">or paste token</span>
+        <span className="text-xs text-stone-500">paste authorization code</span>
         <div className="h-px flex-1 bg-stone-800" />
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
         <input
           type="text"
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-          placeholder="Paste OAuth token here"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="Paste authorization code here"
           className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
         />
 
@@ -460,13 +470,13 @@ function OAuthReconfigure({
 
         <button
           type="submit"
-          disabled={isSubmitting || !token.trim()}
+          disabled={isSubmitting || !code.trim()}
           className="w-full rounded-xl bg-orange-500 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
         >
           {isSubmitting ? (
             <Loader2 className="mx-auto h-4 w-4 animate-spin" />
           ) : (
-            "Save Token"
+            "Connect"
           )}
         </button>
       </form>

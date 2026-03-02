@@ -13,6 +13,7 @@ import {
   generateCodeVerifier,
   generateCodeChallenge,
   buildAuthUrl,
+  exchangeCode,
 } from "../services/oauth.js";
 
 const CONTEXT = "settings";
@@ -190,6 +191,50 @@ router.get("/oauth-url", async (_req: Request, res: Response) => {
   } catch (err) {
     logger.error("Failed to generate OAuth URL", CONTEXT, { error: String(err) });
     res.status(500).json({ error: "Failed to generate OAuth URL" });
+  }
+});
+
+// --------------------------------------------------------------------------
+// POST /oauth-exchange — Exchange authorization code for tokens
+// --------------------------------------------------------------------------
+router.post("/oauth-exchange", async (req: Request, res: Response) => {
+  try {
+    const { code } = req.body as { code?: string };
+
+    if (!code) {
+      res.status(400).json({ error: "Authorization code is required" });
+      return;
+    }
+
+    // Retrieve stored code verifier
+    const codeVerifier = await getSetting("oauth_code_verifier");
+    if (!codeVerifier) {
+      logger.warn("OAuth exchange attempted but no code verifier found", CONTEXT);
+      res.status(400).json({ error: "No OAuth session found. Please generate a new OAuth URL first." });
+      return;
+    }
+
+    // Exchange code for tokens
+    const tokens = await exchangeCode(code, codeVerifier);
+
+    // Encrypt and store tokens
+    const encryptedToken = encrypt(tokens.accessToken);
+    await upsertSetting("claude_auth_type", "oauth");
+    await upsertSetting("claude_auth_token", encryptedToken);
+
+    if (tokens.refreshToken) {
+      const encryptedRefresh = encrypt(tokens.refreshToken);
+      await upsertSetting("claude_oauth_refresh", encryptedRefresh);
+    }
+
+    // Clean up temporary verifier
+    await deleteSetting("oauth_code_verifier");
+
+    logger.info("OAuth token exchange completed successfully", CONTEXT);
+    res.json({ success: true });
+  } catch (err) {
+    logger.error("OAuth token exchange failed", CONTEXT, { error: String(err) });
+    res.status(500).json({ error: "Failed to exchange authorization code. Please try again." });
   }
 });
 
