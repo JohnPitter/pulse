@@ -13,7 +13,7 @@ import {
   generateCodeVerifier,
   generateCodeChallenge,
   buildAuthUrl,
-  exchangeCode,
+  buildRedirectUri,
 } from "../services/oauth.js";
 
 const CONTEXT = "settings";
@@ -53,6 +53,9 @@ async function upsertSetting(key: string, value: string): Promise<void> {
 async function deleteSetting(key: string): Promise<void> {
   await db.delete(settings).where(eq(settings.key, key));
 }
+
+// Exports for use by oauth callback route
+export { getSetting, upsertSetting, deleteSetting };
 
 // --------------------------------------------------------------------------
 // POST /claude-auth — Save OAuth token or API key (encrypted)
@@ -175,16 +178,21 @@ router.post("/password", async (req: Request, res: Response) => {
 // --------------------------------------------------------------------------
 // GET /oauth-url — Generate PKCE and return OAuth URL
 // --------------------------------------------------------------------------
-router.get("/oauth-url", async (_req: Request, res: Response) => {
+router.get("/oauth-url", async (req: Request, res: Response) => {
   try {
+    const port = parseInt(req.query.port as string, 10) || 3000;
+    const redirectUri = buildRedirectUri(port);
+
     const codeVerifier = generateCodeVerifier();
     const codeChallenge = generateCodeChallenge(codeVerifier);
     const state = randomBytes(16).toString("base64url");
 
-    // Store code verifier temporarily for the token exchange step
+    // Store code verifier and redirect URI for the callback step
     await upsertSetting("oauth_code_verifier", codeVerifier);
+    await upsertSetting("oauth_state", state);
+    await upsertSetting("oauth_redirect_uri", redirectUri);
 
-    const url = buildAuthUrl(codeChallenge, state);
+    const url = buildAuthUrl(codeChallenge, state, redirectUri);
 
     logger.info("Generated OAuth URL with PKCE", CONTEXT);
     res.json({ url, state });
@@ -195,27 +203,41 @@ router.get("/oauth-url", async (_req: Request, res: Response) => {
 });
 
 // --------------------------------------------------------------------------
-// POST /oauth-exchange — Exchange authorization code for tokens
+// POST /oauth-exchange — Exchange authorization code for tokens (manual fallback)
 // --------------------------------------------------------------------------
 router.post("/oauth-exchange", async (req: Request, res: Response) => {
   try {
-    const { code } = req.body as { code?: string };
+    const { code, redirectUrl } = req.body as { code?: string; redirectUrl?: string };
 
-    if (!code) {
+    // Extract code from redirect URL if provided
+    let authCode = code;
+    if (!authCode && redirectUrl) {
+      try {
+        const url = new URL(redirectUrl);
+        authCode = url.searchParams.get("code") ?? undefined;
+      } catch {
+        res.status(400).json({ error: "Invalid redirect URL" });
+        return;
+      }
+    }
+
+    if (!authCode) {
       res.status(400).json({ error: "Authorization code is required" });
       return;
     }
 
-    // Retrieve stored code verifier
+    // Retrieve stored code verifier and redirect URI
     const codeVerifier = await getSetting("oauth_code_verifier");
-    if (!codeVerifier) {
-      logger.warn("OAuth exchange attempted but no code verifier found", CONTEXT);
+    const redirectUri = await getSetting("oauth_redirect_uri");
+    if (!codeVerifier || !redirectUri) {
+      logger.warn("OAuth exchange attempted but no session found", CONTEXT);
       res.status(400).json({ error: "No OAuth session found. Please generate a new OAuth URL first." });
       return;
     }
 
-    // Exchange code for tokens
-    const tokens = await exchangeCode(code, codeVerifier);
+    // Exchange code for tokens (import dynamically to use updated function)
+    const { exchangeCode } = await import("../services/oauth.js");
+    const tokens = await exchangeCode(authCode, codeVerifier, redirectUri);
 
     // Encrypt and store tokens
     const encryptedToken = encrypt(tokens.accessToken);
@@ -227,8 +249,10 @@ router.post("/oauth-exchange", async (req: Request, res: Response) => {
       await upsertSetting("claude_oauth_refresh", encryptedRefresh);
     }
 
-    // Clean up temporary verifier
+    // Clean up temporary state
     await deleteSetting("oauth_code_verifier");
+    await deleteSetting("oauth_state");
+    await deleteSetting("oauth_redirect_uri");
 
     logger.info("OAuth token exchange completed successfully", CONTEXT);
     res.json({ success: true });

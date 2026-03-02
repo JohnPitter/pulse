@@ -9,11 +9,13 @@ import { Server as SocketIOServer } from "socket.io";
 
 import { loadConfig } from "./lib/config.js";
 import * as logger from "./lib/logger.js";
+import { encrypt } from "./lib/encryption.js";
 import { db } from "./db/index.js";
 import { AgentManager } from "./services/agent-manager.js";
+import { exchangeCode } from "./services/oauth.js";
 import { authRouter } from "./routes/auth.js";
 import { createAgentRouter } from "./routes/agents.js";
-import { settingsRouter } from "./routes/settings.js";
+import { settingsRouter, getSetting, upsertSetting, deleteSetting } from "./routes/settings.js";
 import { setupSocket } from "./socket/index.js";
 
 const config = loadConfig();
@@ -51,10 +53,75 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const webDistPath = path.join(__dirname, "../../web/dist");
 app.use(express.static(webDistPath));
 
+// --- OAuth result page helper ---
+function oauthResultPage(success: boolean, message: string): string {
+  const icon = success ? "&#10004;" : "&#10006;";
+  const color = success ? "#22c55e" : "#ef4444";
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pulse OAuth</title></head><body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#0c0a09;color:#fff">
+<div style="text-align:center;max-width:360px;padding:24px"><div style="font-size:48px;color:${color};margin-bottom:16px">${icon}</div>
+<p style="font-size:18px;font-weight:600;margin:0 0 8px">${message}</p>
+${success ? '<p style="font-size:13px;color:#a8a29e">Return to the Pulse app.</p>' : '<p style="font-size:13px;color:#a8a29e">Go back to Pulse settings and try again.</p>'}
+</div></body></html>`;
+}
+
 // --- Routes ---
 
 app.get("/api/health", (_req: Request, res: Response) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// --- OAuth callback (NO auth required — called by browser redirect from Anthropic) ---
+app.get("/api/oauth/callback", async (req: Request, res: Response) => {
+  const code = req.query.code as string | undefined;
+  const state = req.query.state as string | undefined;
+
+  if (!code) {
+    res.status(400).send(oauthResultPage(false, "No authorization code received."));
+    return;
+  }
+
+  try {
+    // Verify state parameter
+    const storedState = await getSetting("oauth_state");
+    if (storedState && state !== storedState) {
+      logger.warn("OAuth callback state mismatch", "oauth");
+      res.status(400).send(oauthResultPage(false, "Invalid state parameter. Please try again."));
+      return;
+    }
+
+    // Retrieve stored PKCE verifier and redirect URI
+    const codeVerifier = await getSetting("oauth_code_verifier");
+    const redirectUri = await getSetting("oauth_redirect_uri");
+    if (!codeVerifier || !redirectUri) {
+      res.status(400).send(oauthResultPage(false, "No pending OAuth session. Please start again from Pulse settings."));
+      return;
+    }
+
+    // Exchange code for tokens
+    const tokens = await exchangeCode(code, codeVerifier, redirectUri);
+
+    // Encrypt and store
+    const encryptedToken = encrypt(tokens.accessToken);
+    await upsertSetting("claude_auth_type", "oauth");
+    await upsertSetting("claude_auth_token", encryptedToken);
+
+    if (tokens.refreshToken) {
+      const encryptedRefresh = encrypt(tokens.refreshToken);
+      await upsertSetting("claude_oauth_refresh", encryptedRefresh);
+    }
+
+    // Clean up temporary state
+    await deleteSetting("oauth_code_verifier");
+    await deleteSetting("oauth_state");
+    await deleteSetting("oauth_redirect_uri");
+
+    logger.info("OAuth callback: tokens exchanged and stored successfully", "oauth");
+    res.send(oauthResultPage(true, "Authentication successful! You can close this tab."));
+  } catch (err) {
+    logger.error("OAuth callback failed", "oauth", { error: String(err) });
+    res.status(500).send(oauthResultPage(false, "Token exchange failed. Please try again."));
+  }
 });
 
 app.use("/api/auth", authRouter);

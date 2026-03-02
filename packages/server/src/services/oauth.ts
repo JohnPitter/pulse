@@ -5,13 +5,19 @@ const OAUTH_CONTEXT = "oauth";
 
 const AUTH_URL = "https://claude.ai/oauth/authorize";
 const TOKEN_URL = "https://console.anthropic.com/v1/oauth/token";
-const REDIRECT_URI = "https://platform.claude.com/oauth/code/callback";
 const CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
 const SCOPES = "org:create_api_key user:profile user:inference user:sessions:claude_code user:mcp_servers";
 
 /**
+ * Builds the redirect URI pointing to the Pulse server callback.
+ * Uses localhost which is accepted by Claude's native OAuth client.
+ */
+export function buildRedirectUri(port: number): string {
+  return `http://localhost:${port}/api/oauth/callback`;
+}
+
+/**
  * Generates a cryptographically random PKCE code verifier.
- * Returns a 32-byte random value encoded as base64url.
  */
 export function generateCodeVerifier(): string {
   const verifier = randomBytes(32).toString("base64url");
@@ -20,8 +26,7 @@ export function generateCodeVerifier(): string {
 }
 
 /**
- * Generates a PKCE code challenge from a code verifier.
- * Uses SHA-256 hash encoded as base64url (S256 method).
+ * Generates a PKCE code challenge from a code verifier (S256).
  */
 export function generateCodeChallenge(verifier: string): string {
   const challenge = createHash("sha256").update(verifier).digest("base64url");
@@ -31,13 +36,12 @@ export function generateCodeChallenge(verifier: string): string {
 
 /**
  * Builds the OAuth authorization URL with PKCE parameters.
- * The URL is used to redirect the user to Claude's OAuth consent page.
  */
-export function buildAuthUrl(codeChallenge: string, state: string): string {
+export function buildAuthUrl(codeChallenge: string, state: string, redirectUri: string): string {
   const params = new URLSearchParams({
     response_type: "code",
     client_id: CLIENT_ID,
-    redirect_uri: REDIRECT_URI,
+    redirect_uri: redirectUri,
     scope: SCOPES,
     code_challenge: codeChallenge,
     code_challenge_method: "S256",
@@ -50,17 +54,15 @@ export function buildAuthUrl(codeChallenge: string, state: string): string {
   return url;
 }
 
-interface TokenResponse {
+export interface TokenResponse {
   accessToken: string;
   refreshToken?: string;
 }
 
 /**
  * Exchanges an authorization code for access and refresh tokens.
- * Uses JSON content-type as required by Claude's OAuth implementation.
- * Timeout: 30 seconds to prevent hanging requests.
  */
-export async function exchangeCode(code: string, codeVerifier: string): Promise<TokenResponse> {
+export async function exchangeCode(code: string, codeVerifier: string, redirectUri: string): Promise<TokenResponse> {
   logger.info("Exchanging authorization code for tokens", OAUTH_CONTEXT);
 
   const controller = new AbortController();
@@ -80,7 +82,7 @@ export async function exchangeCode(code: string, codeVerifier: string): Promise<
       body: JSON.stringify({
         grant_type: "authorization_code",
         code: cleanCode,
-        redirect_uri: REDIRECT_URI,
+        redirect_uri: redirectUri,
         client_id: CLIENT_ID,
         code_verifier: codeVerifier,
       }),

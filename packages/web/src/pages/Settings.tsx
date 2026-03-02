@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useRef, useCallback, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -10,8 +10,9 @@ import {
   AlertCircle,
   Loader2,
   Puzzle,
+  ExternalLink,
+  ClipboardPaste,
 } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
 
 // --------------------------------------------------------------------------
 // Types
@@ -347,16 +348,53 @@ function OAuthReconfigure({
   onComplete: () => void;
 }) {
   const [oauthUrl, setOauthUrl] = useState<string | null>(null);
-  const [code, setCode] = useState("");
+  const [redirectUrl, setRedirectUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingUrl, setIsLoadingUrl] = useState(true);
+  const [isWaiting, setIsWaiting] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Detect server port from current URL
+  const serverPort = window.location.port || "3000";
+
+  // Poll auth status to detect when callback completes
+  const startPolling = useCallback(() => {
+    if (pollRef.current) return;
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch("/api/settings/claude-auth/status", {
+          credentials: "include",
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { configured: boolean };
+          if (data.configured) {
+            if (pollRef.current) clearInterval(pollRef.current);
+            pollRef.current = null;
+            setSuccess(true);
+            setTimeout(onComplete, 1000);
+          }
+        }
+      } catch {
+        // Silent — keep polling
+      }
+    }, 2000);
+  }, [onComplete]);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, []);
+
+  // Fetch OAuth URL on mount
   useEffect(() => {
     const fetchUrl = async () => {
       try {
-        const res = await fetch("/api/settings/oauth-url", {
+        const res = await fetch(`/api/settings/oauth-url?port=${serverPort}`, {
           credentials: "include",
         });
         if (res.ok) {
@@ -370,11 +408,22 @@ function OAuthReconfigure({
       }
     };
     fetchUrl();
-  }, []);
+  }, [serverPort]);
 
-  const handleSubmit = async (e: FormEvent) => {
+  // Open OAuth in new tab and start polling
+  const handleOpenAuth = () => {
+    if (!oauthUrl) return;
+    window.open(oauthUrl, "_blank");
+    setIsWaiting(true);
+    startPolling();
+    // Show fallback after 15 seconds
+    setTimeout(() => setShowFallback(true), 15000);
+  };
+
+  // Manual fallback: paste redirect URL
+  const handleFallbackSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!code.trim() || isSubmitting) return;
+    if (!redirectUrl.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
     setError(null);
@@ -384,7 +433,7 @@ function OAuthReconfigure({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ code: code.trim() }),
+        body: JSON.stringify({ redirectUrl: redirectUrl.trim() }),
       });
 
       if (!res.ok) {
@@ -425,61 +474,89 @@ function OAuthReconfigure({
         <div className="flex items-center justify-center py-6">
           <Loader2 className="h-5 w-5 animate-spin text-stone-500" />
         </div>
-      ) : oauthUrl ? (
-        <div className="flex flex-col items-center gap-3">
-          <div className="rounded-xl border border-stone-700 bg-white p-3">
-            <QRCodeSVG value={oauthUrl} size={140} />
-          </div>
-          <p className="text-xs text-stone-500 text-center max-w-[280px]">
-            1. Open link or scan QR code{"\n"}
-            2. Authorize on Claude{"\n"}
-            3. Copy the code shown and paste below
+      ) : !isWaiting ? (
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-xs text-stone-400 text-center max-w-[280px]">
+            Click the button below to authorize with Claude. A new tab will open for you to log in and approve access.
           </p>
-          <a
-            href={oauthUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-orange-400 underline transition-colors duration-200 hover:text-orange-300"
+          <button
+            onClick={handleOpenAuth}
+            disabled={!oauthUrl}
+            className="flex items-center justify-center gap-2 w-full rounded-xl bg-orange-500 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
           >
-            Open authorization page
-          </a>
+            <ExternalLink className="h-4 w-4" />
+            Authorize with Claude
+          </button>
         </div>
-      ) : null}
+      ) : (
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
+          <p className="text-sm text-stone-300">Waiting for authorization...</p>
+          <p className="text-xs text-stone-500 text-center">
+            Complete the login in the other tab. This page will update automatically.
+          </p>
+        </div>
+      )}
 
-      <div className="flex items-center gap-3">
-        <div className="h-px flex-1 bg-stone-800" />
-        <span className="text-xs text-stone-500">paste authorization code</span>
-        <div className="h-px flex-1 bg-stone-800" />
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <input
-          type="text"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          placeholder="Paste authorization code here"
-          className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
-        />
-
-        {error && (
-          <div className="flex items-center gap-2 text-sm text-red-400">
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={isSubmitting || !code.trim()}
-          className="w-full rounded-xl bg-orange-500 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
-        >
-          {isSubmitting ? (
-            <Loader2 className="mx-auto h-4 w-4 animate-spin" />
-          ) : (
-            "Connect"
+      {/* Fallback: paste redirect URL (shown after timeout or manually) */}
+      {isWaiting && (
+        <div className="space-y-3">
+          {!showFallback && (
+            <button
+              onClick={() => setShowFallback(true)}
+              className="w-full text-xs text-stone-500 transition-colors duration-200 hover:text-stone-300"
+            >
+              Having trouble? Click here for manual setup
+            </button>
           )}
-        </button>
-      </form>
+
+          {showFallback && (
+            <>
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-stone-800" />
+                <span className="flex items-center gap-1.5 text-xs text-stone-500">
+                  <ClipboardPaste className="h-3 w-3" />
+                  manual fallback
+                </span>
+                <div className="h-px flex-1 bg-stone-800" />
+              </div>
+
+              <p className="text-xs text-stone-500 text-center">
+                If the redirect failed, copy the full URL from your browser address bar and paste it below.
+              </p>
+
+              <form onSubmit={handleFallbackSubmit} className="space-y-3">
+                <input
+                  type="text"
+                  value={redirectUrl}
+                  onChange={(e) => setRedirectUrl(e.target.value)}
+                  placeholder="http://localhost:3000/api/oauth/callback?code=..."
+                  className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+                />
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !redirectUrl.trim()}
+                  className="w-full rounded-xl border border-stone-700 bg-stone-800 py-2.5 text-sm text-stone-300 transition-all duration-200 hover:bg-stone-700 hover:text-white active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                  ) : (
+                    "Exchange Code"
+                  )}
+                </button>
+              </form>
+            </>
+          )}
+        </div>
+      )}
+
+      {error && (
+        <div className="flex items-center gap-2 text-sm text-red-400">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
     </div>
   );
 }
