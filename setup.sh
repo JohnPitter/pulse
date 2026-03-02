@@ -86,6 +86,7 @@ ExecStart=/usr/bin/env node packages/server/dist/index.js
 Restart=on-failure
 RestartSec=5
 Environment=NODE_ENV=production
+Environment=HOME=${PULSE_HOME}
 
 # Load env file
 EnvironmentFile=${PULSE_HOME}/app/.env
@@ -94,7 +95,7 @@ EnvironmentFile=${PULSE_HOME}/app/.env
 NoNewPrivileges=true
 ProtectSystem=strict
 ReadWritePaths=${PULSE_HOME}/app/data
-ProtectHome=true
+ProtectHome=read-only
 PrivateTmp=true
 
 [Install]
@@ -133,6 +134,10 @@ printf "  ${CYAN}systemctl status pulse${NC}    — Check status\n"
 printf "  ${CYAN}systemctl restart pulse${NC}   — Restart\n"
 printf "  ${CYAN}systemctl stop pulse${NC}      — Stop\n"
 printf "  ${CYAN}journalctl -u pulse -f${NC}    — View logs\n"
+printf "\n"
+printf "${BOLD}Claude authentication:${NC}\n"
+printf "  ${CYAN}su - ${PULSE_USER} -c 'claude login'${NC}\n"
+printf "  Then go to Settings → CLI Token → Import from CLI\n"
 printf "\n"
 printf "${BOLD}Files:${NC}\n"
 printf "  App:    ${CYAN}${PULSE_HOME}/app/${NC}\n"

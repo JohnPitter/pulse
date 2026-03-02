@@ -257,7 +257,31 @@ else
 fi
 
 # -------------------------------------------------------------------------
-# 5. Install dependencies
+# 5. Install Claude Code CLI (native binary)
+# -------------------------------------------------------------------------
+step "Checking Claude Code CLI"
+
+if command -v claude &>/dev/null; then
+  CLAUDE_VERSION="$(claude --version 2>/dev/null | head -1)" || CLAUDE_VERSION="unknown"
+  success "Claude Code CLI already installed (${CLAUDE_VERSION})"
+else
+  info "Installing Claude Code CLI..."
+  curl -fsSL https://claude.ai/install.sh | bash
+
+  # Ensure ~/.local/bin is in PATH for this session
+  export PATH="$HOME/.local/bin:$PATH"
+
+  if command -v claude &>/dev/null; then
+    CLAUDE_VERSION="$(claude --version 2>/dev/null | head -1)" || CLAUDE_VERSION="unknown"
+    success "Claude Code CLI installed (${CLAUDE_VERSION})"
+  else
+    warn "Claude Code CLI installation may have failed. You can install it manually later:"
+    warn "  curl -fsSL https://claude.ai/install.sh | bash"
+  fi
+fi
+
+# -------------------------------------------------------------------------
+# 6. Install dependencies
 # -------------------------------------------------------------------------
 step "Installing dependencies (npm install)"
 
@@ -265,7 +289,7 @@ npm install
 success "Dependencies installed"
 
 # -------------------------------------------------------------------------
-# 6. Generate .env file (only if it does not already exist)
+# 7. Generate .env file (only if it does not already exist)
 # -------------------------------------------------------------------------
 step "Configuring environment"
 
@@ -293,7 +317,7 @@ EOF
 fi
 
 # -------------------------------------------------------------------------
-# 7. Build the project
+# 8. Build the project
 # -------------------------------------------------------------------------
 step "Building the project (npm run build)"
 
@@ -301,7 +325,7 @@ npm run build
 success "Build completed successfully"
 
 # -------------------------------------------------------------------------
-# 8. Done!
+# 9. Done!
 # -------------------------------------------------------------------------
 printf "\n${GREEN}${BOLD}╔══════════════════════════════════════════╗${NC}\n"
 printf "${GREEN}${BOLD}║       Installation complete!              ║${NC}\n"
@@ -311,9 +335,12 @@ printf "${BOLD}Getting started:${NC}\n"
 printf "  1. Start the server:   ${CYAN}npm start${NC}\n"
 printf "  2. Open your browser:  ${CYAN}http://localhost:3000${NC}\n"
 printf "  3. On first visit you will be prompted to set an admin password.\n"
+printf "  4. Authenticate with Claude: ${CYAN}claude login${NC}\n"
+printf "     Then go to Settings → CLI Token → Import from CLI\n"
 printf "\n"
 printf "${BOLD}Useful commands:${NC}\n"
 printf "  ${CYAN}npm run dev${NC}       — Start in development mode (hot reload)\n"
 printf "  ${CYAN}npm run build${NC}     — Rebuild the project\n"
 printf "  ${CYAN}npm start${NC}         — Start in production mode\n"
+printf "  ${CYAN}claude login${NC}      — Authenticate with Claude (for agent features)\n"
 printf "\n"
