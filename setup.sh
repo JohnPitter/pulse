@@ -24,6 +24,20 @@ warn()    { printf "${YELLOW}[WARN]${NC}  %s\n" "$1"; }
 fail()    { printf "${RED}[ERROR]${NC} %s\n" "$1" >&2; exit 1; }
 step()    { printf "\n${CYAN}${BOLD}▸ %s${NC}\n" "$1"; }
 
+# Detect OS type
+if [ -f /etc/os-release ]; then
+  . /etc/os-release
+  case "$ID" in
+    ubuntu|debian|pop|linuxmint|elementary|zorin) OS_TYPE="debian" ;;
+    fedora|rhel|centos|rocky|alma|amzn) OS_TYPE="rhel" ;;
+    arch|manjaro|endeavouros) OS_TYPE="arch" ;;
+    opensuse*|sles) OS_TYPE="suse" ;;
+    *) OS_TYPE="unknown" ;;
+  esac
+else
+  OS_TYPE="unknown"
+fi
+
 printf "\n${BOLD}╔══════════════════════════════════════════╗${NC}\n"
 printf "${BOLD}║        Pulse — One-Line Setup            ║${NC}\n"
 printf "${BOLD}╚══════════════════════════════════════════╝${NC}\n\n"
@@ -94,8 +108,8 @@ EnvironmentFile=${PULSE_HOME}/app/.env
 # Security hardening
 NoNewPrivileges=true
 ProtectSystem=strict
-ReadWritePaths=${PULSE_HOME}/app/data
-ProtectHome=read-only
+ReadWritePaths=${PULSE_HOME}
+ProtectHome=false
 PrivateTmp=true
 
 [Install]
@@ -118,6 +132,91 @@ else
   warn "Service may have failed to start. Check: journalctl -u ${SERVICE_NAME} -n 20"
 fi
 
+# --- HTTPS / TLS with Caddy ---
+step "Configuring HTTPS (Caddy reverse proxy)"
+
+PULSE_DOMAIN=""
+
+# Accept domain via PULSE_DOMAIN env var or prompt interactively
+if [ -n "${PULSE_DOMAIN:-}" ]; then
+  info "Using domain from environment: ${PULSE_DOMAIN}"
+elif [ -t 0 ]; then
+  printf "${BOLD}Enter your domain for HTTPS (e.g. pulse.example.com)${NC}\n"
+  printf "  Leave empty to skip HTTPS and use http://<ip>:3000 instead\n"
+  printf "  ${CYAN}Domain: ${NC}"
+  read -r PULSE_DOMAIN
+elif [ -e /dev/tty ]; then
+  # Running via pipe (curl | bash) — read from tty
+  printf "${BOLD}Enter your domain for HTTPS (e.g. pulse.example.com)${NC}\n"
+  printf "  Leave empty to skip HTTPS and use http://<ip>:3000 instead\n"
+  printf "  ${CYAN}Domain: ${NC}"
+  read -r PULSE_DOMAIN < /dev/tty
+else
+  info "Non-interactive mode — skipping HTTPS. Set PULSE_DOMAIN env var to enable."
+fi
+
+if [ -n "$PULSE_DOMAIN" ]; then
+  # Install Caddy
+  if ! command -v caddy &>/dev/null; then
+    info "Installing Caddy..."
+    case "$OS_TYPE" in
+      debian)
+        apt-get install -y -qq debian-keyring debian-archive-keyring apt-transport-https curl 2>/dev/null || true
+        curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg 2>/dev/null
+        curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list >/dev/null
+        apt-get update -qq
+        apt-get install -y -qq caddy
+        ;;
+      rhel)
+        dnf install -y 'dnf-command(copr)' 2>/dev/null && dnf copr enable -y @caddy/caddy 2>/dev/null && dnf install -y caddy 2>/dev/null \
+          || { curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/setup.rpm.sh' | bash && dnf install -y caddy 2>/dev/null; } \
+          || fail "Could not install Caddy. Install manually: https://caddyserver.com/docs/install"
+        ;;
+      arch)
+        pacman -Sy --noconfirm caddy
+        ;;
+      *)
+        warn "Auto-install not supported for this OS. Install Caddy manually: https://caddyserver.com/docs/install"
+        PULSE_DOMAIN=""
+        ;;
+    esac
+  fi
+
+  if command -v caddy &>/dev/null && [ -n "$PULSE_DOMAIN" ]; then
+    success "Caddy $(caddy version 2>/dev/null | head -1) available"
+
+    # Write Caddyfile
+    cat > /etc/caddy/Caddyfile <<CADDYEOF
+${PULSE_DOMAIN} {
+    reverse_proxy localhost:3000
+}
+CADDYEOF
+
+    # Update .env CORS_ORIGIN to use HTTPS domain
+    ENV_FILE="${PULSE_HOME}/app/.env"
+    if [ -f "$ENV_FILE" ]; then
+      sed -i "s|^CORS_ORIGIN=.*|CORS_ORIGIN=https://${PULSE_DOMAIN}|" "$ENV_FILE"
+      success "Updated CORS_ORIGIN to https://${PULSE_DOMAIN}"
+    fi
+
+    # Restart services
+    systemctl enable caddy
+    systemctl restart caddy
+    systemctl restart "$SERVICE_NAME"
+
+    # Wait for Caddy to obtain certificate
+    sleep 3
+    if systemctl is-active --quiet caddy; then
+      success "Caddy is running — TLS certificate will be auto-provisioned by Let's Encrypt"
+    else
+      warn "Caddy may have failed. Check: journalctl -u caddy -n 20"
+      warn "Ensure DNS for ${PULSE_DOMAIN} points to this server and ports 80/443 are open"
+    fi
+  fi
+else
+  info "Skipping HTTPS setup"
+fi
+
 # --- Done ---
 printf "\n${GREEN}${BOLD}╔══════════════════════════════════════════╗${NC}\n"
 printf "${GREEN}${BOLD}║         Setup complete!                   ║${NC}\n"
@@ -127,13 +226,24 @@ printf "${GREEN}${BOLD}╚══════════════════
 SERVER_IP="$(hostname -I 2>/dev/null | awk '{print $1}')" || SERVER_IP="<your-server-ip>"
 
 printf "${BOLD}Access:${NC}\n"
-printf "  ${CYAN}http://${SERVER_IP}:3000${NC}\n"
+if [ -n "$PULSE_DOMAIN" ]; then
+  printf "  ${CYAN}https://${PULSE_DOMAIN}${NC}\n"
+else
+  printf "  ${CYAN}http://${SERVER_IP}:3000${NC}\n"
+fi
 printf "\n"
 printf "${BOLD}Service commands:${NC}\n"
 printf "  ${CYAN}systemctl status pulse${NC}    — Check status\n"
 printf "  ${CYAN}systemctl restart pulse${NC}   — Restart\n"
 printf "  ${CYAN}systemctl stop pulse${NC}      — Stop\n"
 printf "  ${CYAN}journalctl -u pulse -f${NC}    — View logs\n"
+if [ -n "$PULSE_DOMAIN" ]; then
+  printf "\n"
+  printf "${BOLD}HTTPS (Caddy):${NC}\n"
+  printf "  ${CYAN}systemctl status caddy${NC}    — Check Caddy status\n"
+  printf "  ${CYAN}cat /etc/caddy/Caddyfile${NC} — View Caddy config\n"
+  printf "  ${CYAN}journalctl -u caddy -f${NC}   — View Caddy logs\n"
+fi
 printf "\n"
 printf "${BOLD}Claude authentication:${NC}\n"
 printf "  ${CYAN}su - ${PULSE_USER} -c 'claude login'${NC}\n"
