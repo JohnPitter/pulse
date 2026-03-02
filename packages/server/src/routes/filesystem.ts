@@ -72,21 +72,25 @@ router.post("/mkdir", async (req: Request, res: Response) => {
     }
 
     const targetPath = resolve(normalize(rawPath));
+    logger.debug(`mkdir request: raw="${rawPath}" resolved="${targetPath}"`, CONTEXT);
+
+    const existing = await stat(targetPath).catch(() => null);
+    if (existing) {
+      res.status(409).json({ error: "Directory already exists" });
+      return;
+    }
 
     try {
-      const existing = await stat(targetPath).catch(() => null);
-      if (existing) {
-        res.status(409).json({ error: "Directory already exists" });
-        return;
-      }
       await mkdir(targetPath, { recursive: true });
     } catch (err: unknown) {
       const code = (err as NodeJS.ErrnoException).code;
+      logger.error(`mkdir failed: code=${code} path=${targetPath}`, CONTEXT, { error: String(err) });
       if (code === "EACCES") {
         res.status(403).json({ error: "Permission denied" });
         return;
       }
-      throw err;
+      res.status(400).json({ error: `Failed to create directory: ${code ?? "unknown error"}` });
+      return;
     }
 
     logger.info(`Created directory: ${targetPath}`, CONTEXT);
