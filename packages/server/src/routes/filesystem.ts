@@ -84,8 +84,9 @@ router.post("/mkdir", async (req: Request, res: Response) => {
       return;
     }
 
-    // Walk up to find the deepest existing ancestor directory
+    // Walk up to find the deepest existing writable ancestor
     const parent = dirname(targetPath);
+    let writableAncestor: string | null = null;
     let checkPath = parent;
     while (checkPath !== dirname(checkPath)) {
       const s = await stat(checkPath).catch(() => null);
@@ -94,42 +95,48 @@ router.post("/mkdir", async (req: Request, res: Response) => {
           res.status(400).json({ error: `Path component is not a directory: ${checkPath}` });
           return;
         }
+        writableAncestor = checkPath;
         break;
       }
       checkPath = dirname(checkPath);
     }
 
-    // If the immediate parent doesn't exist, try creating it explicitly
-    // to surface permission errors on the filesystem root
-    const parentStat = await stat(parent).catch(() => null);
-    if (!parentStat) {
-      try {
-        await mkdir(parent, { recursive: true });
-      } catch (err: unknown) {
-        const code = (err as NodeJS.ErrnoException).code;
-        logger.error(`mkdir parent failed: code=${code} path=${parent}`, CONTEXT, { error: String(err) });
-        const reason = code === "EACCES" ? "Permission denied" :
-          code === "EROFS" ? "Read-only filesystem" :
-          code ?? "unknown error";
-        res.status(400).json({ error: `Cannot create parent directory ${parent}: ${reason}` });
-        return;
-      }
-    } else if (!parentStat.isDirectory()) {
-      res.status(400).json({ error: `Parent path is not a directory: ${parent}` });
+    if (!writableAncestor) {
+      res.status(400).json({ error: "No accessible parent directory found in path" });
       return;
     }
 
-    try {
-      await mkdir(targetPath, { recursive: true });
-    } catch (err: unknown) {
-      const code = (err as NodeJS.ErrnoException).code;
-      logger.error(`mkdir failed: code=${code} path=${targetPath}`, CONTEXT, { error: String(err) });
-      const reason = code === "EACCES" ? "Permission denied" :
-        code === "EROFS" ? "Read-only filesystem" :
-        code === "ENOENT" ? `Parent directory does not exist: ${parent}` :
-        `${code ?? "unknown error"}`;
-      res.status(400).json({ error: `Failed to create directory: ${reason}` });
-      return;
+    // Build the chain of directories that need to be created, one by one
+    // from the deepest existing ancestor down to the target
+    const dirsToCreate: string[] = [];
+    let buildPath = targetPath;
+    while (buildPath !== writableAncestor) {
+      dirsToCreate.unshift(buildPath);
+      buildPath = dirname(buildPath);
+    }
+
+    for (const dir of dirsToCreate) {
+      try {
+        await mkdir(dir);
+      } catch (err: unknown) {
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code === "EEXIST") continue;
+        logger.error(`mkdir failed: code=${code} path=${dir}`, CONTEXT, { error: String(err) });
+        const reason = code === "EACCES" ? "Permission denied" :
+          code === "EROFS" ? "Read-only filesystem" :
+          code === "ENOENT" ? `Parent directory does not exist: ${dirname(dir)}` :
+          `${code ?? "unknown error"}`;
+        res.status(400).json({ error: `Cannot create ${dir}: ${reason}` });
+        return;
+      }
+
+      // Verify the directory was actually created
+      const created = await stat(dir).catch(() => null);
+      if (!created || !created.isDirectory()) {
+        logger.error(`mkdir silent failure: ${dir} does not exist after creation`, CONTEXT);
+        res.status(400).json({ error: `Cannot create directory at ${dir}: filesystem may be read-only` });
+        return;
+      }
     }
 
     logger.info(`Created directory: ${targetPath}`, CONTEXT);
