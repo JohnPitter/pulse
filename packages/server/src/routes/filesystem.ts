@@ -84,10 +84,37 @@ router.post("/mkdir", async (req: Request, res: Response) => {
       return;
     }
 
-    // Validate that the parent path is a reachable directory
+    // Walk up to find the deepest existing ancestor directory
     const parent = dirname(targetPath);
+    let checkPath = parent;
+    while (checkPath !== dirname(checkPath)) {
+      const s = await stat(checkPath).catch(() => null);
+      if (s) {
+        if (!s.isDirectory()) {
+          res.status(400).json({ error: `Path component is not a directory: ${checkPath}` });
+          return;
+        }
+        break;
+      }
+      checkPath = dirname(checkPath);
+    }
+
+    // If the immediate parent doesn't exist, try creating it explicitly
+    // to surface permission errors on the filesystem root
     const parentStat = await stat(parent).catch(() => null);
-    if (parentStat && !parentStat.isDirectory()) {
+    if (!parentStat) {
+      try {
+        await mkdir(parent, { recursive: true });
+      } catch (err: unknown) {
+        const code = (err as NodeJS.ErrnoException).code;
+        logger.error(`mkdir parent failed: code=${code} path=${parent}`, CONTEXT, { error: String(err) });
+        const reason = code === "EACCES" ? "Permission denied" :
+          code === "EROFS" ? "Read-only filesystem" :
+          code ?? "unknown error";
+        res.status(400).json({ error: `Cannot create parent directory ${parent}: ${reason}` });
+        return;
+      }
+    } else if (!parentStat.isDirectory()) {
       res.status(400).json({ error: `Parent path is not a directory: ${parent}` });
       return;
     }
@@ -97,15 +124,11 @@ router.post("/mkdir", async (req: Request, res: Response) => {
     } catch (err: unknown) {
       const code = (err as NodeJS.ErrnoException).code;
       logger.error(`mkdir failed: code=${code} path=${targetPath}`, CONTEXT, { error: String(err) });
-      if (code === "EACCES") {
-        res.status(403).json({ error: "Permission denied" });
-        return;
-      }
-      if (code === "ENOENT") {
-        res.status(400).json({ error: `Parent directory does not exist or path is invalid: ${parent}` });
-        return;
-      }
-      res.status(400).json({ error: `Failed to create directory: ${code ?? "unknown error"}` });
+      const reason = code === "EACCES" ? "Permission denied" :
+        code === "EROFS" ? "Read-only filesystem" :
+        code === "ENOENT" ? `Parent directory does not exist: ${parent}` :
+        `${code ?? "unknown error"}`;
+      res.status(400).json({ error: `Failed to create directory: ${reason}` });
       return;
     }
 
