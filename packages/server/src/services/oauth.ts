@@ -10,13 +10,12 @@ const SCOPES = "user:profile user:inference user:sessions:claude_code user:mcp_s
 
 /**
  * Builds the redirect URI for OAuth callback.
- * Claude's native client_id only accepts localhost redirect URIs.
- * If the user accesses Pulse locally, the callback works automatically.
- * If remote, the redirect fails but the code is visible in the address bar
- * for manual paste.
+ * Uses Anthropic's official callback endpoint for the native client_id.
+ * After authorization, the user is redirected to console.anthropic.com
+ * which displays the authorization code for manual copy.
  */
-export function buildRedirectUri(port: number): string {
-  return `http://localhost:${port}/api/oauth/callback`;
+export function buildRedirectUri(_port: number): string {
+  return "https://console.anthropic.com/oauth/code/callback";
 }
 
 /**

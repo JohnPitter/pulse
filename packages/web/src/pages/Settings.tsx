@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -11,7 +11,6 @@ import {
   Loader2,
   Puzzle,
   ExternalLink,
-  ClipboardPaste,
 } from "lucide-react";
 
 // --------------------------------------------------------------------------
@@ -298,10 +297,14 @@ function ReconfigureAuth({
   onCancel: () => void;
   onComplete: () => void;
 }) {
-  const [method, setMethod] = useState<"oauth" | "apikey" | null>(null);
+  const [method, setMethod] = useState<"oauth" | "oauthtoken" | "apikey" | null>(null);
 
   if (method === "oauth") {
     return <OAuthReconfigure onBack={() => setMethod(null)} onComplete={onComplete} />;
+  }
+
+  if (method === "oauthtoken") {
+    return <OAuthTokenReconfigure onBack={() => setMethod(null)} onComplete={onComplete} />;
   }
 
   if (method === "apikey") {
@@ -310,13 +313,20 @@ function ReconfigureAuth({
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <button
           onClick={() => setMethod("oauth")}
           className="flex flex-col items-center gap-2 rounded-xl border border-stone-700 bg-stone-800 p-4 text-center transition-all duration-200 hover:bg-stone-700 hover:border-stone-600 active:scale-[0.98]"
         >
           <Key className="h-5 w-5 text-orange-500" />
           <span className="text-xs font-medium text-white">OAuth</span>
+        </button>
+        <button
+          onClick={() => setMethod("oauthtoken")}
+          className="flex flex-col items-center gap-2 rounded-xl border border-stone-700 bg-stone-800 p-4 text-center transition-all duration-200 hover:bg-stone-700 hover:border-stone-600 active:scale-[0.98]"
+        >
+          <Shield className="h-5 w-5 text-orange-500" />
+          <span className="text-xs font-medium text-white">CLI Token</span>
         </button>
         <button
           onClick={() => setMethod("apikey")}
@@ -351,49 +361,15 @@ function OAuthReconfigure({
   const [redirectUrl, setRedirectUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingUrl, setIsLoadingUrl] = useState(true);
-  const [isWaiting, setIsWaiting] = useState(false);
-  const [showFallback, setShowFallback] = useState(false);
+  const [authOpened, setAuthOpened] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const serverPort = window.location.port || "3000";
-
-  // Poll auth status to detect when callback completes
-  const startPolling = useCallback(() => {
-    if (pollRef.current) return;
-    pollRef.current = setInterval(async () => {
-      try {
-        const res = await fetch("/api/settings/claude-auth/status", {
-          credentials: "include",
-        });
-        if (res.ok) {
-          const data = (await res.json()) as { configured: boolean };
-          if (data.configured) {
-            if (pollRef.current) clearInterval(pollRef.current);
-            pollRef.current = null;
-            setSuccess(true);
-            setTimeout(onComplete, 1000);
-          }
-        }
-      } catch {
-        // Silent — keep polling
-      }
-    }, 2000);
-  }, [onComplete]);
-
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-  }, []);
 
   // Fetch OAuth URL on mount
   useEffect(() => {
     const fetchUrl = async () => {
       try {
-        const res = await fetch(`/api/settings/oauth-url?port=${serverPort}`, {
+        const res = await fetch("/api/settings/oauth-url?port=3000", {
           credentials: "include",
         });
         if (res.ok) {
@@ -407,18 +383,16 @@ function OAuthReconfigure({
       }
     };
     fetchUrl();
-  }, [serverPort]);
+  }, []);
 
-  // Open OAuth in new tab and start polling
+  // Open OAuth in new tab
   const handleOpenAuth = () => {
     if (!oauthUrl) return;
     window.open(oauthUrl, "_blank");
-    setIsWaiting(true);
-    setShowFallback(true);
-    startPolling();
+    setAuthOpened(true);
   };
 
-  // Manual fallback: paste redirect URL
+  // Paste redirect URL and exchange code
   const handleFallbackSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!redirectUrl.trim() || isSubmitting) return;
@@ -472,63 +446,45 @@ function OAuthReconfigure({
         <div className="flex items-center justify-center py-6">
           <Loader2 className="h-5 w-5 animate-spin text-stone-500" />
         </div>
-      ) : !isWaiting ? (
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-xs text-stone-400 text-center max-w-[280px]">
-            Authorize with Claude. After approving, you'll be redirected to a localhost URL — copy the full URL from the address bar and paste it below.
-          </p>
+      ) : (
+        <div className="space-y-4">
+          {/* Step 1: Open auth */}
+          <div className="flex items-center gap-3">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-500/20 text-xs font-bold text-orange-400">
+              1
+            </span>
+            <p className="text-xs text-stone-400">
+              Click below to authorize with Claude in a new tab.
+            </p>
+          </div>
+
           <button
             onClick={handleOpenAuth}
             disabled={!oauthUrl}
             className="flex items-center justify-center gap-2 w-full rounded-xl bg-orange-500 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
           >
             <ExternalLink className="h-4 w-4" />
-            Authorize with Claude
+            {authOpened ? "Open Again" : "Authorize with Claude"}
           </button>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
-          <p className="text-sm text-stone-300">Waiting for authorization...</p>
-          <p className="text-xs text-stone-500 text-center">
-            Complete the login in the other tab. This page will update automatically.
-          </p>
-        </div>
-      )}
 
-      {/* Fallback: paste redirect URL (shown after timeout or manually) */}
-      {isWaiting && (
-        <div className="space-y-3">
-          {!showFallback && (
-            <button
-              onClick={() => setShowFallback(true)}
-              className="w-full text-xs text-stone-500 transition-colors duration-200 hover:text-stone-300"
-            >
-              Having trouble? Click here for manual setup
-            </button>
-          )}
-
-          {showFallback && (
+          {/* Step 2: Paste URL */}
+          {authOpened && (
             <>
               <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-stone-800" />
-                <span className="flex items-center gap-1.5 text-xs text-stone-500">
-                  <ClipboardPaste className="h-3 w-3" />
-                  manual fallback
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-500/20 text-xs font-bold text-orange-400">
+                  2
                 </span>
-                <div className="h-px flex-1 bg-stone-800" />
+                <p className="text-xs text-stone-400">
+                  After authorizing, copy the full URL from your browser and paste it below.
+                </p>
               </div>
-
-              <p className="text-xs text-stone-500 text-center">
-                If the redirect failed, copy the full URL from your browser address bar and paste it below.
-              </p>
 
               <form onSubmit={handleFallbackSubmit} className="space-y-3">
                 <input
                   type="text"
                   value={redirectUrl}
                   onChange={(e) => setRedirectUrl(e.target.value)}
-                  placeholder="http://localhost:3000/api/oauth/callback?code=..."
+                  placeholder="https://console.anthropic.com/oauth/code/callback?code=..."
                   className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
                 />
 
@@ -555,6 +511,142 @@ function OAuthReconfigure({
           <span>{error}</span>
         </div>
       )}
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
+// OAuth Token (from CLI) Reconfigure
+// --------------------------------------------------------------------------
+
+function OAuthTokenReconfigure({
+  onBack,
+  onComplete,
+}: {
+  onBack: () => void;
+  onComplete: () => void;
+}) {
+  const [token, setToken] = useState("");
+  const [refreshToken, setRefreshToken] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!token.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/settings/claude-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          type: "oauth",
+          token: token.trim(),
+          refreshToken: refreshToken.trim() || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        setError(data.error ?? "Failed to save token");
+        setIsSubmitting(false);
+        return;
+      }
+
+      setSuccess(true);
+      setTimeout(onComplete, 1000);
+    } catch {
+      setError("Connection failed");
+      setIsSubmitting(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-6">
+        <CheckCircle2 className="h-10 w-10 text-green-500" />
+        <p className="text-sm font-medium">Token saved successfully</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <button
+        onClick={onBack}
+        className="flex items-center gap-1.5 text-xs text-stone-400 transition-colors duration-200 hover:text-white"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back
+      </button>
+
+      <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
+        <p className="text-xs text-stone-400 leading-relaxed">
+          Get your token from{" "}
+          <code className="rounded bg-stone-700 px-1.5 py-0.5 text-[11px] text-orange-400">
+            ~/.claude/.credentials.json
+          </code>
+          {" "}after running{" "}
+          <code className="rounded bg-stone-700 px-1.5 py-0.5 text-[11px] text-orange-400">
+            claude login
+          </code>
+          {" "}in your terminal.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div>
+          <label htmlFor="oauth-token" className="block text-xs text-stone-400 mb-1.5">
+            Access Token
+          </label>
+          <input
+            id="oauth-token"
+            type="password"
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            placeholder="sk-ant-oat01-..."
+            className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="oauth-refresh" className="block text-xs text-stone-400 mb-1.5">
+            Refresh Token <span className="text-stone-600">(optional)</span>
+          </label>
+          <input
+            id="oauth-refresh"
+            type="password"
+            value={refreshToken}
+            onChange={(e) => setRefreshToken(e.target.value)}
+            placeholder="sk-ant-ort01-..."
+            className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+          />
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-2 text-sm text-red-400">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={isSubmitting || !token.trim()}
+          className="w-full rounded-xl bg-orange-500 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+        >
+          {isSubmitting ? (
+            <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+          ) : (
+            "Save Token"
+          )}
+        </button>
+      </form>
     </div>
   );
 }

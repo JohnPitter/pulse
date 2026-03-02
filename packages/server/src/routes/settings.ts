@@ -78,8 +78,13 @@ router.post("/claude-auth", async (req: Request, res: Response) => {
       return;
     }
 
-    if (type === "apikey" && !token.startsWith("sk-ant-")) {
-      res.status(400).json({ error: "API key must start with sk-ant-" });
+    if (type === "apikey" && !token.startsWith("sk-ant-api")) {
+      res.status(400).json({ error: "API key must start with sk-ant-api" });
+      return;
+    }
+
+    if (type === "oauth" && !token.startsWith("sk-ant-oat")) {
+      res.status(400).json({ error: "OAuth token must start with sk-ant-oat" });
       return;
     }
 
