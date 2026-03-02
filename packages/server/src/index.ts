@@ -16,6 +16,7 @@ import { exchangeCode } from "./services/oauth.js";
 import { authRouter } from "./routes/auth.js";
 import { createAgentRouter } from "./routes/agents.js";
 import { settingsRouter, getSetting, upsertSetting, deleteSetting } from "./routes/settings.js";
+import { filesystemRouter } from "./routes/filesystem.js";
 import { setupSocket } from "./socket/index.js";
 import { initTokenRefresh, startAutoRefresh } from "./services/token-refresh.js";
 
@@ -128,6 +129,7 @@ app.get("/api/oauth/callback", async (req: Request, res: Response) => {
 app.use("/api/auth", authRouter);
 app.use("/api/agents", createAgentRouter(agentManager));
 app.use("/api/settings", settingsRouter);
+app.use("/api/filesystem", filesystemRouter);
 
 // --- SPA fallback (must come after API routes, before error handler) ---
 // Express 5 uses path-to-regexp v8+ which requires named wildcards

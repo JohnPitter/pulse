@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, FolderSearch } from "lucide-react";
 import { useAgentsStore, type CreateAgentPayload } from "../../stores/agents";
+import { DirectoryPicker } from "./DirectoryPicker";
 
 interface CreateAgentDialogProps {
   open: boolean;
@@ -32,6 +33,7 @@ export function CreateAgentDialog({ open, onClose }: CreateAgentDialogProps) {
   const [initialPrompt, setInitialPrompt] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   if (!open) return null;
 
@@ -133,14 +135,30 @@ export function CreateAgentDialog({ open, onClose }: CreateAgentDialogProps) {
             >
               Project Path
             </label>
-            <input
-              id="agent-path"
-              type="text"
-              value={projectPath}
-              onChange={(e) => setProjectPath(e.target.value)}
-              placeholder="/home/user/project"
-              required
-              className="w-full rounded-xl border border-stone-700 bg-stone-950 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+            <div className="flex gap-2">
+              <input
+                id="agent-path"
+                type="text"
+                value={projectPath}
+                onChange={(e) => setProjectPath(e.target.value)}
+                placeholder="/home/user/project"
+                required
+                className="flex-1 rounded-xl border border-stone-700 bg-stone-950 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+              />
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                className="shrink-0 rounded-xl border border-stone-700 bg-stone-950 px-3 py-2.5 text-stone-400 transition-all duration-200 hover:bg-stone-800 hover:text-orange-400 hover:border-stone-600 active:scale-[0.98]"
+                aria-label="Browse directories"
+              >
+                <FolderSearch className="h-4 w-4" />
+              </button>
+            </div>
+            <DirectoryPicker
+              open={pickerOpen}
+              onClose={() => setPickerOpen(false)}
+              onSelect={(path) => setProjectPath(path)}
+              initialPath={projectPath || undefined}
             />
           </div>
 
