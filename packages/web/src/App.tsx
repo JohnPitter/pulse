@@ -7,6 +7,7 @@ import { Login } from "./pages/Login";
 import { SetupWizard } from "./pages/SetupWizard";
 import { Dashboard } from "./pages/Dashboard";
 import { AgentView } from "./pages/AgentView";
+import { Settings } from "./pages/Settings";
 
 function LoadingSpinner() {
   return (
@@ -52,6 +53,12 @@ export function App() {
           path="/agent/:id"
           element={
             isAuthenticated ? <AgentView /> : <Navigate to="/login" />
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            isAuthenticated ? <Settings /> : <Navigate to="/login" />
           }
         />
       </Routes>
