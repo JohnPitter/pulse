@@ -22,12 +22,20 @@ export function createTerminalSession(
   const shell = command[0];
   const args = command.slice(1);
 
+  // Build env with HOME/.local/bin in PATH (for Claude CLI binary)
+  const home = process.env.HOME ?? "";
+  const localBin = home ? `${home}/.local/bin` : "";
+  const currentPath = process.env.PATH ?? "";
+  const envPath = localBin && !currentPath.includes(localBin)
+    ? `${localBin}:${currentPath}`
+    : currentPath;
+
   const ptyProcess = pty.spawn(shell, args, {
     name: "xterm-256color",
     cols: 120,
     rows: 40,
     cwd,
-    env: process.env as Record<string, string>,
+    env: { ...process.env, PATH: envPath } as Record<string, string>,
   });
 
   const session: TerminalSession = {

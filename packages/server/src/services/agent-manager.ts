@@ -187,10 +187,15 @@ export class AgentManager {
     const parser = new ChatParser();
     this.parsers.set(id, parser);
 
+    // Buffer recent output for debugging exit errors
+    let recentOutput = "";
+
     // Wire pty output -> terminal:output event + feed ChatParser
     session.pty.onData((data: string) => {
       io.to(id).emit("terminal:output", { agentId: id, data });
       parser.feed(data);
+      // Keep last 2KB of output for exit debugging
+      recentOutput = (recentOutput + data).slice(-2048);
     });
 
     // Wire ChatParser message -> agent:message event + update lastMessage in DB
@@ -247,6 +252,14 @@ export class AgentManager {
         exitCode,
         status,
       });
+
+      // Log recent output on error for debugging
+      if (exitCode !== 0 && recentOutput.trim()) {
+        logger.error(`Agent stderr/output before exit`, CONTEXT, {
+          agentId: id,
+          output: recentOutput.trim().slice(-500),
+        });
+      }
 
       this.parsers.delete(id);
 
