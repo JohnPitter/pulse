@@ -62,7 +62,8 @@ app.use("/api/agents", createAgentRouter(agentManager));
 app.use("/api/settings", settingsRouter);
 
 // --- SPA fallback (must come after API routes, before error handler) ---
-app.get("*", (_req: Request, res: Response) => {
+// Express 5 uses path-to-regexp v8+ which requires named wildcards
+app.get("/{*path}", (_req: Request, res: Response) => {
   res.sendFile(path.join(webDistPath, "index.html"));
 });
 
