@@ -357,8 +357,7 @@ function OAuthReconfigure({
   const [success, setSuccess] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Use the current origin so the redirect comes back to the same host
-  const currentOrigin = window.location.origin;
+  const serverPort = window.location.port || "3000";
 
   // Poll auth status to detect when callback completes
   const startPolling = useCallback(() => {
@@ -394,7 +393,7 @@ function OAuthReconfigure({
   useEffect(() => {
     const fetchUrl = async () => {
       try {
-        const res = await fetch(`/api/settings/oauth-url?origin=${encodeURIComponent(currentOrigin)}`, {
+        const res = await fetch(`/api/settings/oauth-url?port=${serverPort}`, {
           credentials: "include",
         });
         if (res.ok) {
@@ -408,16 +407,15 @@ function OAuthReconfigure({
       }
     };
     fetchUrl();
-  }, [currentOrigin]);
+  }, [serverPort]);
 
   // Open OAuth in new tab and start polling
   const handleOpenAuth = () => {
     if (!oauthUrl) return;
     window.open(oauthUrl, "_blank");
     setIsWaiting(true);
+    setShowFallback(true);
     startPolling();
-    // Show fallback after 15 seconds
-    setTimeout(() => setShowFallback(true), 15000);
   };
 
   // Manual fallback: paste redirect URL
@@ -477,7 +475,7 @@ function OAuthReconfigure({
       ) : !isWaiting ? (
         <div className="flex flex-col items-center gap-4">
           <p className="text-xs text-stone-400 text-center max-w-[280px]">
-            Click the button below to authorize with Claude. A new tab will open for you to log in and approve access.
+            Authorize with Claude. After approving, you'll be redirected to a localhost URL — copy the full URL from the address bar and paste it below.
           </p>
           <button
             onClick={handleOpenAuth}

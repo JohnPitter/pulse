@@ -6,17 +6,17 @@ const OAUTH_CONTEXT = "oauth";
 const AUTH_URL = "https://claude.ai/oauth/authorize";
 const TOKEN_URL = "https://console.anthropic.com/v1/oauth/token";
 const CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
-const SCOPES = "org:create_api_key user:profile user:inference user:sessions:claude_code user:mcp_servers";
+const SCOPES = "user:profile user:inference user:sessions:claude_code user:mcp_servers";
 
 /**
- * Builds the redirect URI pointing back to the Pulse server callback.
- * Uses the origin the user is accessing Pulse from so the redirect returns
- * to the same host (VPS IP, localhost, domain, etc.).
+ * Builds the redirect URI for OAuth callback.
+ * Claude's native client_id only accepts localhost redirect URIs.
+ * If the user accesses Pulse locally, the callback works automatically.
+ * If remote, the redirect fails but the code is visible in the address bar
+ * for manual paste.
  */
-export function buildRedirectUri(origin: string): string {
-  // Strip trailing slash if present
-  const base = origin.replace(/\/$/, "");
-  return `${base}/api/oauth/callback`;
+export function buildRedirectUri(port: number): string {
+  return `http://localhost:${port}/api/oauth/callback`;
 }
 
 /**
