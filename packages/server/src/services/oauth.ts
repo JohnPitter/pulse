@@ -7,7 +7,7 @@ const AUTH_URL = "https://claude.ai/oauth/authorize";
 const TOKEN_URL = "https://console.anthropic.com/v1/oauth/token";
 const REDIRECT_URI = "https://console.anthropic.com/oauth/code/callback";
 const CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
-const SCOPES = "user:profile user:inference user:sessions:claude_code";
+const SCOPES = "user:profile user:inference";
 
 /**
  * Generates a cryptographically random PKCE code verifier.
@@ -80,9 +80,9 @@ export async function exchangeCode(code: string, codeVerifier: string): Promise<
     });
 
     if (!response.ok) {
-      const statusText = response.statusText || "Unknown error";
-      logger.error(`Token exchange failed: ${response.status} ${statusText}`, OAUTH_CONTEXT);
-      throw new Error(`Token exchange failed: ${response.status} ${statusText}`);
+      const errorBody = await response.text().catch(() => "");
+      logger.error(`Token exchange failed: ${response.status} ${errorBody}`, OAUTH_CONTEXT);
+      throw new Error(`Token exchange failed: ${response.status} ${errorBody || response.statusText}`);
     }
 
     const data = (await response.json()) as { access_token: string; refresh_token?: string };
