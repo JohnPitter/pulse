@@ -223,26 +223,14 @@ else
   info "Skipping HTTPS setup"
 fi
 
-# --- Claude CLI authentication ---
+# --- Claude CLI check ---
 CLAUDE_BIN="${PULSE_HOME}/.local/bin/claude"
-CLAUDE_LOGGED_IN=false
 
 if [ -x "$CLAUDE_BIN" ]; then
-  step "Authenticating Claude Code CLI"
-  info "Running 'claude login' as user '${PULSE_USER}'..."
-  info "Follow the prompts below to authenticate with your Anthropic account."
-  printf "\n"
-
-  if sudo -u "$PULSE_USER" env "PATH=${PULSE_HOME}/.local/bin:$PATH" "HOME=${PULSE_HOME}" claude login < /dev/tty 2>&1; then
-    success "Claude CLI authenticated"
-    CLAUDE_LOGGED_IN=true
-  else
-    warn "Claude login was skipped or failed. You can run it later:"
-    warn "  su - ${PULSE_USER} -c 'claude login'"
-  fi
+  success "Claude CLI installed at ${CLAUDE_BIN}"
 else
-  warn "Claude CLI not found at ${CLAUDE_BIN}. Install it later:"
-  warn "  su - ${PULSE_USER} -c 'curl -fsSL https://claude.ai/install.sh | bash && claude login'"
+  warn "Claude CLI not found. Install it later:"
+  warn "  su - ${PULSE_USER} -c 'curl -fsSL https://claude.ai/install.sh | bash'"
 fi
 
 # --- Done ---
@@ -272,11 +260,10 @@ if [ -n "$PULSE_DOMAIN" ]; then
   printf "  ${CYAN}cat /etc/caddy/Caddyfile${NC} — View Caddy config\n"
   printf "  ${CYAN}journalctl -u caddy -f${NC}   — View Caddy logs\n"
 fi
-if [ "$CLAUDE_LOGGED_IN" = false ]; then
-  printf "\n"
-  printf "${BOLD}Claude authentication (pending):${NC}\n"
-  printf "  ${CYAN}su - ${PULSE_USER} -c 'claude login'${NC}\n"
-fi
+printf "\n"
+printf "${BOLD}Claude authentication:${NC}\n"
+printf "  ${CYAN}su - ${PULSE_USER} -c 'claude login'${NC}\n"
+printf "  Then go to Settings → CLI Token → Import from CLI\n"
 printf "\n"
 printf "${BOLD}Files:${NC}\n"
 printf "  App:    ${CYAN}${PULSE_HOME}/app/${NC}\n"
