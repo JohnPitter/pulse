@@ -14,14 +14,11 @@ import { ChatPanel } from "../components/chat/ChatPanel";
 import { ChatInput } from "../components/chat/ChatInput";
 import { TerminalView } from "../components/terminal/TerminalView";
 import { type ChatMessageData } from "../components/chat/ChatMessage";
-import {
-  getSocket,
-  emitEvent,
-  onEvent,
-  disconnectSocket,
-} from "../stores/socket";
+import { getSocket, emitEvent, onEvent } from "../stores/socket";
 
-let messageCounter = 0;
+function generateMsgId(): string {
+  return `msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
 
 export function AgentView() {
   const { id: agentId } = useParams<{ id: string }>();
@@ -83,11 +80,10 @@ export function AgentView() {
           timestamp: string;
         };
         if (payload.agentId !== agentId) return;
-        messageCounter += 1;
         setMessages((prev) => [
           ...prev,
           {
-            id: `msg-${messageCounter}`,
+            id: generateMsgId(),
             role: "assistant",
             content: payload.content,
             timestamp: payload.timestamp,
@@ -102,11 +98,10 @@ export function AgentView() {
       (data: unknown) => {
         const payload = data as { agentId: string; content: string };
         if (payload.agentId !== agentId) return;
-        messageCounter += 1;
         setMessages((prev) => [
           ...prev,
           {
-            id: `msg-${messageCounter}`,
+            id: generateMsgId(),
             role: "assistant",
             content: payload.content,
             timestamp: new Date().toISOString(),
@@ -129,16 +124,14 @@ export function AgentView() {
       unsubMessage();
       unsubWaiting();
       unsubStatus();
-      disconnectSocket();
     };
   }, [agentId]);
 
   const handleSend = useCallback(
     (content: string) => {
       if (!agentId) return;
-      messageCounter += 1;
       const newMsg: ChatMessageData = {
-        id: `msg-${messageCounter}`,
+        id: generateMsgId(),
         role: "user",
         content,
         timestamp: new Date().toISOString(),

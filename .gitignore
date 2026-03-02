@@ -5,3 +5,7 @@ dist/
 data/
 .env
 .env.local
+
+# Compiled JS in source dirs (tsc artifacts)
+packages/web/src/**/*.js
+packages/server/src/**/*.js

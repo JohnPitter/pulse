@@ -83,8 +83,10 @@ router.post("/login", loginLimiter, async (req: Request, res: Response) => {
  * Clears the authentication cookie.
  */
 router.post("/logout", (_req: Request, res: Response) => {
+  const config = loadConfig();
   res.clearCookie("token", {
     httpOnly: true,
+    secure: config.nodeEnv === "production",
     sameSite: "strict",
   });
 

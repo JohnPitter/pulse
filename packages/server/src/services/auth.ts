@@ -29,7 +29,7 @@ export async function hashPassword(password: string): Promise<string> {
  */
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
   const isValid = await bcrypt.compare(password, hash);
-  logger.debug("Password verification completed", AUTH_CONTEXT, { isValid });
+  logger.debug("Password verification completed", AUTH_CONTEXT);
   return isValid;
 }
 

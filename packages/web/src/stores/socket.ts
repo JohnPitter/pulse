@@ -3,7 +3,6 @@ import { io, type Socket } from "socket.io-client";
 type EventCallback = (...args: unknown[]) => void;
 
 let socket: Socket | null = null;
-let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 10;
 const BASE_DELAY_MS = 1000;
 
@@ -21,14 +20,6 @@ export function getSocket(): Socket {
     reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
     reconnectionDelay: BASE_DELAY_MS,
     reconnectionDelayMax: BASE_DELAY_MS * Math.pow(2, 4), // 16s max
-  });
-
-  socket.on("connect", () => {
-    reconnectAttempts = 0;
-  });
-
-  socket.on("disconnect", () => {
-    reconnectAttempts += 1;
   });
 
   return socket;
@@ -56,7 +47,6 @@ export function disconnectSocket(): void {
   if (socket) {
     socket.disconnect();
     socket = null;
-    reconnectAttempts = 0;
   }
 }
 
