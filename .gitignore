@@ -9,3 +9,6 @@ data/
 # Compiled JS in source dirs (tsc artifacts)
 packages/web/src/**/*.js
 packages/server/src/**/*.js
+
+# TypeScript build cache
+*.tsbuildinfo
