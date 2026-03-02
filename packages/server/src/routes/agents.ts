@@ -73,7 +73,7 @@ export function createAgentRouter(agentManager: AgentManager): Router {
         claudeMd: claudeMd as string | undefined,
         initialPrompt: initialPrompt as string | undefined,
         model: (model as string) ?? "sonnet",
-        thinkingEnabled: (thinkingEnabled as number) ?? 0,
+        thinkingEnabled: thinkingEnabled ? 1 : 0,
         permissionMode: (permissionMode as string) ?? "bypassPermissions",
       });
 
@@ -95,7 +95,11 @@ export function createAgentRouter(agentManager: AgentManager): Router {
   router.patch("/:id", async (req: Request, res: Response) => {
     try {
       const id = getParamId(req);
-      const agent = await agentManager.updateAgent(id, req.body as Record<string, unknown>);
+      const body = req.body as Record<string, unknown>;
+      if ("thinkingEnabled" in body) {
+        body.thinkingEnabled = body.thinkingEnabled ? 1 : 0;
+      }
+      const agent = await agentManager.updateAgent(id, body);
       if (!agent) {
         res.status(404).json({ error: "Agent not found" });
         return;
