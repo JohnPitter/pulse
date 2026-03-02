@@ -4,7 +4,7 @@ import rateLimit from "express-rate-limit";
 import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { settings } from "../db/schema.js";
-import { verifyPassword, generateToken } from "../services/auth.js";
+import { hashPassword, verifyPassword, generateToken } from "../services/auth.js";
 import { loadConfig } from "../lib/config.js";
 import * as logger from "../lib/logger.js";
 import type { AuthenticatedRequest } from "../middleware/auth.js";
@@ -26,6 +26,69 @@ const loginLimiter = rateLimit({
 });
 
 const router = Router();
+
+/**
+ * GET /status
+ * Returns whether the admin password has been configured.
+ * Used by the frontend to decide between login and setup screens.
+ */
+router.get("/status", async (_req: Request, res: Response) => {
+  const result = await db
+    .select()
+    .from(settings)
+    .where(eq(settings.key, "admin_password_hash"))
+    .limit(1);
+
+  res.json({ configured: result.length > 0 });
+});
+
+/**
+ * POST /setup
+ * Sets the initial admin password. Only works when no password is configured.
+ */
+router.post("/setup", loginLimiter, async (req: Request, res: Response) => {
+  const { password } = req.body as { password?: string };
+
+  if (!password) {
+    res.status(400).json({ error: "Password is required" });
+    return;
+  }
+
+  if (password.length < 6) {
+    res.status(400).json({ error: "Password must be at least 6 characters" });
+    return;
+  }
+
+  // Check if password is already configured
+  const existing = await db
+    .select()
+    .from(settings)
+    .where(eq(settings.key, "admin_password_hash"))
+    .limit(1);
+
+  if (existing.length > 0) {
+    logger.warn("Setup attempted but admin password already exists", AUTH_CONTEXT);
+    res.status(409).json({ error: "Admin password is already configured" });
+    return;
+  }
+
+  const hash = await hashPassword(password);
+  await db.insert(settings).values({ key: "admin_password_hash", value: hash });
+
+  // Auto-login after setup
+  const token = generateToken({ userId: "admin", role: "admin" });
+  const config = loadConfig();
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: config.nodeEnv === "production",
+    sameSite: "strict",
+    maxAge: TWENTY_FOUR_HOURS_MS,
+  });
+
+  logger.info("Admin password configured via setup", AUTH_CONTEXT);
+  res.json({ success: true });
+});
 
 /**
  * POST /login

@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
 import { useAuthStore } from "./stores/auth";
-import { Login } from "./pages/Login";
+import { Login, SetupPassword } from "./pages/Login";
 import { SetupWizard } from "./pages/SetupWizard";
 import { Dashboard } from "./pages/Dashboard";
 import { AgentView } from "./pages/AgentView";
@@ -20,6 +20,7 @@ function LoadingSpinner() {
 export function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isLoading = useAuthStore((s) => s.isLoading);
+  const needsSetup = useAuthStore((s) => s.needsSetup);
   const checkAuth = useAuthStore((s) => s.checkAuth);
 
   useEffect(() => {
@@ -28,6 +29,10 @@ export function App() {
 
   if (isLoading) {
     return <LoadingSpinner />;
+  }
+
+  if (needsSetup) {
+    return <SetupPassword />;
   }
 
   return (
