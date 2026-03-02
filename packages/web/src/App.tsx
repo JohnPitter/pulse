@@ -4,7 +4,6 @@ import { Loader2 } from "lucide-react";
 
 import { useAuthStore } from "./stores/auth";
 import { Login, SetupPassword } from "./pages/Login";
-import { SetupWizard } from "./pages/SetupWizard";
 import { Dashboard } from "./pages/Dashboard";
 import { AgentView } from "./pages/AgentView";
 import { Settings } from "./pages/Settings";
@@ -41,12 +40,6 @@ export function App() {
         <Route
           path="/login"
           element={isAuthenticated ? <Navigate to="/" /> : <Login />}
-        />
-        <Route
-          path="/setup"
-          element={
-            isAuthenticated ? <SetupWizard /> : <Navigate to="/login" />
-          }
         />
         <Route
           path="/"
