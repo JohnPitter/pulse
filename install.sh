@@ -268,15 +268,20 @@ else
   info "Installing Claude Code CLI..."
   curl -fsSL https://claude.ai/install.sh | bash
 
-  # Ensure ~/.local/bin is in PATH for this session
+  # Ensure ~/.local/bin is in PATH for this session and future sessions
   export PATH="$HOME/.local/bin:$PATH"
+
+  # Persist PATH in .bashrc if not already there
+  if [ -d "$HOME/.local/bin" ] && ! grep -q '\.local/bin' "$HOME/.bashrc" 2>/dev/null; then
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
+  fi
 
   if command -v claude &>/dev/null; then
     CLAUDE_VERSION="$(claude --version 2>/dev/null | head -1)" || CLAUDE_VERSION="unknown"
     success "Claude Code CLI installed (${CLAUDE_VERSION})"
   else
     warn "Claude Code CLI installation may have failed. You can install it manually later:"
-    warn "  curl -fsSL https://claude.ai/install.sh | bash"
+    warn "  su - pulse -c 'curl -fsSL https://claude.ai/install.sh | bash'"
   fi
 fi
 

@@ -76,18 +76,18 @@ step "Cloning repository"
 if [ -d "${PULSE_HOME}/app/.git" ]; then
   info "Repository exists — pulling latest..."
   cd "${PULSE_HOME}/app"
-  sudo -u "$PULSE_USER" git pull --ff-only
+  sudo -u "$PULSE_USER" env "HOME=${PULSE_HOME}" git pull --ff-only
 else
   # Clean any leftover non-git directory
   rm -rf "${PULSE_HOME}/app"
-  sudo -u "$PULSE_USER" git clone "$REPO" "${PULSE_HOME}/app"
+  sudo -u "$PULSE_USER" env "HOME=${PULSE_HOME}" git clone "$REPO" "${PULSE_HOME}/app"
   cd "${PULSE_HOME}/app"
 fi
 success "Repository ready at ${PULSE_HOME}/app"
 
 # --- Run the full installer as pulse user ---
 step "Running installer as '${PULSE_USER}'"
-sudo -u "$PULSE_USER" bash install.sh
+sudo -u "$PULSE_USER" env "HOME=${PULSE_HOME}" bash install.sh
 
 # --- Create systemd service ---
 step "Configuring systemd service"
@@ -223,6 +223,28 @@ else
   info "Skipping HTTPS setup"
 fi
 
+# --- Claude CLI authentication ---
+CLAUDE_BIN="${PULSE_HOME}/.local/bin/claude"
+CLAUDE_LOGGED_IN=false
+
+if [ -x "$CLAUDE_BIN" ]; then
+  step "Authenticating Claude Code CLI"
+  info "Running 'claude login' as user '${PULSE_USER}'..."
+  info "Follow the prompts below to authenticate with your Anthropic account."
+  printf "\n"
+
+  if sudo -u "$PULSE_USER" env "PATH=${PULSE_HOME}/.local/bin:$PATH" "HOME=${PULSE_HOME}" claude login < /dev/tty 2>&1; then
+    success "Claude CLI authenticated"
+    CLAUDE_LOGGED_IN=true
+  else
+    warn "Claude login was skipped or failed. You can run it later:"
+    warn "  su - ${PULSE_USER} -c 'claude login'"
+  fi
+else
+  warn "Claude CLI not found at ${CLAUDE_BIN}. Install it later:"
+  warn "  su - ${PULSE_USER} -c 'curl -fsSL https://claude.ai/install.sh | bash && claude login'"
+fi
+
 # --- Done ---
 printf "\n${GREEN}${BOLD}╔══════════════════════════════════════════╗${NC}\n"
 printf "${GREEN}${BOLD}║         Setup complete!                   ║${NC}\n"
@@ -250,10 +272,11 @@ if [ -n "$PULSE_DOMAIN" ]; then
   printf "  ${CYAN}cat /etc/caddy/Caddyfile${NC} — View Caddy config\n"
   printf "  ${CYAN}journalctl -u caddy -f${NC}   — View Caddy logs\n"
 fi
-printf "\n"
-printf "${BOLD}Claude authentication:${NC}\n"
-printf "  ${CYAN}su - ${PULSE_USER} -c 'claude login'${NC}\n"
-printf "  Then go to Settings → CLI Token → Import from CLI\n"
+if [ "$CLAUDE_LOGGED_IN" = false ]; then
+  printf "\n"
+  printf "${BOLD}Claude authentication (pending):${NC}\n"
+  printf "  ${CYAN}su - ${PULSE_USER} -c 'claude login'${NC}\n"
+fi
 printf "\n"
 printf "${BOLD}Files:${NC}\n"
 printf "  App:    ${CYAN}${PULSE_HOME}/app/${NC}\n"
