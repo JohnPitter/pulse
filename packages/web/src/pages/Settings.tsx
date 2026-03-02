@@ -357,8 +357,8 @@ function OAuthReconfigure({
   const [success, setSuccess] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Detect server port from current URL
-  const serverPort = window.location.port || "3000";
+  // Use the current origin so the redirect comes back to the same host
+  const currentOrigin = window.location.origin;
 
   // Poll auth status to detect when callback completes
   const startPolling = useCallback(() => {
@@ -394,7 +394,7 @@ function OAuthReconfigure({
   useEffect(() => {
     const fetchUrl = async () => {
       try {
-        const res = await fetch(`/api/settings/oauth-url?port=${serverPort}`, {
+        const res = await fetch(`/api/settings/oauth-url?origin=${encodeURIComponent(currentOrigin)}`, {
           credentials: "include",
         });
         if (res.ok) {
@@ -408,7 +408,7 @@ function OAuthReconfigure({
       }
     };
     fetchUrl();
-  }, [serverPort]);
+  }, [currentOrigin]);
 
   // Open OAuth in new tab and start polling
   const handleOpenAuth = () => {

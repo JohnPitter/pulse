@@ -180,8 +180,8 @@ router.post("/password", async (req: Request, res: Response) => {
 // --------------------------------------------------------------------------
 router.get("/oauth-url", async (req: Request, res: Response) => {
   try {
-    const port = parseInt(req.query.port as string, 10) || 3000;
-    const redirectUri = buildRedirectUri(port);
+    const origin = req.query.origin as string || `http://localhost:3000`;
+    const redirectUri = buildRedirectUri(origin);
 
     const codeVerifier = generateCodeVerifier();
     const codeChallenge = generateCodeChallenge(codeVerifier);
