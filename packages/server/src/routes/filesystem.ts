@@ -76,7 +76,19 @@ router.post("/mkdir", async (req: Request, res: Response) => {
 
     const existing = await stat(targetPath).catch(() => null);
     if (existing) {
-      res.status(409).json({ error: "Directory already exists" });
+      if (existing.isDirectory()) {
+        res.status(409).json({ error: "Directory already exists" });
+        return;
+      }
+      res.status(400).json({ error: "A file already exists at this path" });
+      return;
+    }
+
+    // Validate that the parent path is a reachable directory
+    const parent = dirname(targetPath);
+    const parentStat = await stat(parent).catch(() => null);
+    if (parentStat && !parentStat.isDirectory()) {
+      res.status(400).json({ error: `Parent path is not a directory: ${parent}` });
       return;
     }
 
@@ -87,6 +99,10 @@ router.post("/mkdir", async (req: Request, res: Response) => {
       logger.error(`mkdir failed: code=${code} path=${targetPath}`, CONTEXT, { error: String(err) });
       if (code === "EACCES") {
         res.status(403).json({ error: "Permission denied" });
+        return;
+      }
+      if (code === "ENOENT") {
+        res.status(400).json({ error: `Parent directory does not exist or path is invalid: ${parent}` });
         return;
       }
       res.status(400).json({ error: `Failed to create directory: ${code ?? "unknown error"}` });
