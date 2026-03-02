@@ -6,16 +6,15 @@ const OAUTH_CONTEXT = "oauth";
 const AUTH_URL = "https://claude.ai/oauth/authorize";
 const TOKEN_URL = "https://console.anthropic.com/v1/oauth/token";
 const CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
-const SCOPES = "user:profile user:inference user:sessions:claude_code user:mcp_servers";
+const REDIRECT_URI = "https://platform.claude.com/oauth/code/callback";
+const SCOPES = "org:create_api_key user:profile user:inference user:sessions:claude_code user:mcp_servers";
 
 /**
- * Builds the redirect URI for OAuth callback.
- * Uses Anthropic's official callback endpoint for the native client_id.
- * After authorization, the user is redirected to console.anthropic.com
- * which displays the authorization code for manual copy.
+ * Returns the redirect URI used by the native Claude Code client_id.
+ * This must match exactly what Anthropic's OAuth server expects.
  */
 export function buildRedirectUri(_port: number): string {
-  return "https://console.anthropic.com/oauth/code/callback";
+  return REDIRECT_URI;
 }
 
 /**
@@ -40,16 +39,16 @@ export function generateCodeChallenge(verifier: string): string {
  * Builds the OAuth authorization URL with PKCE parameters.
  */
 export function buildAuthUrl(codeChallenge: string, state: string, redirectUri: string): string {
-  const params = new URLSearchParams({
-    response_type: "code",
-    client_id: CLIENT_ID,
-    redirect_uri: redirectUri,
-    scope: SCOPES,
-    code_challenge: codeChallenge,
-    code_challenge_method: "S256",
-    state,
-    code: "true",
-  });
+  // Order matches exactly what `claude login` generates
+  const params = new URLSearchParams();
+  params.set("code", "true");
+  params.set("client_id", CLIENT_ID);
+  params.set("response_type", "code");
+  params.set("redirect_uri", redirectUri);
+  params.set("scope", SCOPES);
+  params.set("code_challenge", codeChallenge);
+  params.set("code_challenge_method", "S256");
+  params.set("state", state);
 
   const url = `${AUTH_URL}?${params.toString()}`;
   logger.debug("Built OAuth authorization URL", OAUTH_CONTEXT);

@@ -484,7 +484,7 @@ function OAuthReconfigure({
                   type="text"
                   value={redirectUrl}
                   onChange={(e) => setRedirectUrl(e.target.value)}
-                  placeholder="https://console.anthropic.com/oauth/code/callback?code=..."
+                  placeholder="https://platform.claude.com/oauth/code/callback?code=..."
                   className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
                 />
 
