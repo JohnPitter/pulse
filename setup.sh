@@ -67,13 +67,19 @@ else
   success "User '${PULSE_USER}' created (home: ${PULSE_HOME})"
 fi
 
+# Ensure home directory exists with correct ownership (handles reinstalls)
+mkdir -p "$PULSE_HOME"
+chown "${PULSE_USER}:${PULSE_USER}" "$PULSE_HOME"
+
 # --- Clone / update repo ---
 step "Cloning repository"
-if [ -d "${PULSE_HOME}/app" ]; then
-  info "Directory exists — pulling latest..."
+if [ -d "${PULSE_HOME}/app/.git" ]; then
+  info "Repository exists — pulling latest..."
   cd "${PULSE_HOME}/app"
   sudo -u "$PULSE_USER" git pull --ff-only
 else
+  # Clean any leftover non-git directory
+  rm -rf "${PULSE_HOME}/app"
   sudo -u "$PULSE_USER" git clone "$REPO" "${PULSE_HOME}/app"
   cd "${PULSE_HOME}/app"
 fi
