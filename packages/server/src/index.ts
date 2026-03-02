@@ -7,14 +7,20 @@ import { Server as SocketIOServer } from "socket.io";
 
 import { loadConfig } from "./lib/config.js";
 import * as logger from "./lib/logger.js";
+import { db } from "./db/index.js";
+import { AgentManager } from "./services/agent-manager.js";
 import { authRouter } from "./routes/auth.js";
-import agentRouter from "./routes/agents.js";
+import { createAgentRouter } from "./routes/agents.js";
+import { settingsRouter } from "./routes/settings.js";
 import { setupSocket } from "./socket/index.js";
 
 const config = loadConfig();
 
 const app = express();
 const server = createServer(app);
+
+// --- Shared service instances ---
+const agentManager = new AgentManager(db);
 
 // --- Middleware pipeline ---
 
@@ -45,7 +51,8 @@ app.get("/api/health", (_req: Request, res: Response) => {
 });
 
 app.use("/api/auth", authRouter);
-app.use("/api/agents", agentRouter);
+app.use("/api/agents", createAgentRouter(agentManager));
+app.use("/api/settings", settingsRouter);
 
 // --- Error handler (Express 5 requires 4 params) ---
 
@@ -63,7 +70,7 @@ const io = new SocketIOServer(server, {
   },
 });
 
-setupSocket(io);
+setupSocket(io, agentManager);
 
 // --- Start server ---
 

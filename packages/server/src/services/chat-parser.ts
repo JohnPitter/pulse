@@ -1,5 +1,5 @@
-type MessageCallback = (content: string) => void;
-type WaitingCallback = (content: string) => void;
+export type MessageCallback = (content: string) => void;
+export type WaitingCallback = (content: string) => void;
 
 const QUESTION_PATTERNS: RegExp[] = [
   /\?\s*$/m,

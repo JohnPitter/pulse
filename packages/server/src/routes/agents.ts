@@ -1,18 +1,11 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 
-import { AgentManager } from "../services/agent-manager.js";
+import type { AgentManager } from "../services/agent-manager.js";
 import { requireAuth } from "../middleware/auth.js";
-import { db } from "../db/index.js";
 import * as logger from "../lib/logger.js";
 
 const CONTEXT = "agents-route";
-
-const agentManager = new AgentManager(db);
-
-const router = Router();
-
-router.use(requireAuth);
 
 function getParamId(req: Request): string {
   const id = req.params.id;
@@ -20,106 +13,117 @@ function getParamId(req: Request): string {
 }
 
 /**
- * GET / — list all agents
+ * Creates an Express Router for agent CRUD endpoints.
+ * Accepts a shared AgentManager instance for consistency
+ * with the socket layer.
  */
-router.get("/", async (_req: Request, res: Response) => {
-  try {
-    const agents = await agentManager.listAgents();
-    res.json(agents);
-  } catch (err) {
-    logger.error("Failed to list agents", CONTEXT, { error: String(err) });
-    res.status(500).json({ error: "Failed to list agents" });
-  }
-});
+export function createAgentRouter(agentManager: AgentManager): Router {
+  const router = Router();
 
-/**
- * GET /:id — get agent by id
- */
-router.get("/:id", async (req: Request, res: Response) => {
-  try {
-    const id = getParamId(req);
-    const agent = await agentManager.getAgent(id);
-    if (!agent) {
-      res.status(404).json({ error: "Agent not found" });
-      return;
+  router.use(requireAuth);
+
+  /**
+   * GET / — list all agents
+   */
+  router.get("/", async (_req: Request, res: Response) => {
+    try {
+      const agents = await agentManager.listAgents();
+      res.json(agents);
+    } catch (err) {
+      logger.error("Failed to list agents", CONTEXT, { error: String(err) });
+      res.status(500).json({ error: "Failed to list agents" });
     }
-    res.json(agent);
-  } catch (err) {
-    logger.error("Failed to get agent", CONTEXT, { error: String(err), agentId: getParamId(req) });
-    res.status(500).json({ error: "Failed to get agent" });
-  }
-});
+  });
 
-/**
- * POST / — create agent
- * Required: name, projectPath
- * Defaults: model=sonnet, permissionMode=bypassPermissions
- */
-router.post("/", async (req: Request, res: Response) => {
-  try {
-    const { name, projectPath, claudeMd, initialPrompt, model, thinkingEnabled, permissionMode } = req.body as Record<string, unknown>;
-
-    if (!name || !projectPath) {
-      res.status(400).json({ error: "name and projectPath are required" });
-      return;
+  /**
+   * GET /:id — get agent by id
+   */
+  router.get("/:id", async (req: Request, res: Response) => {
+    try {
+      const id = getParamId(req);
+      const agent = await agentManager.getAgent(id);
+      if (!agent) {
+        res.status(404).json({ error: "Agent not found" });
+        return;
+      }
+      res.json(agent);
+    } catch (err) {
+      logger.error("Failed to get agent", CONTEXT, { error: String(err), agentId: getParamId(req) });
+      res.status(500).json({ error: "Failed to get agent" });
     }
+  });
 
-    const agent = await agentManager.createAgent({
-      name: name as string,
-      projectPath: projectPath as string,
-      claudeMd: claudeMd as string | undefined,
-      initialPrompt: initialPrompt as string | undefined,
-      model: (model as string) ?? "sonnet",
-      thinkingEnabled: (thinkingEnabled as number) ?? 0,
-      permissionMode: (permissionMode as string) ?? "bypassPermissions",
-    });
+  /**
+   * POST / — create agent
+   * Required: name, projectPath
+   * Defaults: model=sonnet, permissionMode=bypassPermissions
+   */
+  router.post("/", async (req: Request, res: Response) => {
+    try {
+      const { name, projectPath, claudeMd, initialPrompt, model, thinkingEnabled, permissionMode } = req.body as Record<string, unknown>;
 
-    res.status(201).json(agent);
-  } catch (err) {
-    const message = String(err);
-    if (message.includes("UNIQUE constraint failed")) {
-      res.status(409).json({ error: "Agent name already exists" });
-      return;
+      if (!name || !projectPath) {
+        res.status(400).json({ error: "name and projectPath are required" });
+        return;
+      }
+
+      const agent = await agentManager.createAgent({
+        name: name as string,
+        projectPath: projectPath as string,
+        claudeMd: claudeMd as string | undefined,
+        initialPrompt: initialPrompt as string | undefined,
+        model: (model as string) ?? "sonnet",
+        thinkingEnabled: (thinkingEnabled as number) ?? 0,
+        permissionMode: (permissionMode as string) ?? "bypassPermissions",
+      });
+
+      res.status(201).json(agent);
+    } catch (err) {
+      const message = String(err);
+      if (message.includes("UNIQUE constraint failed")) {
+        res.status(409).json({ error: "Agent name already exists" });
+        return;
+      }
+      logger.error("Failed to create agent", CONTEXT, { error: message });
+      res.status(500).json({ error: "Failed to create agent" });
     }
-    logger.error("Failed to create agent", CONTEXT, { error: message });
-    res.status(500).json({ error: "Failed to create agent" });
-  }
-});
+  });
 
-/**
- * PATCH /:id — update agent
- */
-router.patch("/:id", async (req: Request, res: Response) => {
-  try {
-    const id = getParamId(req);
-    const agent = await agentManager.updateAgent(id, req.body as Record<string, unknown>);
-    if (!agent) {
-      res.status(404).json({ error: "Agent not found" });
-      return;
+  /**
+   * PATCH /:id — update agent
+   */
+  router.patch("/:id", async (req: Request, res: Response) => {
+    try {
+      const id = getParamId(req);
+      const agent = await agentManager.updateAgent(id, req.body as Record<string, unknown>);
+      if (!agent) {
+        res.status(404).json({ error: "Agent not found" });
+        return;
+      }
+      res.json(agent);
+    } catch (err) {
+      logger.error("Failed to update agent", CONTEXT, { error: String(err), agentId: getParamId(req) });
+      res.status(500).json({ error: "Failed to update agent" });
     }
-    res.json(agent);
-  } catch (err) {
-    logger.error("Failed to update agent", CONTEXT, { error: String(err), agentId: getParamId(req) });
-    res.status(500).json({ error: "Failed to update agent" });
-  }
-});
+  });
 
-/**
- * DELETE /:id — delete agent
- */
-router.delete("/:id", async (req: Request, res: Response) => {
-  try {
-    const id = getParamId(req);
-    const deleted = await agentManager.deleteAgent(id);
-    if (!deleted) {
-      res.status(404).json({ error: "Agent not found" });
-      return;
+  /**
+   * DELETE /:id — delete agent
+   */
+  router.delete("/:id", async (req: Request, res: Response) => {
+    try {
+      const id = getParamId(req);
+      const deleted = await agentManager.deleteAgent(id);
+      if (!deleted) {
+        res.status(404).json({ error: "Agent not found" });
+        return;
+      }
+      res.status(204).send();
+    } catch (err) {
+      logger.error("Failed to delete agent", CONTEXT, { error: String(err), agentId: getParamId(req) });
+      res.status(500).json({ error: "Failed to delete agent" });
     }
-    res.status(204).send();
-  } catch (err) {
-    logger.error("Failed to delete agent", CONTEXT, { error: String(err), agentId: getParamId(req) });
-    res.status(500).json({ error: "Failed to delete agent" });
-  }
-});
+  });
 
-export default router;
+  return router;
+}

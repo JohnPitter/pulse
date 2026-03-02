@@ -1,5 +1,7 @@
 import type { Server } from "socket.io";
+
 import { verifyToken } from "../services/auth.js";
+import type { AgentManager } from "../services/agent-manager.js";
 import { setupChatHandlers } from "./chat.js";
 import { setupTerminalHandlers } from "./terminal.js";
 import * as logger from "../lib/logger.js";
@@ -29,7 +31,7 @@ function parseCookieToken(cookieHeader?: string): string | undefined {
  * On connection: registers chat and terminal handlers.
  * On disconnect: logs the event.
  */
-export function setupSocket(io: Server): void {
+export function setupSocket(io: Server, agentManager: AgentManager): void {
   // Auth middleware
   io.use((socket, next) => {
     const token =
@@ -63,7 +65,7 @@ export function setupSocket(io: Server): void {
       userId: socket.data.user?.userId,
     });
 
-    setupChatHandlers(socket, io);
+    setupChatHandlers(socket, io, agentManager);
     setupTerminalHandlers(socket, io);
 
     socket.on("disconnect", (reason) => {
