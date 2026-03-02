@@ -5,7 +5,6 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { settings } from "../db/schema.js";
 import { hashPassword, verifyPassword, generateToken } from "../services/auth.js";
-import { loadConfig } from "../lib/config.js";
 import * as logger from "../lib/logger.js";
 import type { AuthenticatedRequest } from "../middleware/auth.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -13,6 +12,19 @@ import { requireAuth } from "../middleware/auth.js";
 const AUTH_CONTEXT = "auth";
 
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+
+function isSecureRequest(req: Request): boolean {
+  return req.secure || req.headers["x-forwarded-proto"] === "https";
+}
+
+function cookieOptions(req: Request, maxAge?: number) {
+  return {
+    httpOnly: true,
+    secure: isSecureRequest(req),
+    sameSite: "strict" as const,
+    ...(maxAge !== undefined && { maxAge }),
+  };
+}
 
 /**
  * Rate limiter for login endpoint: 5 requests per 15 minutes per IP.
@@ -77,14 +89,8 @@ router.post("/setup", loginLimiter, async (req: Request, res: Response) => {
 
   // Auto-login after setup
   const token = generateToken({ userId: "admin", role: "admin" });
-  const config = loadConfig();
 
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: config.nodeEnv === "production",
-    sameSite: "strict",
-    maxAge: TWENTY_FOUR_HOURS_MS,
-  });
+  res.cookie("token", token, cookieOptions(req, TWENTY_FOUR_HOURS_MS));
 
   logger.info("Admin password configured via setup", AUTH_CONTEXT);
   res.json({ success: true });
@@ -127,15 +133,9 @@ router.post("/login", loginLimiter, async (req: Request, res: Response) => {
     return;
   }
 
-  const config = loadConfig();
   const token = generateToken({ userId: "admin", role: "admin" });
 
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: config.nodeEnv === "production",
-    sameSite: "strict",
-    maxAge: TWENTY_FOUR_HOURS_MS,
-  });
+  res.cookie("token", token, cookieOptions(req, TWENTY_FOUR_HOURS_MS));
 
   logger.info("Admin logged in successfully", AUTH_CONTEXT);
   res.json({ success: true });
@@ -145,13 +145,8 @@ router.post("/login", loginLimiter, async (req: Request, res: Response) => {
  * POST /logout
  * Clears the authentication cookie.
  */
-router.post("/logout", (_req: Request, res: Response) => {
-  const config = loadConfig();
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: config.nodeEnv === "production",
-    sameSite: "strict",
-  });
+router.post("/logout", (req: Request, res: Response) => {
+  res.clearCookie("token", cookieOptions(req));
 
   logger.info("User logged out", AUTH_CONTEXT);
   res.json({ success: true });
