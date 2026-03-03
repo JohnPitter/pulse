@@ -1,6 +1,4 @@
 import { useRef, useState, useCallback } from "react";
-import { Send } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface ChatInputProps {
   onSend: (content: string) => void;
@@ -31,7 +29,6 @@ export function ChatInput({ onSend, disabled = false, placeholder = "Type a mess
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(e.target.value);
-    // Auto-resize textarea
     const el = e.target;
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
@@ -41,7 +38,10 @@ export function ChatInput({ onSend, disabled = false, placeholder = "Type a mess
 
   return (
     <div className="border-t border-white/5 bg-stone-900/90 backdrop-blur-sm px-4 py-3">
-      <div className="flex items-end gap-2">
+      <div className="flex items-end gap-3">
+        <span className="mb-2.5 shrink-0 font-mono text-sm text-white/30" aria-hidden="true">
+          ❯
+        </span>
         <textarea
           ref={textareaRef}
           value={value}
@@ -50,24 +50,21 @@ export function ChatInput({ onSend, disabled = false, placeholder = "Type a mess
           disabled={disabled}
           placeholder={placeholder}
           rows={1}
-          className="flex-1 resize-none rounded-xl border border-white/5 bg-stone-800/80 px-4 py-2.5 text-[14px] text-white placeholder-stone-500 outline-none transition-colors duration-200 focus:border-orange-500/50 disabled:opacity-50"
+          className="flex-1 resize-none bg-transparent text-[14px] text-white placeholder-stone-500 outline-none disabled:opacity-50"
         />
-        <AnimatePresence mode="wait">
-          <motion.button
-            key={hasContent ? "active" : "inactive"}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            type="button"
-            onClick={handleSend}
-            disabled={disabled || !hasContent}
-            aria-label="Send message"
-            className="shrink-0 rounded-xl bg-orange-500 p-2.5 text-white transition-all duration-200 hover:bg-orange-600 active:scale-[0.95] disabled:opacity-40 disabled:hover:bg-orange-500"
-          >
-            <Send className="h-4 w-4" />
-          </motion.button>
-        </AnimatePresence>
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={disabled || !hasContent}
+          aria-label="Send message"
+          className={`mb-1 shrink-0 px-2 py-1 text-[13px] font-medium transition-colors duration-200 ${
+            hasContent
+              ? "text-orange-400 hover:text-orange-300"
+              : "text-stone-600"
+          } disabled:opacity-40`}
+        >
+          send
+        </button>
       </div>
     </div>
   );

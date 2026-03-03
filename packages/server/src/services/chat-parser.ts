@@ -12,15 +12,27 @@ const QUESTION_PATTERNS: RegExp[] = [
 
 const FLUSH_DEBOUNCE_MS = 500;
 
-// Matches ANSI escape sequences (colors, cursor moves, etc.)
+// Comprehensive ANSI/VT escape sequence stripping
 // eslint-disable-next-line no-control-regex
-const ANSI_REGEX = /\x1b\[[0-9;]*[a-zA-Z]|\x1b\].*?\x07|\x1b\[[\d;]*m/g;
+const ANSI_REGEX = new RegExp(
+  [
+    "\\x1b\\[[0-?]*[ -/]*[@-~]",                  // CSI sequences (colors, cursor, DEC private modes like ?25l, ?7727h)
+    "\\x1b\\][^\\x07\\x1b]*(?:\\x07|\\x1b\\\\)",  // OSC sequences (title, hyperlinks, etc.)
+    "\\x1b[()][A-B0-2]",                           // Character set designations (the (B bug)
+    "\\x1b[@-Z\\\\\\-_]",                          // Fe escape sequences
+    "\\x1b[#%()*+\\-./][^\\x1b]?",                 // Misc escape sequences
+    "\\x07",                                        // BEL character
+  ].join("|"),
+  "g",
+);
 
 /**
- * Strips ANSI escape codes from a string.
+ * Strips ANSI escape codes and leftover control characters from a string.
  */
 export function stripAnsi(input: string): string {
-  return input.replace(ANSI_REGEX, "");
+  return input
+    .replace(ANSI_REGEX, "")
+    .replace(/[\x00-\x08\x0e-\x1f]/g, ""); // leftover control chars (keep \t \n \r)
 }
 
 export class ChatParser {
