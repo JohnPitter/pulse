@@ -1,6 +1,6 @@
 import type { Socket, Server } from "socket.io";
 
-import { writeToTerminal } from "../services/terminal.js";
+import { writeToTerminal, resizeTerminal } from "../services/terminal.js";
 import * as logger from "../lib/logger.js";
 
 const CONTEXT = "socket:terminal";
@@ -9,7 +9,8 @@ const CONTEXT = "socket:terminal";
  * Registers terminal event handlers on the given socket.
  *
  * Events handled:
- * - `terminal:input` — writes raw data to the agent's pty stdin
+ * - `terminal:input`  — writes raw data to the agent's pty stdin
+ * - `terminal:resize` — resizes the pty dimensions
  */
 export function setupTerminalHandlers(socket: Socket, _io: Server): void {
   socket.on("terminal:input", (data: { agentId: string; data: string }) => {
@@ -24,5 +25,15 @@ export function setupTerminalHandlers(socket: Socket, _io: Server): void {
         message: `No active terminal session for agent: ${data.agentId}`,
       });
     }
+  });
+
+  socket.on("terminal:resize", (data: { agentId: string; cols: number; rows: number }) => {
+    logger.debug("Terminal resize received", CONTEXT, {
+      agentId: data.agentId,
+      cols: data.cols,
+      rows: data.rows,
+    });
+
+    resizeTerminal(data.agentId, data.cols, data.rows);
   });
 }

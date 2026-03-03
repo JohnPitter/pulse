@@ -7,11 +7,19 @@ import { agents, chatMessages } from "../db/schema.js";
 import * as logger from "../lib/logger.js";
 import { ChatParser } from "./chat-parser.js";
 import {
-  createTerminalSession,
+  registerTerminalSession,
   getTerminalSession,
   destroyTerminalSession,
   writeToTerminal,
 } from "./terminal.js";
+import {
+  tmuxSessionName,
+  sessionExists,
+  createTmuxSession,
+  captureTmuxPane,
+  killTmuxSession,
+  attachToSession,
+} from "./tmux.js";
 
 const CONTEXT = "agent-manager";
 const INITIAL_PROMPT_DELAY_MS = 2000;
@@ -45,6 +53,7 @@ export interface UpdateAgentInput {
   pid?: number | null;
   lastMessage?: string | null;
   lastActiveAt?: string | null;
+  startedAt?: string | null;
 }
 
 export interface ClaudeCommandOptions {
@@ -131,6 +140,16 @@ export class AgentManager {
       return false;
     }
 
+    // Kill tmux session if alive
+    const tmuxName = tmuxSessionName(id);
+    if (await sessionExists(tmuxName)) {
+      await killTmuxSession(tmuxName);
+    }
+
+    // Destroy pty session
+    destroyTerminalSession(id);
+    this.destroyParser(id);
+
     await this.db.delete(agents).where(eq(agents.id, id));
 
     logger.info(`Agent deleted: ${id}`, CONTEXT, { agentId: id });
@@ -154,8 +173,15 @@ export class AgentManager {
   }
 
   /**
-   * Starts an agent: spawns the Claude CLI process via node-pty,
-   * wires output to socket events and ChatParser, updates DB status.
+   * Starts an agent by creating (or reattaching to) a tmux session.
+   *
+   * Flow:
+   * 1. Check if tmux session already exists → reattach pty only
+   * 2. If not, create tmux session with Claude CLI
+   * 3. Attach pty to tmux session
+   * 4. Replay history via tmux capture-pane
+   * 5. Wire pty output to socket events + ChatParser
+   * 6. On pty exit: DON'T kill tmux, just detach listener
    */
   async startAgent(id: string, io: SocketIOServer): Promise<void> {
     const agent = await this.getAgent(id);
@@ -163,29 +189,61 @@ export class AgentManager {
       throw new Error(`Agent not found: ${id}`);
     }
 
-    // If DB says running but no terminal session exists (e.g. server restart),
-    // reset status and allow re-start
-    if (agent.status === "running" || agent.status === "waiting") {
-      const existingSession = getTerminalSession(id);
-      if (existingSession) {
-        logger.info(`Agent already running with active session`, CONTEXT, { agentId: id });
-        return;
-      }
-      logger.warn(`Agent status is '${agent.status}' but no terminal session found — resetting`, CONTEXT, { agentId: id });
-      await this.updateAgent(id, { status: "stopped", pid: null, tmuxSession: null });
+    const tmuxName = tmuxSessionName(id);
+    const existingPty = getTerminalSession(id);
+
+    // If we already have a pty attached, agent is truly running
+    if (existingPty) {
+      logger.info(`Agent already has active pty session`, CONTEXT, { agentId: id });
+      return;
     }
 
-    const command = this.buildClaudeCommand({
-      model: agent.model,
-      thinkingEnabled: agent.thinkingEnabled,
-      permissionMode: agent.permissionMode,
-    });
+    const tmuxAlive = await sessionExists(tmuxName);
 
-    logger.info(`Starting agent: ${agent.name}`, CONTEXT, { agentId: id, command: command.join(" ") });
+    if (!tmuxAlive) {
+      // No tmux session — create one with the Claude command
+      const command = this.buildClaudeCommand({
+        model: agent.model,
+        thinkingEnabled: agent.thinkingEnabled,
+        permissionMode: agent.permissionMode,
+      });
 
-    const session = createTerminalSession(id, command, agent.projectPath);
+      logger.info(`Creating tmux session for agent: ${agent.name}`, CONTEXT, {
+        agentId: id,
+        tmuxName,
+        command: command.join(" "),
+      });
+
+      // Build env with HOME/.local/bin in PATH
+      const home = process.env.HOME ?? "";
+      const localBin = home ? `${home}/.local/bin` : "";
+      const currentPath = process.env.PATH ?? "";
+      const envPath =
+        localBin && !currentPath.includes(localBin)
+          ? `${localBin}:${currentPath}`
+          : currentPath;
+
+      await createTmuxSession(tmuxName, agent.projectPath, command, {
+        ...process.env as Record<string, string>,
+        PATH: envPath,
+      });
+    } else {
+      logger.info(`Reattaching to existing tmux session: ${tmuxName}`, CONTEXT, { agentId: id });
+    }
+
+    // Attach pty to the tmux session
+    const ptyProcess = attachToSession(tmuxName, agent.projectPath);
+    const session = registerTerminalSession(id, ptyProcess, tmuxName);
+
+    // Setup ChatParser
     const parser = new ChatParser();
     this.parsers.set(id, parser);
+
+    // Send history replay from tmux capture
+    const history = await captureTmuxPane(tmuxName);
+    if (history.trim()) {
+      io.to(id).emit("terminal:history", { agentId: id, data: history });
+    }
 
     // Buffer recent output for debugging exit errors
     let recentOutput = "";
@@ -244,50 +302,53 @@ export class AgentManager {
       });
     });
 
-    // Wire pty exit -> update status to idle or error
+    // Wire pty exit -> DON'T kill tmux, just detach pty listener
     session.pty.onExit(({ exitCode }) => {
-      const status = exitCode === 0 ? "idle" : "error";
-      logger.info(`Agent process exited`, CONTEXT, {
+      logger.info(`Agent pty detached (tmux session preserved)`, CONTEXT, {
         agentId: id,
         exitCode,
-        status,
+        tmuxName,
       });
 
       // Log recent output on error for debugging
       if (exitCode !== 0 && recentOutput.trim()) {
-        logger.error(`Agent stderr/output before exit`, CONTEXT, {
+        logger.error(`Agent output before pty exit`, CONTEXT, {
           agentId: id,
           output: recentOutput.trim().slice(-500),
         });
       }
 
-      this.parsers.delete(id);
+      this.destroyParser(id);
 
-      this.updateAgent(id, {
-        status,
-        pid: null,
-        tmuxSession: null,
-      }).catch((err: unknown) => {
-        logger.error(`Failed to update agent on exit`, CONTEXT, {
-          agentId: id,
-          error: String(err),
+      // Check if tmux session is still alive — determines status
+      sessionExists(tmuxName).then((alive: boolean) => {
+        const status = alive ? "idle" : (exitCode === 0 ? "idle" : "error");
+        this.updateAgent(id, {
+          status,
+          pid: null,
+        }).catch((err: unknown) => {
+          logger.error(`Failed to update agent on pty exit`, CONTEXT, {
+            agentId: id,
+            error: String(err),
+          });
         });
+        io.to(id).emit("agent:status", { agentId: id, status });
       });
-
-      io.to(id).emit("agent:status", { agentId: id, status });
     });
 
-    // Update DB: running status with pid
+    // Update DB: running status with pid and tmux session name
+    const now = new Date().toISOString();
     await this.updateAgent(id, {
       status: "running",
       pid: session.pty.pid,
-      tmuxSession: `pulse-${id.slice(0, 8)}`,
+      tmuxSession: tmuxName,
+      startedAt: tmuxAlive ? agent.startedAt : now,
     });
 
     io.to(id).emit("agent:status", { agentId: id, status: "running" });
 
-    // If agent has an initialPrompt, send it after a short delay
-    if (agent.initialPrompt) {
+    // If agent has an initialPrompt and this is a fresh session, send it after delay
+    if (!tmuxAlive && agent.initialPrompt) {
       setTimeout(() => {
         const currentSession = getTerminalSession(id);
         if (currentSession) {
@@ -300,11 +361,13 @@ export class AgentManager {
     logger.info(`Agent started: ${agent.name}`, CONTEXT, {
       agentId: id,
       pid: session.pty.pid,
+      tmuxName,
+      reattached: tmuxAlive,
     });
   }
 
   /**
-   * Stops an agent: destroys the terminal session and updates DB status.
+   * Stops an agent: kills the tmux session, destroys pty, updates DB.
    */
   async stopAgent(id: string, io: SocketIOServer): Promise<void> {
     const agent = await this.getAgent(id);
@@ -314,13 +377,19 @@ export class AgentManager {
 
     logger.info(`Stopping agent: ${agent.name}`, CONTEXT, { agentId: id });
 
+    // Destroy pty first (detach from tmux)
     destroyTerminalSession(id);
-    this.parsers.delete(id);
+    this.destroyParser(id);
+
+    // Kill the tmux session
+    const tmuxName = tmuxSessionName(id);
+    await killTmuxSession(tmuxName);
 
     await this.updateAgent(id, {
       status: "stopped",
       pid: null,
       tmuxSession: null,
+      startedAt: null,
     });
 
     io.to(id).emit("agent:status", { agentId: id, status: "stopped" });
@@ -349,5 +418,16 @@ export class AgentManager {
       agentId: id,
       contentLength: content.length,
     });
+  }
+
+  /**
+   * Cleans up a parser for the given agent.
+   */
+  private destroyParser(id: string): void {
+    const parser = this.parsers.get(id);
+    if (parser) {
+      parser.destroy();
+      this.parsers.delete(id);
+    }
   }
 }

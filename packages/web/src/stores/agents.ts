@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { io, type Socket } from "socket.io-client";
+import { getSocket, emitEvent } from "./socket";
 
 export interface Agent {
   id: string;
@@ -15,6 +15,7 @@ export interface Agent {
   pid: number | null;
   lastMessage: string | null;
   lastActiveAt: string | null;
+  startedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -40,10 +41,12 @@ interface AgentsState {
   agents: Agent[];
   loading: boolean;
   error: string | null;
-  socket: Socket | null;
+  connected: boolean;
   fetchAgents: () => Promise<void>;
   createAgent: (payload: CreateAgentPayload) => Promise<Agent | null>;
   deleteAgent: (id: string) => Promise<boolean>;
+  startAgent: (id: string) => void;
+  stopAgent: (id: string) => void;
   connectSocket: () => void;
   disconnectSocket: () => void;
 }
@@ -52,7 +55,7 @@ export const useAgentsStore = create<AgentsState>((set, get) => ({
   agents: [],
   loading: false,
   error: null,
-  socket: null,
+  connected: false,
 
   fetchAgents: async () => {
     if (get().loading) return;
@@ -109,12 +112,17 @@ export const useAgentsStore = create<AgentsState>((set, get) => ({
     }
   },
 
+  startAgent: (id: string) => {
+    emitEvent("agent:start", { agentId: id });
+  },
+
+  stopAgent: (id: string) => {
+    emitEvent("agent:stop", { agentId: id });
+  },
+
   connectSocket: () => {
-    if (get().socket) return;
-    const socket = io(window.location.origin, {
-      withCredentials: true,
-      transports: ["websocket", "polling"],
-    });
+    if (get().connected) return;
+    const socket = getSocket();
 
     socket.on("agent:status", (data: AgentStatusEvent) => {
       set((state) => ({
@@ -131,14 +139,20 @@ export const useAgentsStore = create<AgentsState>((set, get) => ({
       }));
     });
 
-    set({ socket });
+    socket.on("connect", () => {
+      set({ connected: true });
+    });
+
+    socket.on("disconnect", () => {
+      set({ connected: false });
+    });
+
+    set({ connected: socket.connected });
   },
 
   disconnectSocket: () => {
-    const { socket } = get();
-    if (socket) {
-      socket.disconnect();
-      set({ socket: null });
-    }
+    // Don't disconnect the singleton — other components may need it.
+    // Just mark this store as not listening.
+    set({ connected: false });
   },
 }));

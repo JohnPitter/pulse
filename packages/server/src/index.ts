@@ -9,6 +9,7 @@ import { Server as SocketIOServer } from "socket.io";
 
 import { loadConfig } from "./lib/config.js";
 import * as logger from "./lib/logger.js";
+import { listAliveSessions, tmuxSessionName } from "./services/tmux.js";
 import { encrypt } from "./lib/encryption.js";
 import { db } from "./db/index.js";
 import { AgentManager } from "./services/agent-manager.js";
@@ -157,12 +158,39 @@ setupSocket(io, agentManager);
 
 // --- Start server ---
 
-server.listen(config.port, () => {
+server.listen(config.port, async () => {
   logger.info(`Pulse server running on port ${config.port}`, "server");
 
   // Start OAuth token auto-refresh
   initTokenRefresh(getSetting, upsertSetting);
   startAutoRefresh();
+
+  // Reconcile tmux sessions with DB state
+  try {
+    const aliveSessions = await listAliveSessions();
+    const aliveSet = new Set(aliveSessions);
+    const allAgents = await agentManager.listAgents();
+
+    for (const agent of allAgents) {
+      const tmuxName = tmuxSessionName(agent.id);
+      const isAlive = aliveSet.has(tmuxName);
+      const isMarkedRunning = agent.status === "running" || agent.status === "waiting";
+
+      if (isMarkedRunning && !isAlive) {
+        // DB says running but tmux is dead → set stopped
+        logger.warn(`Reconcile: agent '${agent.name}' marked ${agent.status} but tmux dead → stopped`, "reconcile");
+        await agentManager.updateAgent(agent.id, { status: "stopped", pid: null, tmuxSession: null });
+      } else if (!isMarkedRunning && isAlive && agent.status === "stopped") {
+        // DB says stopped but tmux is alive → set idle (survived restart)
+        logger.info(`Reconcile: agent '${agent.name}' marked stopped but tmux alive → idle`, "reconcile");
+        await agentManager.updateAgent(agent.id, { status: "idle", tmuxSession: tmuxName });
+      }
+    }
+
+    logger.info(`Reconciliation complete: ${aliveSessions.length} alive tmux sessions`, "reconcile");
+  } catch (err) {
+    logger.warn(`tmux reconciliation failed (tmux may not be installed)`, "reconcile", { error: String(err) });
+  }
 });
 
 export { app, server, io };

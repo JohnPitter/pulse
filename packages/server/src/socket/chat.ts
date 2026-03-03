@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { db } from "../db/index.js";
 import { chatMessages } from "../db/schema.js";
 import type { AgentManager } from "../services/agent-manager.js";
+import { captureTmuxPane, tmuxSessionName, sessionExists } from "../services/tmux.js";
 import * as logger from "../lib/logger.js";
 
 const CONTEXT = "socket:chat";
@@ -15,7 +16,7 @@ const CONTEXT = "socket:chat";
  * - `chat:send`       — sends a user message to the agent stdin
  * - `agent:start`     — spawns the agent process
  * - `agent:stop`      — stops the agent process
- * - `agent:subscribe` — joins the socket to the agent's room for events
+ * - `agent:subscribe` — joins the socket to the agent's room + sends history
  */
 export function setupChatHandlers(
   socket: Socket,
@@ -93,11 +94,27 @@ export function setupChatHandlers(
     }
   });
 
-  socket.on("agent:subscribe", (data: { agentId: string }) => {
+  socket.on("agent:subscribe", async (data: { agentId: string }) => {
     socket.join(data.agentId);
     logger.info("Socket subscribed to agent room", CONTEXT, {
       agentId: data.agentId,
       socketId: socket.id,
     });
+
+    // Send tmux history if session is alive
+    const tmuxName = tmuxSessionName(data.agentId);
+    try {
+      if (await sessionExists(tmuxName)) {
+        const history = await captureTmuxPane(tmuxName);
+        if (history.trim()) {
+          socket.emit("terminal:history", { agentId: data.agentId, data: history });
+        }
+      }
+    } catch (err) {
+      logger.debug("Failed to send tmux history on subscribe", CONTEXT, {
+        agentId: data.agentId,
+        error: String(err),
+      });
+    }
   });
 }

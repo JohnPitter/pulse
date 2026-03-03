@@ -17,12 +17,17 @@ export function TerminalView({ agentId }: TerminalViewProps) {
 
     const terminal = new Terminal({
       cursorBlink: true,
+      cursorStyle: "bar",
       theme: {
-        background: "#0c0a09", // stone-950
-        foreground: "#e7e5e4", // stone-200
+        background: "#0c0a09",
+        foreground: "#e7e5e4",
+        cursor: "#f97316",
+        cursorAccent: "#0c0a09",
+        selectionBackground: "rgba(249, 115, 22, 0.3)",
       },
       fontSize: 14,
-      fontFamily: "monospace",
+      fontFamily: '"Geist Mono", ui-monospace, SFMono-Regular, monospace',
+      lineHeight: 1.2,
     });
 
     const fitAddon = new FitAddon();
@@ -32,7 +37,18 @@ export function TerminalView({ agentId }: TerminalViewProps) {
 
     terminalRef.current = terminal;
 
-    // Listen for terminal output from server
+    // Listen for terminal history replay (tmux capture-pane on reconnect)
+    const unsubHistory = onEvent(
+      "terminal:history",
+      (data: unknown) => {
+        const payload = data as { agentId: string; data: string };
+        if (payload.agentId === agentId) {
+          terminal.write(payload.data);
+        }
+      },
+    );
+
+    // Listen for live terminal output from server
     const unsubOutput = onEvent(
       "terminal:output",
       (data: unknown) => {
@@ -48,9 +64,11 @@ export function TerminalView({ agentId }: TerminalViewProps) {
       emitEvent("terminal:input", { agentId, data });
     });
 
-    // Handle resize
+    // Handle resize — notify server of new dimensions
     const observer = new ResizeObserver(() => {
       fitAddon.fit();
+      const { cols, rows } = terminal;
+      emitEvent("terminal:resize", { agentId, cols, rows });
     });
     observer.observe(termRef.current);
 
@@ -58,15 +76,22 @@ export function TerminalView({ agentId }: TerminalViewProps) {
       observer.disconnect();
       disposeData.dispose();
       unsubOutput();
+      unsubHistory();
       terminal.dispose();
       terminalRef.current = null;
     };
   }, [agentId]);
 
   return (
-    <div
-      ref={termRef}
-      className="flex-1 w-full min-h-0"
-    />
+    <div className="flex flex-col flex-1 min-h-0">
+      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5 bg-stone-900/60">
+        <span className="h-2 w-2 rounded-full bg-orange-500" aria-hidden="true" />
+        <span className="text-[11px] font-mono text-stone-500">TTY</span>
+      </div>
+      <div
+        ref={termRef}
+        className="flex-1 w-full min-h-0"
+      />
+    </div>
   );
 }

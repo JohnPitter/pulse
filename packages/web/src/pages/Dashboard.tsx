@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Plus, Loader2, Bot } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAgentsStore } from "../stores/agents";
 import { Header } from "../components/layout/Header";
 import { BottomNav } from "../components/layout/BottomNav";
@@ -46,8 +47,13 @@ export function Dashboard() {
             <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
           </div>
         ) : agents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="rounded-xl bg-stone-900 p-4 mb-4">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex flex-col items-center justify-center py-20 text-center"
+          >
+            <div className="rounded-xl border border-white/5 bg-stone-900/80 backdrop-blur-sm p-4 mb-4">
               <Bot className="h-8 w-8 text-stone-600" />
             </div>
             <p className="text-sm font-medium text-stone-400">No agents yet</p>
@@ -61,13 +67,15 @@ export function Dashboard() {
             >
               Create Agent
             </button>
-          </div>
+          </motion.div>
         ) : (
-          <div className="grid gap-3">
-            {agents.map((agent) => (
-              <AgentCard key={agent.id} agent={agent} />
-            ))}
-          </div>
+          <AnimatePresence mode="popLayout">
+            <div className="grid gap-3">
+              {agents.map((agent, i) => (
+                <AgentCard key={agent.id} agent={agent} index={i} />
+              ))}
+            </div>
+          </AnimatePresence>
         )}
       </main>
 

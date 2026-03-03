@@ -53,5 +53,12 @@ sqlite.exec(`
   );
 `);
 
+// Migration guard: add started_at column if missing
+try {
+  sqlite.exec(`ALTER TABLE agents ADD COLUMN started_at TEXT`);
+} catch {
+  // Column already exists — safe to ignore
+}
+
 export const db = drizzle(sqlite, { schema });
 export { sqlite };

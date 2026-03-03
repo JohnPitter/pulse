@@ -1,23 +1,21 @@
 import { useNavigate } from "react-router-dom";
 import { Play, Square, FolderOpen } from "lucide-react";
-import { AgentStatusBadge } from "./AgentStatusBadge";
+import { motion } from "framer-motion";
+import { GlassCard } from "../common/GlassCard";
+import { StatusDot } from "../common/StatusDot";
+import { Badge } from "../common/Badge";
 import type { Agent } from "../../stores/agents";
+import { emitEvent } from "../../stores/socket";
 
 interface AgentCardProps {
   agent: Agent;
+  index?: number;
 }
 
 const MODEL_LABELS: Record<string, string> = {
   sonnet: "Sonnet",
   opus: "Opus",
   haiku: "Haiku",
-};
-
-const PERMISSION_LABELS: Record<string, string> = {
-  bypassPermissions: "Bypass",
-  acceptEdits: "Accept Edits",
-  plan: "Plan",
-  default: "Default",
 };
 
 function formatTimeAgo(dateStr: string | null): string {
@@ -35,79 +33,88 @@ function formatTimeAgo(dateStr: string | null): string {
   return `${diffDay}d ago`;
 }
 
-export function AgentCard({ agent }: AgentCardProps) {
+export function AgentCard({ agent, index = 0 }: AgentCardProps) {
   const navigate = useNavigate();
   const isRunning = agent.status === "running" || agent.status === "waiting";
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Will be wired to start/stop actions in a future task
+    if (isRunning) {
+      emitEvent("agent:stop", { agentId: agent.id });
+    } else {
+      emitEvent("agent:start", { agentId: agent.id });
+    }
   };
 
   return (
-    <button
-      type="button"
-      onClick={() => navigate(`/agent/${agent.id}`)}
-      className="w-full rounded-xl border border-stone-800 bg-stone-900 p-4 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-md active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
     >
-      {/* Top row: status + name */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 min-w-0">
-          <AgentStatusBadge status={agent.status} />
-          <span className="text-sm font-semibold tracking-tight text-white truncate">
-            {agent.name}
+      <GlassCard
+        hover
+        onClick={() => navigate(`/agent/${agent.id}`)}
+        className="w-full p-4 text-left"
+      >
+        {/* Top row: status dot + name + toggle */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <StatusDot status={agent.status} size="md" />
+            <span className="text-sm font-semibold tracking-tight text-white truncate">
+              {agent.name}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleToggle}
+            aria-label={isRunning ? "Stop agent" : "Start agent"}
+            className={`shrink-0 rounded-lg p-1.5 transition-all duration-200 ${
+              isRunning
+                ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                : "bg-green-500/10 text-green-400 hover:bg-green-500/20"
+            }`}
+          >
+            {isRunning ? (
+              <Square className="h-4 w-4" />
+            ) : (
+              <Play className="h-4 w-4" />
+            )}
+          </button>
+        </div>
+
+        {/* Project path */}
+        <div className="mt-2 flex items-center gap-1.5">
+          <FolderOpen className="h-3 w-3 shrink-0 text-stone-500" />
+          <span className="text-xs text-stone-500 truncate">
+            {agent.projectPath}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={handleToggle}
-          aria-label={isRunning ? "Stop agent" : "Start agent"}
-          className="shrink-0 rounded-lg p-1.5 transition-colors duration-200 hover:bg-stone-800"
-        >
-          {isRunning ? (
-            <Square className="h-4 w-4 text-red-400" />
-          ) : (
-            <Play className="h-4 w-4 text-green-400" />
+
+        {/* Badges row */}
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          <Badge variant="orange">
+            {MODEL_LABELS[agent.model] ?? agent.model}
+          </Badge>
+          {agent.thinkingEnabled === 1 && (
+            <Badge variant="purple">Thinking</Badge>
           )}
-        </button>
-      </div>
+        </div>
 
-      {/* Project path */}
-      <div className="mt-2 flex items-center gap-1.5">
-        <FolderOpen className="h-3 w-3 shrink-0 text-stone-500" />
-        <span className="text-xs text-stone-500 truncate">
-          {agent.projectPath}
-        </span>
-      </div>
-
-      {/* Badges row */}
-      <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        <span className="rounded-full bg-stone-800 px-2 py-0.5 text-[11px] text-stone-300">
-          {MODEL_LABELS[agent.model] ?? agent.model}
-        </span>
-        {agent.thinkingEnabled === 1 && (
-          <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-[11px] text-purple-400">
-            Thinking
-          </span>
+        {/* Last message preview */}
+        {agent.lastMessage && (
+          <p className="mt-3 text-xs text-stone-400 line-clamp-2">
+            {agent.lastMessage}
+          </p>
         )}
-        <span className="rounded-full bg-stone-800 px-2 py-0.5 text-[11px] text-stone-300">
-          {PERMISSION_LABELS[agent.permissionMode] ?? agent.permissionMode}
-        </span>
-      </div>
 
-      {/* Last message preview */}
-      {agent.lastMessage && (
-        <p className="mt-3 text-xs text-stone-400 line-clamp-2">
-          {agent.lastMessage}
-        </p>
-      )}
-
-      {/* Time ago */}
-      {agent.lastActiveAt && (
-        <p className="mt-2 text-[11px] text-stone-500">
-          {formatTimeAgo(agent.lastActiveAt)}
-        </p>
-      )}
-    </button>
+        {/* Time ago */}
+        {agent.lastActiveAt && (
+          <p className="mt-2 text-[11px] text-stone-600">
+            {formatTimeAgo(agent.lastActiveAt)}
+          </p>
+        )}
+      </GlassCard>
+    </motion.div>
   );
 }

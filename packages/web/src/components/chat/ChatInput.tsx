@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback } from "react";
 import { Send } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ChatInputProps {
   onSend: (content: string) => void;
@@ -36,8 +37,10 @@ export function ChatInput({ onSend, disabled = false, placeholder = "Type a mess
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
   };
 
+  const hasContent = value.trim().length > 0;
+
   return (
-    <div className="border-t border-stone-800 bg-stone-900 px-4 py-3">
+    <div className="border-t border-white/5 bg-stone-900/90 backdrop-blur-sm px-4 py-3">
       <div className="flex items-end gap-2">
         <textarea
           ref={textareaRef}
@@ -47,17 +50,24 @@ export function ChatInput({ onSend, disabled = false, placeholder = "Type a mess
           disabled={disabled}
           placeholder={placeholder}
           rows={1}
-          className="flex-1 resize-none rounded-xl border border-stone-700 bg-stone-800 px-4 py-2.5 text-[14px] text-white placeholder-stone-500 outline-none transition-colors duration-200 focus:border-orange-500 disabled:opacity-50"
+          className="flex-1 resize-none rounded-xl border border-white/5 bg-stone-800/80 px-4 py-2.5 text-[14px] text-white placeholder-stone-500 outline-none transition-colors duration-200 focus:border-orange-500/50 disabled:opacity-50"
         />
-        <button
-          type="button"
-          onClick={handleSend}
-          disabled={disabled || !value.trim()}
-          aria-label="Send message"
-          className="shrink-0 rounded-xl bg-orange-500 p-2.5 text-white transition-all duration-200 hover:bg-orange-600 active:scale-[0.95] disabled:opacity-40 disabled:hover:bg-orange-500"
-        >
-          <Send className="h-4 w-4" />
-        </button>
+        <AnimatePresence mode="wait">
+          <motion.button
+            key={hasContent ? "active" : "inactive"}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            type="button"
+            onClick={handleSend}
+            disabled={disabled || !hasContent}
+            aria-label="Send message"
+            className="shrink-0 rounded-xl bg-orange-500 p-2.5 text-white transition-all duration-200 hover:bg-orange-600 active:scale-[0.95] disabled:opacity-40 disabled:hover:bg-orange-500"
+          >
+            <Send className="h-4 w-4" />
+          </motion.button>
+        </AnimatePresence>
       </div>
     </div>
   );

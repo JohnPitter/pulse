@@ -11,6 +11,7 @@ import {
   Loader2,
   Puzzle,
 } from "lucide-react";
+import { GlassCard } from "../components/common/GlassCard";
 
 // --------------------------------------------------------------------------
 // Types
@@ -31,7 +32,7 @@ export function Settings() {
   return (
     <div className="min-h-screen bg-stone-950 text-white">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/80 backdrop-blur-sm px-4 py-3">
+      <div className="sticky top-0 z-10 border-b border-white/5 bg-stone-950/80 backdrop-blur-md px-4 py-3">
         <div className="mx-auto flex max-w-lg items-center gap-3">
           <button
             onClick={() => navigate("/")}
@@ -111,7 +112,7 @@ function ChangePasswordSection() {
   };
 
   return (
-    <section className="rounded-xl border border-stone-800 bg-stone-900 p-6">
+    <GlassCard className="p-6">
       <div className="flex items-center gap-3 mb-4">
         <div className="rounded-lg bg-stone-800 p-2">
           <Lock className="h-4 w-4 text-stone-400" />
@@ -133,7 +134,7 @@ function ChangePasswordSection() {
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             placeholder="Enter current password"
-            className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+            className="w-full rounded-lg border border-white/5 bg-stone-800/80 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
           />
         </div>
 
@@ -147,7 +148,7 @@ function ChangePasswordSection() {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             placeholder="At least 6 characters"
-            className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+            className="w-full rounded-lg border border-white/5 bg-stone-800/80 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
           />
         </div>
 
@@ -161,7 +162,7 @@ function ChangePasswordSection() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Repeat new password"
-            className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+            className="w-full rounded-lg border border-white/5 bg-stone-800/80 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
           />
         </div>
 
@@ -191,7 +192,7 @@ function ChangePasswordSection() {
           )}
         </button>
       </form>
-    </section>
+    </GlassCard>
   );
 }
 
@@ -255,16 +256,16 @@ function ClaudeAuthSection() {
 
   if (isLoading) {
     return (
-      <section className="rounded-xl border border-stone-800 bg-stone-900 p-6">
+      <GlassCard className="p-6">
         <div className="flex items-center justify-center py-4">
           <Loader2 className="h-5 w-5 animate-spin text-stone-500" />
         </div>
-      </section>
+      </GlassCard>
     );
   }
 
   return (
-    <section className="rounded-xl border border-stone-800 bg-stone-900 p-6">
+    <GlassCard className="p-6">
       <div className="flex items-center gap-3 mb-4">
         <div className="rounded-lg bg-stone-800 p-2">
           <Shield className="h-4 w-4 text-stone-400" />
@@ -311,7 +312,7 @@ function ClaudeAuthSection() {
         <div className="flex gap-2">
           <button
             onClick={() => setShowReconfigure(true)}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-stone-700 bg-stone-800 py-2.5 text-sm text-stone-300 transition-all duration-200 hover:bg-stone-700 hover:text-white active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/5 bg-stone-800/80 py-2.5 text-sm text-stone-300 transition-all duration-200 hover:bg-stone-700 hover:text-white active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
           >
             <Key className="h-3.5 w-3.5" />
             {status?.configured ? "Reconfigure" : "Configure"}
@@ -320,7 +321,7 @@ function ClaudeAuthSection() {
             <button
               onClick={handleRefreshToken}
               disabled={isRefreshing}
-              className="flex items-center justify-center gap-2 rounded-xl border border-stone-700 bg-stone-800 px-4 py-2.5 text-sm text-stone-300 transition-all duration-200 hover:bg-stone-700 hover:text-white active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+              className="flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-stone-800/80 px-4 py-2.5 text-sm text-stone-300 transition-all duration-200 hover:bg-stone-700 hover:text-white active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
               title="Refresh OAuth token"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
@@ -328,7 +329,7 @@ function ClaudeAuthSection() {
           )}
         </div>
       )}
-    </section>
+    </GlassCard>
   );
 }
 
@@ -358,14 +359,14 @@ function ReconfigureAuth({
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => setMethod("oauthtoken")}
-          className="flex flex-col items-center gap-2 rounded-xl border border-stone-700 bg-stone-800 p-4 text-center transition-all duration-200 hover:bg-stone-700 hover:border-stone-600 active:scale-[0.98]"
+          className="flex flex-col items-center gap-2 rounded-xl border border-white/5 bg-stone-800/80 p-4 text-center transition-all duration-200 hover:bg-stone-700 hover:border-white/10 active:scale-[0.98]"
         >
           <Shield className="h-5 w-5 text-orange-500" />
           <span className="text-xs font-medium text-white">CLI Token</span>
         </button>
         <button
           onClick={() => setMethod("apikey")}
-          className="flex flex-col items-center gap-2 rounded-xl border border-stone-700 bg-stone-800 p-4 text-center transition-all duration-200 hover:bg-stone-700 hover:border-stone-600 active:scale-[0.98]"
+          className="flex flex-col items-center gap-2 rounded-xl border border-white/5 bg-stone-800/80 p-4 text-center transition-all duration-200 hover:bg-stone-700 hover:border-white/10 active:scale-[0.98]"
         >
           <Key className="h-5 w-5 text-stone-400" />
           <span className="text-xs font-medium text-white">API Key</span>
@@ -380,10 +381,6 @@ function ReconfigureAuth({
     </div>
   );
 }
-
-// --------------------------------------------------------------------------
-// OAuth Reconfigure
-// --------------------------------------------------------------------------
 
 // --------------------------------------------------------------------------
 // CLI Token Import
@@ -404,7 +401,6 @@ function OAuthTokenReconfigure({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Auto-import from server's ~/.claude/.credentials.json
   const handleAutoImport = async () => {
     setIsImporting(true);
     setError(null);
@@ -430,7 +426,6 @@ function OAuthTokenReconfigure({
     }
   };
 
-  // Manual paste fallback
   const handleManualSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!token.trim() || isSubmitting) return;
@@ -484,8 +479,7 @@ function OAuthTokenReconfigure({
         Back
       </button>
 
-      {/* Info box */}
-      <div className="rounded-lg border border-stone-700 bg-stone-800/50 p-3">
+      <div className="rounded-lg border border-white/5 bg-stone-800/50 p-3">
         <p className="text-xs text-stone-400 leading-relaxed">
           SSH into the server and run{" "}
           <code className="rounded bg-stone-700 px-1.5 py-0.5 text-[11px] text-orange-400">
@@ -495,7 +489,6 @@ function OAuthTokenReconfigure({
         </p>
       </div>
 
-      {/* Auto-import button */}
       <button
         onClick={handleAutoImport}
         disabled={isImporting}
@@ -515,7 +508,6 @@ function OAuthTokenReconfigure({
         </div>
       )}
 
-      {/* Manual paste toggle */}
       {!showManual ? (
         <button
           onClick={() => { setShowManual(true); setError(null); }}
@@ -541,7 +533,7 @@ function OAuthTokenReconfigure({
               value={token}
               onChange={(e) => setToken(e.target.value)}
               placeholder="sk-ant-oat01-..."
-              className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+              className="w-full rounded-lg border border-white/5 bg-stone-800/80 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
             />
           </div>
 
@@ -555,14 +547,14 @@ function OAuthTokenReconfigure({
               value={refreshToken}
               onChange={(e) => setRefreshToken(e.target.value)}
               placeholder="sk-ant-ort01-..."
-              className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+              className="w-full rounded-lg border border-white/5 bg-stone-800/80 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
             />
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting || !token.trim()}
-            className="w-full rounded-xl border border-stone-700 bg-stone-800 py-2.5 text-sm text-stone-300 transition-all duration-200 hover:bg-stone-700 hover:text-white active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+            className="w-full rounded-xl border border-white/5 bg-stone-800/80 py-2.5 text-sm text-stone-300 transition-all duration-200 hover:bg-stone-700 hover:text-white active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
           >
             {isSubmitting ? (
               <Loader2 className="mx-auto h-4 w-4 animate-spin" />
@@ -652,7 +644,7 @@ function ApiKeyReconfigure({
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             placeholder="sk-ant-..."
-            className="w-full rounded-lg border border-stone-700 bg-stone-800 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+            className="w-full rounded-lg border border-white/5 bg-stone-800/80 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
           />
         </div>
 
@@ -680,12 +672,12 @@ function ApiKeyReconfigure({
 }
 
 // --------------------------------------------------------------------------
-// Plugins Section (read-only placeholder)
+// Plugins Section
 // --------------------------------------------------------------------------
 
 function PluginsSection() {
   return (
-    <section className="rounded-xl border border-stone-800 bg-stone-900 p-6">
+    <GlassCard className="p-6">
       <div className="flex items-center gap-3 mb-4">
         <div className="rounded-lg bg-stone-800 p-2">
           <Puzzle className="h-4 w-4 text-stone-400" />
@@ -701,6 +693,6 @@ function PluginsSection() {
         <p className="text-sm text-stone-500">No plugins installed</p>
         <p className="text-xs text-stone-600">Plugin support coming soon</p>
       </div>
-    </section>
+    </GlassCard>
   );
 }

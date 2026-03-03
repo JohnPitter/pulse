@@ -9,12 +9,20 @@ import {
   Loader2,
 } from "lucide-react";
 import { type Agent } from "../stores/agents";
-import { AgentStatusBadge } from "../components/agents/AgentStatusBadge";
+import { StatusDot } from "../components/common/StatusDot";
+import { Badge } from "../components/common/Badge";
 import { ChatPanel } from "../components/chat/ChatPanel";
 import { ChatInput } from "../components/chat/ChatInput";
 import { TerminalView } from "../components/terminal/TerminalView";
+import { MobileKeybar } from "../components/terminal/MobileKeybar";
 import { type ChatMessageData } from "../components/chat/ChatMessage";
 import { getSocket, emitEvent, onEvent } from "../stores/socket";
+
+const MODEL_LABELS: Record<string, string> = {
+  sonnet: "Sonnet",
+  opus: "Opus",
+  haiku: "Haiku",
+};
 
 function generateMsgId(): string {
   return `msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -29,32 +37,57 @@ export function AgentView() {
   const [ttyMode, setTtyMode] = useState(false);
   const [messages, setMessages] = useState<ChatMessageData[]>([]);
 
-  // Fetch agent details
+  // Fetch agent details + chat history
   useEffect(() => {
     if (!agentId) return;
 
     let cancelled = false;
 
-    async function fetchAgent() {
+    async function fetchData() {
       try {
-        const res = await fetch(`/api/agents/${agentId}`, {
-          credentials: "include",
-        });
-        if (!res.ok) {
+        // Fetch agent and messages in parallel
+        const [agentRes, messagesRes] = await Promise.all([
+          fetch(`/api/agents/${agentId}`, { credentials: "include" }),
+          fetch(`/api/agents/${agentId}/messages?limit=100`, { credentials: "include" }),
+        ]);
+
+        if (!agentRes.ok) {
           if (!cancelled) setLoading(false);
           return;
         }
-        const data: Agent = await res.json();
+
+        const agentData: Agent = await agentRes.json();
         if (!cancelled) {
-          setAgent(data);
-          setLoading(false);
+          setAgent(agentData);
         }
+
+        // Load chat history
+        if (messagesRes.ok) {
+          const history = await messagesRes.json() as Array<{
+            id: string;
+            role: string;
+            content: string;
+            timestamp: string;
+          }>;
+          if (!cancelled && history.length > 0) {
+            setMessages(
+              history.map((m) => ({
+                id: m.id,
+                role: m.role as "user" | "assistant",
+                content: m.content,
+                timestamp: m.timestamp,
+              })),
+            );
+          }
+        }
+
+        if (!cancelled) setLoading(false);
       } catch {
         if (!cancelled) setLoading(false);
       }
     }
 
-    fetchAgent();
+    fetchData();
     return () => {
       cancelled = true;
     };
@@ -180,7 +213,7 @@ export function AgentView() {
   return (
     <div className="flex h-screen flex-col bg-stone-950">
       {/* Header */}
-      <header className="flex shrink-0 items-center justify-between border-b border-stone-800 bg-stone-900 px-4 py-3">
+      <header className="flex shrink-0 items-center justify-between border-b border-white/5 bg-stone-900/80 backdrop-blur-sm px-4 py-3">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
@@ -190,11 +223,14 @@ export function AgentView() {
           >
             <ArrowLeft className="h-5 w-5 text-stone-400" />
           </button>
-          <div className="min-w-0">
+          <div className="min-w-0 flex items-center gap-2.5">
+            <StatusDot status={agent.status} size="md" />
             <h1 className="truncate text-sm font-semibold tracking-tight text-white">
               {agent.name}
             </h1>
-            <AgentStatusBadge status={agent.status} />
+            <Badge variant="orange">
+              {MODEL_LABELS[agent.model] ?? agent.model}
+            </Badge>
           </div>
         </div>
 
@@ -204,7 +240,7 @@ export function AgentView() {
             type="button"
             onClick={isRunning ? handleStop : handleStart}
             aria-label={isRunning ? "Stop agent" : "Start agent"}
-            className={`shrink-0 rounded-lg p-2 transition-colors duration-200 ${
+            className={`shrink-0 rounded-lg p-2 transition-all duration-200 ${
               isRunning
                 ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
                 : "bg-green-500/10 text-green-400 hover:bg-green-500/20"
@@ -217,29 +253,42 @@ export function AgentView() {
             )}
           </button>
 
-          {/* TTY Toggle */}
-          <button
-            type="button"
-            onClick={() => setTtyMode((prev) => !prev)}
-            aria-label={ttyMode ? "Switch to chat" : "Switch to terminal"}
-            className={`shrink-0 rounded-lg p-2 transition-colors duration-200 ${
-              ttyMode
-                ? "bg-orange-500/10 text-orange-400 hover:bg-orange-500/20"
-                : "bg-stone-800 text-stone-400 hover:bg-stone-700"
-            }`}
-          >
-            {ttyMode ? (
-              <MessageSquare className="h-4 w-4" />
-            ) : (
-              <TerminalSquare className="h-4 w-4" />
-            )}
-          </button>
+          {/* Pill Toggle: Chat / TTY */}
+          <div className="flex rounded-lg border border-white/5 bg-stone-800/60 p-0.5">
+            <button
+              type="button"
+              onClick={() => setTtyMode(false)}
+              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] font-medium transition-all duration-200 ${
+                !ttyMode
+                  ? "bg-orange-500/15 text-orange-400"
+                  : "text-stone-500 hover:text-stone-300"
+              }`}
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              Chat
+            </button>
+            <button
+              type="button"
+              onClick={() => setTtyMode(true)}
+              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] font-medium transition-all duration-200 ${
+                ttyMode
+                  ? "bg-orange-500/15 text-orange-400"
+                  : "text-stone-500 hover:text-stone-300"
+              }`}
+            >
+              <TerminalSquare className="h-3.5 w-3.5" />
+              TTY
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Content area */}
       {ttyMode ? (
-        <TerminalView agentId={agentId!} />
+        <>
+          <TerminalView agentId={agentId!} />
+          <MobileKeybar agentId={agentId!} />
+        </>
       ) : (
         <>
           <ChatPanel messages={messages} />

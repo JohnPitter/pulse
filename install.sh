@@ -257,7 +257,53 @@ else
 fi
 
 # -------------------------------------------------------------------------
-# 5. Install Claude Code CLI (native binary)
+# 5. Check tmux (needed for agent persistence)
+# -------------------------------------------------------------------------
+step "Checking tmux"
+
+if command -v tmux &>/dev/null; then
+  TMUX_VERSION="$(tmux -V | awk '{print $2}')"
+  success "tmux ${TMUX_VERSION} detected"
+else
+  warn "tmux not found — installing..."
+  case "$OS_TYPE" in
+    debian)
+      SUDO="$(need_sudo)"
+      $SUDO apt-get install -y -qq tmux
+      ;;
+    rhel)
+      SUDO="$(need_sudo)"
+      $SUDO dnf install -y tmux 2>/dev/null || $SUDO yum install -y tmux
+      ;;
+    arch)
+      SUDO="$(need_sudo)"
+      $SUDO pacman -Sy --noconfirm tmux
+      ;;
+    suse)
+      SUDO="$(need_sudo)"
+      $SUDO zypper install -y tmux
+      ;;
+    macos)
+      if command -v brew &>/dev/null; then
+        brew install tmux
+      else
+        fail "tmux not found. Install via Homebrew: brew install tmux"
+      fi
+      ;;
+    *)
+      fail "tmux not found. Please install tmux manually and try again."
+      ;;
+  esac
+
+  if command -v tmux &>/dev/null; then
+    success "tmux $(tmux -V | awk '{print $2}') installed"
+  else
+    fail "tmux installation failed. Please install manually."
+  fi
+fi
+
+# -------------------------------------------------------------------------
+# 6. Install Claude Code CLI (native binary)
 # -------------------------------------------------------------------------
 step "Checking Claude Code CLI"
 
@@ -286,7 +332,7 @@ else
 fi
 
 # -------------------------------------------------------------------------
-# 6. Install dependencies
+# 7. Install dependencies
 # -------------------------------------------------------------------------
 step "Installing dependencies (npm install)"
 
@@ -294,7 +340,7 @@ npm install
 success "Dependencies installed"
 
 # -------------------------------------------------------------------------
-# 7. Generate .env file (only if it does not already exist)
+# 8. Generate .env file (only if it does not already exist)
 # -------------------------------------------------------------------------
 step "Configuring environment"
 
@@ -322,7 +368,7 @@ EOF
 fi
 
 # -------------------------------------------------------------------------
-# 8. Build the project
+# 9. Build the project
 # -------------------------------------------------------------------------
 step "Building the project (npm run build)"
 
@@ -330,7 +376,7 @@ npm run build
 success "Build completed successfully"
 
 # -------------------------------------------------------------------------
-# 9. Done!
+# 10. Done!
 # -------------------------------------------------------------------------
 printf "\n${GREEN}${BOLD}╔══════════════════════════════════════════╗${NC}\n"
 printf "${GREEN}${BOLD}║       Installation complete!              ║${NC}\n"

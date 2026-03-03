@@ -25,12 +25,13 @@ export function getSocket(): Socket {
   return socket;
 }
 
-/** Emit an event with typed payload. */
+/**
+ * Emit an event with typed payload.
+ * Ensures socket exists before emitting.
+ */
 export function emitEvent(event: string, payload: Record<string, unknown>): void {
   const s = getSocket();
-  if (s.connected) {
-    s.emit(event, payload);
-  }
+  s.emit(event, payload);
 }
 
 /** Subscribe to a socket event. Returns an unsubscribe function. */

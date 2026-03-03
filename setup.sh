@@ -115,8 +115,9 @@ EnvironmentFile=${PULSE_HOME}/app/.env
 NoNewPrivileges=true
 ProtectSystem=strict
 ReadWritePaths=${PULSE_HOME}
+ReadWritePaths=/tmp
 ProtectHome=false
-PrivateTmp=true
+PrivateTmp=false
 
 [Install]
 WantedBy=multi-user.target

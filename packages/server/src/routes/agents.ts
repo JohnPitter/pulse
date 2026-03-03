@@ -1,11 +1,16 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
+import { eq, desc } from "drizzle-orm";
 
 import type { AgentManager } from "../services/agent-manager.js";
 import { requireAuth } from "../middleware/auth.js";
+import { db } from "../db/index.js";
+import { chatMessages } from "../db/schema.js";
 import * as logger from "../lib/logger.js";
 
 const CONTEXT = "agents-route";
+const DEFAULT_MESSAGE_LIMIT = 100;
+const MAX_MESSAGE_LIMIT = 200;
 
 function getParamId(req: Request): string {
   const id = req.params.id;
@@ -108,6 +113,43 @@ export function createAgentRouter(agentManager: AgentManager): Router {
     } catch (err) {
       logger.error("Failed to update agent", CONTEXT, { error: String(err), agentId: getParamId(req) });
       res.status(500).json({ error: "Failed to update agent" });
+    }
+  });
+
+  /**
+   * GET /:id/messages — get chat history for an agent
+   * Query params: limit (default 100, max 200)
+   */
+  router.get("/:id/messages", async (req: Request, res: Response) => {
+    try {
+      const id = getParamId(req);
+      const agent = await agentManager.getAgent(id);
+      if (!agent) {
+        res.status(404).json({ error: "Agent not found" });
+        return;
+      }
+
+      const rawLimit = parseInt(req.query.limit as string, 10);
+      const limit = Math.min(
+        Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : DEFAULT_MESSAGE_LIMIT,
+        MAX_MESSAGE_LIMIT,
+      );
+
+      const messages = await db
+        .select()
+        .from(chatMessages)
+        .where(eq(chatMessages.agentId, id))
+        .orderBy(desc(chatMessages.timestamp))
+        .limit(limit);
+
+      // Return in chronological order (oldest first)
+      res.json(messages.reverse());
+    } catch (err) {
+      logger.error("Failed to get agent messages", CONTEXT, {
+        error: String(err),
+        agentId: getParamId(req),
+      });
+      res.status(500).json({ error: "Failed to get messages" });
     }
   });
 

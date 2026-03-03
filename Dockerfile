@@ -25,7 +25,7 @@ WORKDIR /app
 
 # Install build tools required for native modules (node-pty, better-sqlite3)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 make g++ \
+    python3 make g++ tmux \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy workspace root and package manifests
