@@ -28,10 +28,12 @@ export function AgentSidebarItem({ agent, selected, onSelect }: AgentSidebarItem
   };
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onSelect(agent.id)}
-      className={`group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-all duration-150 ${
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect(agent.id); }}
+      className={`group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left cursor-pointer transition-all duration-150 ${
         selected
           ? "bg-white/[0.07] text-white"
           : "text-stone-400 hover:bg-white/[0.03] hover:text-stone-200"
@@ -75,6 +77,6 @@ export function AgentSidebarItem({ agent, selected, onSelect }: AgentSidebarItem
           <Play className="h-3 w-3" />
         )}
       </button>
-    </button>
+    </div>
   );
 }
