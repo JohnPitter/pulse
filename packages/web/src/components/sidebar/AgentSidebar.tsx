@@ -60,12 +60,22 @@ export function AgentSidebar({
 
   return (
     <aside className="flex w-64 shrink-0 flex-col bg-[#0d0d14] border-r border-white/5">
-      {/* Logo / brand */}
-      <div className="flex items-center gap-2 px-4 h-12 border-b border-white/5">
-        <div className="h-2 w-2 rounded-full bg-orange-500" />
-        <span className="text-[15px] font-semibold text-white tracking-tight">
-          Pulse
-        </span>
+      {/* Header: brand + new agent */}
+      <div className="flex items-center justify-between px-4 h-12 border-b border-white/5">
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-orange-500" />
+          <span className="text-[15px] font-semibold text-white tracking-tight">
+            Pulse
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onCreateAgent}
+          aria-label="Create new agent"
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-stone-400 transition-all duration-200 hover:bg-orange-500/10 hover:text-orange-400 active:scale-[0.95]"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Search */}
@@ -116,22 +126,14 @@ export function AgentSidebar({
         )}
       </div>
 
-      {/* Bottom actions */}
-      <div className="border-t border-white/5 px-3 py-3 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onCreateAgent}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-orange-500 py-2 text-[13px] font-semibold text-white transition-all duration-200 hover:bg-orange-600 active:scale-[0.98]"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          New Agent
-        </button>
+      {/* Bottom: settings */}
+      <div className="border-t border-white/5 px-3 py-2.5">
         <Link
           to="/settings"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-stone-500 transition-colors duration-200 hover:bg-white/[0.05] hover:text-stone-300"
-          aria-label="Settings"
+          className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] text-stone-500 transition-colors duration-200 hover:bg-white/[0.05] hover:text-stone-300"
         >
           <Settings className="h-4 w-4" />
+          Settings
         </Link>
       </div>
     </aside>

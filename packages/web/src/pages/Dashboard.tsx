@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Monitor, Loader2 } from "lucide-react";
 import { useAgentsStore } from "../stores/agents";
-import { onEvent } from "../stores/socket";
+import { onEvent, emitEvent } from "../stores/socket";
 import { AgentSidebar } from "../components/sidebar/AgentSidebar";
 import { TerminalView } from "../components/terminal/TerminalView";
 import { TerminalInfoBar } from "../components/terminal/TerminalInfoBar";
@@ -62,11 +62,44 @@ export function Dashboard() {
     return unsub;
   }, [selectedAgentId]);
 
+  const createAgent = useAgentsStore((s) => s.createAgent);
+
   const handleSelectAgent = useCallback((id: string) => {
     setSelectedAgentId(id);
   }, []);
 
   const selectedAgent = agents.find((a) => a.id === selectedAgentId) ?? null;
+
+  const handleToggleAgent = useCallback(() => {
+    if (!selectedAgent) return;
+    const isRunning = selectedAgent.status === "running" || selectedAgent.status === "waiting";
+    if (isRunning) {
+      emitEvent("agent:stop", { agentId: selectedAgent.id });
+    } else {
+      emitEvent("agent:start", { agentId: selectedAgent.id });
+    }
+  }, [selectedAgent]);
+
+  const handleStopAgent = useCallback(() => {
+    if (!selectedAgent) return;
+    emitEvent("agent:stop", { agentId: selectedAgent.id });
+  }, [selectedAgent]);
+
+  const handleDuplicateAgent = useCallback(async () => {
+    if (!selectedAgent) return;
+    const duplicate = await createAgent({
+      name: `${selectedAgent.name} (copy)`,
+      projectPath: selectedAgent.projectPath,
+      model: selectedAgent.model,
+      thinkingEnabled: selectedAgent.thinkingEnabled === 1,
+      permissionMode: selectedAgent.permissionMode,
+      claudeMd: selectedAgent.claudeMd ?? undefined,
+      initialPrompt: selectedAgent.initialPrompt ?? undefined,
+    });
+    if (duplicate) {
+      setSelectedAgentId(duplicate.id);
+    }
+  }, [selectedAgent, createAgent]);
 
   // Auto-select first agent if none selected and agents are loaded
   useEffect(() => {
@@ -92,7 +125,13 @@ export function Dashboard() {
           </div>
         ) : selectedAgent ? (
           <>
-            <TerminalInfoBar agent={selectedAgent} contextUsage={contextUsage} />
+            <TerminalInfoBar
+              agent={selectedAgent}
+              contextUsage={contextUsage}
+              onToggleAgent={handleToggleAgent}
+              onDuplicateAgent={handleDuplicateAgent}
+              onStopAgent={handleStopAgent}
+            />
             <TerminalView agentId={selectedAgent.id} />
             <TerminalStatusBar cliVersion={cliVersion} />
           </>
