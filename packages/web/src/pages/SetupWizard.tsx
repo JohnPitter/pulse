@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Scan, Key, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
+import { Scan, Key, ArrowLeft, Loader2, CheckCircle2, Info } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useNavigate } from "react-router-dom";
 
@@ -18,6 +18,14 @@ export function SetupWizard() {
           </h1>
           <p className="text-sm text-neutral-fg2 mt-2">
             Connect your Claude account
+          </p>
+        </div>
+
+        {/* Info box */}
+        <div className="flex items-start gap-2.5 rounded-lg border border-stroke bg-neutral-bg2 p-3 mb-6">
+          <Info className="h-4 w-4 text-info shrink-0 mt-0.5" />
+          <p className="text-xs text-neutral-fg2 leading-relaxed">
+            Connect a Claude account so Pulse can create and manage agents on your behalf. You can change this later in Settings.
           </p>
         </div>
 
@@ -76,7 +84,7 @@ function MethodSelection({
               </span>
             </div>
             <p className="text-xs text-neutral-fg2 mt-1">
-              Scan a QR code or paste a token to authenticate with Claude
+              Use your existing Claude session. Scan the QR code from a device where you're logged into Claude, or paste an OAuth token.
             </p>
           </div>
         </div>
@@ -93,7 +101,7 @@ function MethodSelection({
           <div>
             <span className="text-sm font-semibold text-neutral-fg1">API Key</span>
             <p className="text-xs text-neutral-fg2 mt-1">
-              Enter your Anthropic API key starting with sk-ant-...
+              Use a direct API key from console.anthropic.com. Gives full control but uses your API credits directly.
             </p>
           </div>
         </div>

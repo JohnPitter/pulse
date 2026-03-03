@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
-import { Search, Plus, Settings, Columns2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Search, Plus, Settings, Columns2, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import type { Agent } from "../../stores/agents";
+import { useAuthStore } from "../../stores/auth";
 import { AgentSidebarItem } from "./AgentSidebarItem";
 
 interface AgentSidebarProps {
@@ -80,9 +81,16 @@ export function AgentSidebar({
   onToggleSplit,
 }: AgentSidebarProps) {
   const [search, setSearch] = useState("");
+  const navigate = useNavigate();
+  const logout = useAuthStore((s) => s.logout);
 
   const groups = useMemo(() => groupAgents(agents, search), [agents, search]);
   const counts = useMemo(() => countByStatus(agents), [agents]);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
 
   return (
     <aside className="flex w-64 shrink-0 flex-col bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
@@ -122,6 +130,14 @@ export function AgentSidebar({
           >
             <Settings className="h-3.5 w-3.5" />
           </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            aria-label="Logout"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-fg3 transition-all duration-200 hover:bg-neutral-bg-hover hover:text-danger"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Monitor, Loader2 } from "lucide-react";
+import { Loader2, Cpu, Plus, Terminal } from "lucide-react";
 import { useAgentsStore, type Agent } from "../stores/agents";
 import { onEvent, emitEvent } from "../stores/socket";
 import { AgentSidebar } from "../components/sidebar/AgentSidebar";
@@ -203,8 +203,10 @@ export function Dashboard() {
               </>
             )}
           </div>
+        ) : agents.length === 0 ? (
+          <NoAgentsState onCreateAgent={() => setDialogOpen(true)} />
         ) : (
-          <EmptyState />
+          <SelectAgentState />
         )}
       </div>
 
@@ -217,20 +219,35 @@ export function Dashboard() {
   );
 }
 
-function EmptyState() {
+function NoAgentsState({ onCreateAgent }: { onCreateAgent: () => void }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center px-6">
-      <div className="rounded-xl border border-stroke bg-neutral-bg3 p-4">
-        <Monitor className="h-8 w-8 text-neutral-fg-disabled" />
+      <div className="rounded-2xl bg-brand-light p-4">
+        <Cpu className="h-8 w-8 text-brand" />
       </div>
-      <div>
-        <p className="text-sm font-medium text-neutral-fg2">
-          Select an agent to begin
-        </p>
-        <p className="mt-1 text-xs text-neutral-fg3">
-          Choose an agent from the sidebar to open its terminal
-        </p>
-      </div>
+      <h2 className="text-lg font-semibold text-neutral-fg1">No agents yet</h2>
+      <p className="text-sm text-neutral-fg2 max-w-sm">
+        Create your first Claude agent to get started. Each agent runs in its own terminal with a dedicated Claude session.
+      </p>
+      <button
+        onClick={onCreateAgent}
+        className="btn-primary flex items-center gap-2 px-6 py-2.5 text-sm"
+      >
+        <Plus className="h-4 w-4" />
+        Create Agent
+      </button>
+    </div>
+  );
+}
+
+function SelectAgentState() {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center px-6">
+      <Terminal className="h-8 w-8 text-neutral-fg3" />
+      <p className="text-sm font-medium text-neutral-fg1">Select an agent</p>
+      <p className="text-xs text-neutral-fg2">
+        Choose an agent from the sidebar to view its live terminal output
+      </p>
     </div>
   );
 }

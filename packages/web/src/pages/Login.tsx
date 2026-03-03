@@ -47,6 +47,9 @@ export function Login() {
             Pulse
           </h1>
           <p className="text-sm text-neutral-fg2 mt-2">Remote Agent Manager</p>
+          <p className="text-xs text-neutral-fg3 mt-3 max-w-[280px] mx-auto leading-relaxed">
+            Manage Claude Code agents on your remote server from anywhere.
+          </p>
         </div>
 
         <div className="rounded-xl border border-stroke bg-neutral-bg2 backdrop-blur-sm p-6">
@@ -122,8 +125,8 @@ export function SetupPassword() {
           <h1 className="text-3xl font-bold text-neutral-fg1 tracking-tight">
             Welcome to Pulse
           </h1>
-          <p className="text-sm text-neutral-fg2 mt-2">
-            Set an admin password to get started
+          <p className="text-sm text-neutral-fg2 mt-2 max-w-[300px] mx-auto leading-relaxed">
+            Pulse lets you deploy and monitor Claude Code agents from your browser. Set an admin password to secure your instance.
           </p>
         </div>
 

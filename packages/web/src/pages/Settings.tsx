@@ -10,8 +10,10 @@ import {
   AlertCircle,
   Loader2,
   Puzzle,
+  LogOut,
 } from "lucide-react";
 import { GlassCard } from "../components/common/GlassCard";
+import { useAuthStore } from "../stores/auth";
 
 // --------------------------------------------------------------------------
 // Types
@@ -28,6 +30,12 @@ interface AuthStatus {
 
 export function Settings() {
   const navigate = useNavigate();
+  const logout = useAuthStore((s) => s.logout);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
 
   return (
     <div className="min-h-screen bg-neutral-bg1 text-neutral-fg1">
@@ -49,6 +57,7 @@ export function Settings() {
         <ChangePasswordSection />
         <ClaudeAuthSection />
         <PluginsSection />
+        <SessionSection onLogout={handleLogout} />
       </div>
     </div>
   );
@@ -692,6 +701,32 @@ function PluginsSection() {
         <Puzzle className="h-8 w-8 text-neutral-fg-disabled" />
         <p className="text-sm text-neutral-fg3">No plugins installed</p>
         <p className="text-xs text-neutral-fg-disabled">Plugin support coming soon</p>
+      </div>
+    </GlassCard>
+  );
+}
+
+// --------------------------------------------------------------------------
+// Session Section
+// --------------------------------------------------------------------------
+
+function SessionSection({ onLogout }: { onLogout: () => void }) {
+  return (
+    <GlassCard className="p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold">Session</h2>
+          <p className="text-xs text-neutral-fg3 mt-1">
+            Signed in as admin
+          </p>
+        </div>
+        <button
+          onClick={onLogout}
+          className="btn-secondary flex items-center gap-2 px-4 py-2 text-sm text-danger transition-colors duration-200 hover:bg-danger/10"
+        >
+          <LogOut className="h-4 w-4" />
+          Logout
+        </button>
       </div>
     </GlassCard>
   );

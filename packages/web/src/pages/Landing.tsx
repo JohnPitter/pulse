@@ -1,26 +1,53 @@
 import { Link } from "react-router-dom";
-import { Terminal, Cpu, SplitSquareVertical, Activity, ArrowRight, ChevronRight } from "lucide-react";
+import { Terminal, Cpu, SplitSquareVertical, Activity, ArrowRight, ChevronRight, Download, Settings, Rocket, BarChart3 } from "lucide-react";
 
 const FEATURES = [
   {
     icon: Cpu,
     title: "Multi-Agent Management",
-    description: "Create, configure, and monitor multiple Claude agents from a single dashboard.",
+    description: "Run multiple Claude agents simultaneously, each with its own model, permissions, and system prompt. Manage them all from one place.",
   },
   {
     icon: SplitSquareVertical,
     title: "Split View Terminal",
-    description: "View two agent terminals side-by-side for parallel workflow monitoring.",
+    description: "View two agent terminals side-by-side to compare outputs, monitor parallel tasks, or debug issues across agents.",
   },
   {
     icon: Activity,
     title: "Real-time Monitoring",
-    description: "Live status updates, context usage tracking, and elapsed time for every agent.",
+    description: "Watch agent output as it streams. Track context window usage, elapsed time, and status changes for every running session.",
   },
   {
     icon: Terminal,
     title: "One-Click Deploy",
-    description: "Start agents instantly with pre-configured models, permissions, and prompts.",
+    description: "Spin up new agents instantly with pre-configured models, permission modes, and custom instructions. No SSH required.",
+  },
+] as const;
+
+const HOW_IT_WORKS = [
+  {
+    step: 1,
+    icon: Download,
+    title: "Install",
+    description: "Run the install command on your remote server to set up the Pulse daemon.",
+  },
+  {
+    step: 2,
+    icon: Settings,
+    title: "Configure",
+    description: "Set an admin password and connect your Claude account via OAuth or API key.",
+  },
+  {
+    step: 3,
+    icon: Rocket,
+    title: "Deploy",
+    description: "Create agents with custom models, system prompts, and permission modes.",
+  },
+  {
+    step: 4,
+    icon: BarChart3,
+    title: "Monitor",
+    description: "Watch your agents work in real-time through live split-view terminals.",
   },
 ] as const;
 
@@ -171,6 +198,40 @@ export function Landing() {
                   </p>
                 </div>
               </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="px-6 pb-24 max-w-4xl mx-auto">
+        <div className="text-center mb-12">
+          <h2 className="text-heading text-neutral-fg1 mb-3">
+            How it works
+          </h2>
+          <p className="text-subtitle max-w-md mx-auto">
+            Get up and running in four simple steps.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {HOW_IT_WORKS.map((item) => (
+            <div
+              key={item.step}
+              className={`card-interactive p-5 text-center animate-fade-up stagger-${item.step}`}
+            >
+              <div className="inline-flex items-center justify-center rounded-full bg-brand-light p-3 mb-3">
+                <item.icon className="h-5 w-5 text-brand" />
+              </div>
+              <div className="text-[11px] font-semibold text-brand uppercase tracking-wider mb-1.5">
+                Step {item.step}
+              </div>
+              <h3 className="text-title text-neutral-fg1 mb-1">
+                {item.title}
+              </h3>
+              <p className="text-compact text-neutral-fg2">
+                {item.description}
+              </p>
             </div>
           ))}
         </div>
