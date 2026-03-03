@@ -77,7 +77,12 @@ app.get("/api/health", (_req: Request, res: Response) => {
 
 // --- System info (no auth required) ---
 app.get("/api/system/version", (_req: Request, res: Response) => {
-  execFile("claude", ["--version"], { timeout: 5000 }, (error, stdout) => {
+  const home = process.env.HOME ?? process.env.USERPROFILE ?? "";
+  const localBin = home ? `${home}/.local/bin` : "";
+  const currentPath = process.env.PATH ?? "";
+  const envPath = localBin ? `${localBin}:${currentPath}` : currentPath;
+
+  execFile("claude", ["--version"], { timeout: 5000, env: { ...process.env, PATH: envPath } }, (error, stdout) => {
     if (error) {
       logger.warn(`Failed to get Claude CLI version: ${error.message}`, "system");
       res.json({ version: "unknown" });
