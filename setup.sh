@@ -139,6 +139,34 @@ else
   warn "Service may have failed to start. Check: journalctl -u ${SERVICE_NAME} -n 20"
 fi
 
+# --- Open firewall port ---
+step "Configuring firewall"
+
+# Read PORT from .env (default 3000)
+ENV_FILE="${PULSE_HOME}/app/.env"
+PULSE_PORT="$(grep -E '^PORT=' "$ENV_FILE" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]')"
+PULSE_PORT="${PULSE_PORT:-3000}"
+
+open_firewall_port() {
+  local port="$1"
+  if command -v ufw &>/dev/null; then
+    ufw allow "${port}/tcp" >/dev/null 2>&1 && success "ufw: allowed port ${port}/tcp" || warn "ufw: failed to allow port ${port}"
+  elif command -v firewall-cmd &>/dev/null; then
+    firewall-cmd --permanent --add-port="${port}/tcp" >/dev/null 2>&1 \
+      && firewall-cmd --reload >/dev/null 2>&1 \
+      && success "firewalld: allowed port ${port}/tcp" \
+      || warn "firewalld: failed to allow port ${port}"
+  elif command -v iptables &>/dev/null; then
+    iptables -C INPUT -p tcp --dport "$port" -j ACCEPT 2>/dev/null \
+      || iptables -A INPUT -p tcp --dport "$port" -j ACCEPT 2>/dev/null
+    success "iptables: allowed port ${port}/tcp"
+  else
+    warn "No firewall tool found (ufw, firewalld, iptables). Please open port ${port}/tcp manually."
+  fi
+}
+
+open_firewall_port "$PULSE_PORT"
+
 # --- HTTPS / TLS with Caddy ---
 step "Configuring HTTPS (Caddy reverse proxy)"
 
@@ -205,6 +233,10 @@ CADDYEOF
       sed -i "s|^CORS_ORIGIN=.*|CORS_ORIGIN=https://${PULSE_DOMAIN}|" "$ENV_FILE"
       success "Updated CORS_ORIGIN to https://${PULSE_DOMAIN}"
     fi
+
+    # Open HTTP/HTTPS ports for Caddy
+    open_firewall_port 80
+    open_firewall_port 443
 
     # Restart services
     systemctl enable caddy
