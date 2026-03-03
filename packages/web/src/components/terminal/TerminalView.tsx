@@ -37,6 +37,9 @@ export function TerminalView({ agentId }: TerminalViewProps) {
 
     terminalRef.current = terminal;
 
+    // Subscribe to the agent's socket room (required to receive terminal events)
+    emitEvent("agent:subscribe", { agentId });
+
     // Listen for terminal history replay (tmux capture-pane on reconnect)
     const unsubHistory = onEvent(
       "terminal:history",
