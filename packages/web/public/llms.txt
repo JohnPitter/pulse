@@ -1,0 +1,32 @@
+# Pulse — Remote Claude Agent Manager
+
+> Deploy, monitor, and control multiple Claude Code agents on your remote server through a real-time web dashboard.
+
+## What is Pulse?
+
+Pulse is a self-hosted web application that provides a browser-based dashboard for managing Claude Code AI agents running on a remote server. It eliminates the need to SSH into your server to start, stop, or monitor agents.
+
+## Key Features
+
+- **Multi-Agent Management**: Run multiple Claude agents simultaneously, each with its own model (Haiku, Sonnet, Opus), permissions, and system prompt.
+- **Real-time Split-View Terminals**: Watch agent output as it streams via xterm.js. View two terminals side-by-side.
+- **One-Click Deploy**: Spin up new agents instantly with pre-configured models, permission modes, and custom instructions.
+- **Live Monitoring**: Track context window usage, elapsed time, and agent status (running, waiting, stopped) in real-time.
+- **Secure Authentication**: OAuth token import from Claude CLI, API key support, and admin password protection with JWT cookies.
+- **Mobile-Friendly**: Responsive design with slide-out sidebar drawer for mobile devices.
+
+## Tech Stack
+
+- **Frontend**: React, TypeScript, Tailwind CSS v4, Vite, xterm.js, Framer Motion
+- **Backend**: Node.js, Express, Socket.IO, Drizzle ORM, SQLite
+- **Infrastructure**: tmux for terminal sessions, systemd for daemon management
+
+## Installation
+
+```
+npx pulse-agent-manager
+```
+
+## Links
+
+- Repository: https://github.com/JohnPitter/pulse
