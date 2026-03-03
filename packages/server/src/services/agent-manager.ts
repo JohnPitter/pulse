@@ -161,7 +161,7 @@ export class AgentManager {
     const args: string[] = ["claude", "--model", options.model];
 
     if (options.thinkingEnabled === 1) {
-      args.push("--thinking");
+      args.push("--thinking", "enabled");
     }
 
     const permissionFlag = PERMISSION_MODE_FLAGS[options.permissionMode];

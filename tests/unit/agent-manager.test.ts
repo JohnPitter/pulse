@@ -210,6 +210,7 @@ describe("AgentManager", () => {
         "--model",
         "sonnet",
         "--thinking",
+        "enabled",
         "--dangerously-skip-permissions",
       ]);
     });
