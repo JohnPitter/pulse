@@ -135,7 +135,32 @@ if ($needNode) {
 }
 
 # -------------------------------------------------------------------------
-# 3. Check npm
+# 3. Install GitHub CLI (gh)
+# -------------------------------------------------------------------------
+Write-Step "Checking GitHub CLI"
+
+if (Test-CommandExists "gh") {
+    Write-Ok "GitHub CLI detected"
+} else {
+    Write-Warn "GitHub CLI not found - installing..."
+
+    if (Test-WingetAvailable) {
+        Write-Info "Installing GitHub CLI via winget..."
+        winget install --id GitHub.cli -e --accept-source-agreements --accept-package-agreements
+        Refresh-Path
+
+        if (Test-CommandExists "gh") {
+            Write-Ok "GitHub CLI installed"
+        } else {
+            Write-Warn "GitHub CLI was installed but not found in PATH. You may need to restart your terminal."
+        }
+    } else {
+        Write-Warn "GitHub CLI not found and winget is not available. Install from https://cli.github.com"
+    }
+}
+
+# -------------------------------------------------------------------------
+# 4. Check npm
 # -------------------------------------------------------------------------
 Write-Step "Checking npm"
 
@@ -152,7 +177,7 @@ if (-not $npmVersion) {
 Write-Ok "npm v$npmVersion detected"
 
 # -------------------------------------------------------------------------
-# 4. Install dependencies
+# 5. Install dependencies
 # -------------------------------------------------------------------------
 Write-Step "Installing dependencies (npm install)"
 
@@ -162,7 +187,7 @@ if ($LASTEXITCODE -ne 0) { Write-Fail "npm install failed." }
 Write-Ok "Dependencies installed"
 
 # -------------------------------------------------------------------------
-# 5. Generate .env file (only if it does not already exist)
+# 6. Generate .env file (only if it does not already exist)
 # -------------------------------------------------------------------------
 Write-Step "Configuring environment"
 
@@ -203,7 +228,7 @@ CORS_ORIGIN=http://localhost:3000
 }
 
 # -------------------------------------------------------------------------
-# 6. Build the project
+# 7. Build the project
 # -------------------------------------------------------------------------
 Write-Step "Building the project (npm run build)"
 
@@ -213,7 +238,7 @@ if ($LASTEXITCODE -ne 0) { Write-Fail "Build failed." }
 Write-Ok "Build completed successfully"
 
 # -------------------------------------------------------------------------
-# 7. Done!
+# 8. Done!
 # -------------------------------------------------------------------------
 Write-Host ""
 Write-Host "=======================================" -ForegroundColor Green

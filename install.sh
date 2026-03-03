@@ -303,7 +303,38 @@ else
 fi
 
 # -------------------------------------------------------------------------
-# 6. Install Claude Code CLI (native binary)
+# 6. Install GitHub CLI (gh)
+# -------------------------------------------------------------------------
+step "Checking GitHub CLI"
+
+if command -v gh &>/dev/null; then
+  GH_VERSION="$(gh --version | head -1 | awk '{print $3}')"
+  success "GitHub CLI ${GH_VERSION} detected"
+else
+  warn "GitHub CLI not found — installing..."
+  case "$OS_TYPE" in
+    debian)
+      SUDO="$(need_sudo)"
+      curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | $SUDO dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+      echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | $SUDO tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+      $SUDO apt-get update -qq && $SUDO apt-get install -y -qq gh
+      ;;
+    rhel) SUDO="$(need_sudo)"; $SUDO dnf install -y gh 2>/dev/null || $SUDO yum install -y gh ;;
+    arch) SUDO="$(need_sudo)"; $SUDO pacman -Sy --noconfirm github-cli ;;
+    suse) SUDO="$(need_sudo)"; $SUDO zypper install -y gh ;;
+    macos) brew install gh ;;
+    *) warn "Cannot auto-install GitHub CLI. Install manually: https://cli.github.com" ;;
+  esac
+
+  if command -v gh &>/dev/null; then
+    success "GitHub CLI $(gh --version | head -1 | awk '{print $3}') installed"
+  else
+    warn "GitHub CLI installation may have failed. Install manually: https://cli.github.com"
+  fi
+fi
+
+# -------------------------------------------------------------------------
+# 7. Install Claude Code CLI (native binary)
 # -------------------------------------------------------------------------
 step "Checking Claude Code CLI"
 
@@ -332,7 +363,7 @@ else
 fi
 
 # -------------------------------------------------------------------------
-# 7. Install dependencies
+# 8. Install dependencies
 # -------------------------------------------------------------------------
 step "Installing dependencies (npm install)"
 
@@ -340,7 +371,7 @@ npm install
 success "Dependencies installed"
 
 # -------------------------------------------------------------------------
-# 8. Generate .env file (only if it does not already exist)
+# 9. Generate .env file (only if it does not already exist)
 # -------------------------------------------------------------------------
 step "Configuring environment"
 
@@ -368,7 +399,7 @@ EOF
 fi
 
 # -------------------------------------------------------------------------
-# 9. Build the project
+# 10. Build the project
 # -------------------------------------------------------------------------
 step "Building the project (npm run build)"
 
@@ -376,7 +407,7 @@ npm run build
 success "Build completed successfully"
 
 # -------------------------------------------------------------------------
-# 10. Open firewall port (only when running as root)
+# 11. Open firewall port (only when running as root)
 # -------------------------------------------------------------------------
 step "Configuring firewall"
 
@@ -419,7 +450,7 @@ else
 fi
 
 # -------------------------------------------------------------------------
-# 11. Done!
+# 12. Done!
 # -------------------------------------------------------------------------
 printf "\n${GREEN}${BOLD}╔══════════════════════════════════════════╗${NC}\n"
 printf "${GREEN}${BOLD}║       Installation complete!              ║${NC}\n"

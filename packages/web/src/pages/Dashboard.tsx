@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Monitor, Loader2 } from "lucide-react";
-import { useAgentsStore } from "../stores/agents";
+import { useAgentsStore, type Agent } from "../stores/agents";
 import { onEvent, emitEvent } from "../stores/socket";
 import { AgentSidebar } from "../components/sidebar/AgentSidebar";
 import { TerminalView } from "../components/terminal/TerminalView";
 import { TerminalInfoBar } from "../components/terminal/TerminalInfoBar";
 import { TerminalStatusBar } from "../components/terminal/TerminalStatusBar";
-import { CreateAgentDialog } from "../components/agents/CreateAgentDialog";
+import { AgentFormDialog } from "../components/agents/AgentFormDialog";
 
 const CONTEXT_RE = /context:\s*([\d.]+k?)\s*\/\s*([\d.]+k?)/i;
 
@@ -22,6 +22,7 @@ export function Dashboard() {
   const [secondAgentId, setSecondAgentId] = useState<string | null>(null);
   const [splitMode, setSplitMode] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editAgent, setEditAgent] = useState<Agent | null>(null);
   const [cliVersion, setCliVersion] = useState<string | null>(null);
   const [contextUsage, setContextUsage] = useState<string | null>(null);
   const [secondContextUsage, setSecondContextUsage] = useState<string | null>(null);
@@ -143,6 +144,15 @@ export function Dashboard() {
     if (duplicate) setSelectedAgentId(duplicate.id);
   }, [createAgent]);
 
+  const makeEditHandler = useCallback((agent: typeof selectedAgent) => () => {
+    if (agent) setEditAgent(agent);
+  }, []);
+
+  const handleDialogClose = useCallback(() => {
+    setDialogOpen(false);
+    setEditAgent(null);
+  }, []);
+
   return (
     <div className="flex h-screen bg-stone-950">
       <AgentSidebar
@@ -169,6 +179,7 @@ export function Dashboard() {
                 agent={selectedAgent}
                 contextUsage={contextUsage}
                 onToggleAgent={makeToggleHandler(selectedAgent)}
+                onEditAgent={makeEditHandler(selectedAgent)}
                 onDuplicateAgent={makeDuplicateHandler(selectedAgent)}
                 onStopAgent={makeStopHandler(selectedAgent)}
               />
@@ -185,6 +196,7 @@ export function Dashboard() {
                     agent={secondAgent}
                     contextUsage={secondContextUsage}
                     onToggleAgent={makeToggleHandler(secondAgent)}
+                    onEditAgent={makeEditHandler(secondAgent)}
                     onDuplicateAgent={makeDuplicateHandler(secondAgent)}
                     onStopAgent={makeStopHandler(secondAgent)}
                   />
@@ -211,9 +223,10 @@ export function Dashboard() {
         )}
       </div>
 
-      <CreateAgentDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+      <AgentFormDialog
+        open={dialogOpen || !!editAgent}
+        onClose={handleDialogClose}
+        agent={editAgent}
       />
     </div>
   );

@@ -17,6 +17,7 @@ interface AgentSidebarProps {
 interface StatusGroup {
   label: string;
   agents: Agent[];
+  color: string;
 }
 
 function groupAgents(agents: Agent[], query: string): StatusGroup[] {
@@ -30,37 +31,43 @@ function groupAgents(agents: Agent[], query: string): StatusGroup[] {
     : agents;
 
   const active: Agent[] = [];
-  const idle: Agent[] = [];
+  const needInput: Agent[] = [];
+  const done: Agent[] = [];
   const stopped: Agent[] = [];
 
   for (const agent of filtered) {
-    if (agent.status === "running" || agent.status === "waiting") {
+    if (agent.status === "running") {
       active.push(agent);
-    } else if (agent.status === "idle") {
-      idle.push(agent);
+    } else if (agent.status === "waiting") {
+      needInput.push(agent);
+    } else if (agent.lastMessage) {
+      done.push(agent);
     } else {
       stopped.push(agent);
     }
   }
 
   const groups: StatusGroup[] = [];
-  if (active.length > 0) groups.push({ label: "Active", agents: active });
-  if (idle.length > 0) groups.push({ label: "Idle", agents: idle });
-  if (stopped.length > 0) groups.push({ label: "Stopped", agents: stopped });
+  if (active.length > 0) groups.push({ label: "Active", agents: active, color: "bg-green-500" });
+  if (needInput.length > 0) groups.push({ label: "Need Input", agents: needInput, color: "bg-yellow-500" });
+  if (done.length > 0) groups.push({ label: "Done", agents: done, color: "bg-blue-500" });
+  if (stopped.length > 0) groups.push({ label: "Stopped", agents: stopped, color: "bg-stone-600" });
 
   return groups;
 }
 
 function countByStatus(agents: Agent[]) {
   let active = 0;
-  let idle = 0;
+  let needInput = 0;
+  let done = 0;
   let stopped = 0;
   for (const a of agents) {
-    if (a.status === "running" || a.status === "waiting") active++;
-    else if (a.status === "idle") idle++;
+    if (a.status === "running") active++;
+    else if (a.status === "waiting") needInput++;
+    else if (a.lastMessage) done++;
     else stopped++;
   }
-  return { active, idle, stopped, total: agents.length };
+  return { active, needInput, done, stopped, total: agents.length };
 }
 
 export function AgentSidebar({
@@ -108,6 +115,13 @@ export function AgentSidebar({
           >
             <Plus className="h-4 w-4" />
           </button>
+          <Link
+            to="/settings"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-stone-500 transition-all duration-200 hover:bg-white/[0.05] hover:text-stone-300"
+            aria-label="Settings"
+          >
+            <Settings className="h-3.5 w-3.5" />
+          </Link>
         </div>
       </div>
 
@@ -119,8 +133,12 @@ export function AgentSidebar({
             <span className="text-[11px] tabular-nums text-stone-500">{counts.active}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-stone-500" />
-            <span className="text-[11px] tabular-nums text-stone-500">{counts.idle}</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-yellow-500" />
+            <span className="text-[11px] tabular-nums text-stone-500">{counts.needInput}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+            <span className="text-[11px] tabular-nums text-stone-500">{counts.done}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-stone-600" />
@@ -156,9 +174,12 @@ export function AgentSidebar({
           groups.map((group) => (
             <div key={group.label} className="mb-3">
               <div className="flex items-center justify-between px-2.5 mb-1">
-                <span className="text-[11px] font-medium uppercase tracking-wider text-stone-600">
-                  {group.label}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className={`h-1.5 w-1.5 rounded-full ${group.color}`} />
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-stone-600">
+                    {group.label}
+                  </span>
+                </div>
                 <span className="text-[10px] tabular-nums text-stone-700">
                   {group.agents.length}
                 </span>
@@ -176,17 +197,6 @@ export function AgentSidebar({
             </div>
           ))
         )}
-      </div>
-
-      {/* Bottom: settings */}
-      <div className="border-t border-white/5 px-3 py-2.5">
-        <Link
-          to="/settings"
-          className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] text-stone-500 transition-colors duration-200 hover:bg-white/[0.05] hover:text-stone-300"
-        >
-          <Settings className="h-4 w-4" />
-          Settings
-        </Link>
       </div>
     </aside>
   );

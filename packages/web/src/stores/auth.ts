@@ -5,6 +5,7 @@ interface AuthState {
   isLoading: boolean;
   needsSetup: boolean;
   error: string | null;
+  loginTime: number | null;
   checkAuth: () => Promise<void>;
   login: (password: string) => Promise<boolean>;
   setup: (password: string) => Promise<boolean>;
@@ -16,6 +17,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
   needsSetup: false,
   error: null,
+  loginTime: null,
 
   checkAuth: async () => {
     try {
@@ -30,7 +32,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       // Check if already authenticated
       const res = await fetch("/api/auth/check", { credentials: "include" });
-      set({ isAuthenticated: res.ok, needsSetup: false, isLoading: false });
+      set({ isAuthenticated: res.ok, needsSetup: false, isLoading: false, loginTime: res.ok ? Date.now() : null });
     } catch {
       set({ isAuthenticated: false, isLoading: false });
     }
@@ -50,7 +52,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({ error: data.error || "Login failed" });
         return false;
       }
-      set({ isAuthenticated: true });
+      set({ isAuthenticated: true, loginTime: Date.now() });
       return true;
     } catch {
       set({ error: "Connection failed" });
@@ -72,7 +74,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({ error: data.error || "Setup failed" });
         return false;
       }
-      set({ isAuthenticated: true, needsSetup: false });
+      set({ isAuthenticated: true, needsSetup: false, loginTime: Date.now() });
       return true;
     } catch {
       set({ error: "Connection failed" });
@@ -89,6 +91,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch {
       // Logout even if the request fails
     }
-    set({ isAuthenticated: false });
+    set({ isAuthenticated: false, loginTime: null });
   },
 }));

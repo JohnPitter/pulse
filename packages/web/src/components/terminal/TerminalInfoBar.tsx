@@ -1,4 +1,4 @@
-import { Play, Pause, Copy, Square } from "lucide-react";
+import { Play, Pause, Copy, Square, Brain, Pencil } from "lucide-react";
 import { StatusDot } from "../common/StatusDot";
 import type { Agent } from "../../stores/agents";
 
@@ -6,6 +6,7 @@ interface TerminalInfoBarProps {
   agent: Agent;
   contextUsage: string | null;
   onToggleAgent: () => void;
+  onEditAgent: () => void;
   onDuplicateAgent: () => void;
   onStopAgent: () => void;
 }
@@ -20,6 +21,7 @@ export function TerminalInfoBar({
   agent,
   contextUsage,
   onToggleAgent,
+  onEditAgent,
   onDuplicateAgent,
   onStopAgent,
 }: TerminalInfoBarProps) {
@@ -37,6 +39,15 @@ export function TerminalInfoBar({
         <span className="rounded-md bg-white/5 px-2 py-0.5 text-[11px] font-medium text-stone-400">
           {MODEL_LABELS[agent.model] ?? agent.model}
         </span>
+        {agent.thinkingEnabled === 1 && (
+          <>
+            <span className="text-stone-700">&middot;</span>
+            <span className="flex items-center gap-1 rounded-md bg-purple-500/10 px-2 py-0.5 text-[11px] font-medium text-purple-400">
+              <Brain className="h-3 w-3" />
+              Thinking
+            </span>
+          </>
+        )}
         {contextUsage && (
           <>
             <span className="text-stone-700">&middot;</span>
@@ -65,6 +76,16 @@ export function TerminalInfoBar({
           ) : (
             <Play className="h-3.5 w-3.5" />
           )}
+        </button>
+
+        {/* Edit */}
+        <button
+          type="button"
+          onClick={onEditAgent}
+          aria-label="Edit agent"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-stone-500 transition-all duration-150 hover:bg-white/5 hover:text-stone-300"
+        >
+          <Pencil className="h-3.5 w-3.5" />
         </button>
 
         {/* Duplicate */}

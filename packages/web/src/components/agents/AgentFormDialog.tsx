@@ -1,12 +1,18 @@
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { X, Loader2, FolderSearch } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAgentsStore, type CreateAgentPayload } from "../../stores/agents";
+import {
+  useAgentsStore,
+  type Agent,
+  type CreateAgentPayload,
+  type UpdateAgentPayload,
+} from "../../stores/agents";
 import { DirectoryPicker } from "./DirectoryPicker";
 
-interface CreateAgentDialogProps {
+interface AgentFormDialogProps {
   open: boolean;
   onClose: () => void;
+  agent?: Agent | null;
 }
 
 const MODELS = [
@@ -22,8 +28,11 @@ const PERMISSION_MODES = [
   { value: "plan", label: "Plan" },
 ] as const;
 
-export function CreateAgentDialog({ open, onClose }: CreateAgentDialogProps) {
+export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) {
   const createAgent = useAgentsStore((s) => s.createAgent);
+  const updateAgent = useAgentsStore((s) => s.updateAgent);
+
+  const isEditMode = !!agent;
 
   const [name, setName] = useState("");
   const [projectPath, setProjectPath] = useState("");
@@ -35,6 +44,20 @@ export function CreateAgentDialog({ open, onClose }: CreateAgentDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+
+  // Populate form when editing
+  useEffect(() => {
+    if (agent) {
+      setName(agent.name);
+      setProjectPath(agent.projectPath);
+      setModel(agent.model);
+      setThinkingEnabled(agent.thinkingEnabled === 1);
+      setPermissionMode(agent.permissionMode);
+      setClaudeMd(agent.claudeMd ?? "");
+      setInitialPrompt(agent.initialPrompt ?? "");
+      setError(null);
+    }
+  }, [agent?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const resetForm = () => {
     setName("");
@@ -48,7 +71,7 @@ export function CreateAgentDialog({ open, onClose }: CreateAgentDialogProps) {
   };
 
   const handleClose = () => {
-    resetForm();
+    if (!isEditMode) resetForm();
     onClose();
   };
 
@@ -59,23 +82,40 @@ export function CreateAgentDialog({ open, onClose }: CreateAgentDialogProps) {
     setIsSubmitting(true);
     setError(null);
 
-    const payload: CreateAgentPayload = {
-      name: name.trim(),
-      projectPath: projectPath.trim(),
-      model,
-      thinkingEnabled,
-      permissionMode,
-    };
-    if (claudeMd.trim()) payload.claudeMd = claudeMd.trim();
-    if (initialPrompt.trim()) payload.initialPrompt = initialPrompt.trim();
-
-    const agent = await createAgent(payload);
-    setIsSubmitting(false);
-
-    if (agent) {
-      handleClose();
+    if (isEditMode && agent) {
+      const payload: UpdateAgentPayload = {
+        name: name.trim(),
+        model,
+        thinkingEnabled,
+        permissionMode,
+        claudeMd: claudeMd.trim() || null,
+        initialPrompt: initialPrompt.trim() || null,
+      };
+      const updated = await updateAgent(agent.id, payload);
+      setIsSubmitting(false);
+      if (updated) {
+        handleClose();
+      } else {
+        setError("Failed to update agent. Check the server logs.");
+      }
     } else {
-      setError("Failed to create agent. Check the server logs.");
+      const payload: CreateAgentPayload = {
+        name: name.trim(),
+        projectPath: projectPath.trim(),
+        model,
+        thinkingEnabled,
+        permissionMode,
+      };
+      if (claudeMd.trim()) payload.claudeMd = claudeMd.trim();
+      if (initialPrompt.trim()) payload.initialPrompt = initialPrompt.trim();
+
+      const created = await createAgent(payload);
+      setIsSubmitting(false);
+      if (created) {
+        handleClose();
+      } else {
+        setError("Failed to create agent. Check the server logs.");
+      }
     }
   };
 
@@ -91,7 +131,7 @@ export function CreateAgentDialog({ open, onClose }: CreateAgentDialogProps) {
           onClick={handleClose}
           role="dialog"
           aria-modal="true"
-          aria-label="Create new agent"
+          aria-label={isEditMode ? "Edit agent" : "Create new agent"}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -104,7 +144,7 @@ export function CreateAgentDialog({ open, onClose }: CreateAgentDialogProps) {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-white tracking-tight">
-                Create Agent
+                {isEditMode ? "Edit Agent" : "Create Agent"}
               </h2>
               <button
                 type="button"
@@ -152,23 +192,28 @@ export function CreateAgentDialog({ open, onClose }: CreateAgentDialogProps) {
                     onChange={(e) => setProjectPath(e.target.value)}
                     placeholder="/home/user/project"
                     required
-                    className="flex-1 rounded-xl border border-white/5 bg-stone-800/80 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+                    readOnly={isEditMode}
+                    className={`flex-1 rounded-xl border border-white/5 bg-stone-800/80 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900 ${isEditMode ? "opacity-60 cursor-not-allowed" : ""}`}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setPickerOpen(true)}
-                    className="shrink-0 rounded-xl border border-white/5 bg-stone-800/80 px-3 py-2.5 text-stone-400 transition-all duration-200 hover:bg-stone-700 hover:text-orange-400 active:scale-[0.98]"
-                    aria-label="Browse directories"
-                  >
-                    <FolderSearch className="h-4 w-4" />
-                  </button>
+                  {!isEditMode && (
+                    <button
+                      type="button"
+                      onClick={() => setPickerOpen(true)}
+                      className="shrink-0 rounded-xl border border-white/5 bg-stone-800/80 px-3 py-2.5 text-stone-400 transition-all duration-200 hover:bg-stone-700 hover:text-orange-400 active:scale-[0.98]"
+                      aria-label="Browse directories"
+                    >
+                      <FolderSearch className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
-                <DirectoryPicker
-                  open={pickerOpen}
-                  onClose={() => setPickerOpen(false)}
-                  onSelect={(path) => setProjectPath(path)}
-                  initialPath={projectPath || undefined}
-                />
+                {!isEditMode && (
+                  <DirectoryPicker
+                    open={pickerOpen}
+                    onClose={() => setPickerOpen(false)}
+                    onSelect={(path) => setProjectPath(path)}
+                    initialPath={projectPath || undefined}
+                  />
+                )}
               </div>
 
               {/* Model */}
@@ -305,6 +350,8 @@ export function CreateAgentDialog({ open, onClose }: CreateAgentDialogProps) {
                 >
                   {isSubmitting ? (
                     <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                  ) : isEditMode ? (
+                    "Save"
                   ) : (
                     "Create"
                   )}

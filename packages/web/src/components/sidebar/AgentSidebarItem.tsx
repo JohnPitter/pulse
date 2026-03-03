@@ -1,7 +1,9 @@
-import { Play, Square, FolderOpen } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Play, Square, FolderOpen, Brain } from "lucide-react";
 import { StatusDot } from "../common/StatusDot";
 import type { Agent } from "../../stores/agents";
 import { emitEvent } from "../../stores/socket";
+import { formatElapsedTime } from "../../lib/format-time";
 
 interface AgentSidebarItemProps {
   agent: Agent;
@@ -17,6 +19,21 @@ const MODEL_LABELS: Record<string, string> = {
 
 export function AgentSidebarItem({ agent, selected, onSelect }: AgentSidebarItemProps) {
   const isRunning = agent.status === "running" || agent.status === "waiting";
+  const [elapsed, setElapsed] = useState(() =>
+    agent.startedAt && isRunning ? formatElapsedTime(agent.startedAt) : "",
+  );
+
+  useEffect(() => {
+    if (!agent.startedAt || !isRunning) {
+      setElapsed("");
+      return;
+    }
+    setElapsed(formatElapsedTime(agent.startedAt));
+    const timer = setInterval(() => {
+      setElapsed(formatElapsedTime(agent.startedAt!));
+    }, 30_000);
+    return () => clearInterval(timer);
+  }, [agent.startedAt, isRunning]);
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -49,21 +66,39 @@ export function AgentSidebarItem({ agent, selected, onSelect }: AgentSidebarItem
           <span className="shrink-0 rounded px-1 py-px text-[9px] font-medium bg-white/5 text-stone-600">
             {MODEL_LABELS[agent.model] ?? agent.model}
           </span>
+          {agent.thinkingEnabled === 1 && (
+            <Brain className="h-2.5 w-2.5 shrink-0 text-purple-400" />
+          )}
         </div>
+
         {/* Last message / activity */}
-        {agent.lastMessage ? (
-          <p className="truncate text-[11px] text-stone-500 mt-0.5">
-            {agent.lastMessage}
-          </p>
-        ) : (
-          <div className="flex items-center gap-1 mt-0.5">
-            <FolderOpen className="h-2.5 w-2.5 shrink-0 text-stone-600" />
-            <p className="truncate text-[11px] text-stone-600">
-              {agent.projectPath.split("/").pop() || agent.projectPath}
+        <div className="flex items-center gap-1.5 mt-0.5">
+          {agent.lastMessage ? (
+            <p className="truncate text-[11px] text-stone-500">
+              {agent.lastMessage}
             </p>
-          </div>
-        )}
+          ) : (
+            <div className="flex items-center gap-1">
+              <FolderOpen className="h-2.5 w-2.5 shrink-0 text-stone-600" />
+              <p className="truncate text-[11px] text-stone-600">
+                {agent.projectPath.split("/").pop() || agent.projectPath}
+              </p>
+            </div>
+          )}
+          {elapsed && (
+            <span className="shrink-0 text-[10px] text-stone-600 tabular-nums">
+              {elapsed}
+            </span>
+          )}
+        </div>
       </div>
+
+      {/* Status badge for waiting agents */}
+      {agent.status === "waiting" && (
+        <span className="shrink-0 rounded-full bg-yellow-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-yellow-400">
+          Input
+        </span>
+      )}
 
       {/* Play/Stop toggle — visible on hover or when selected */}
       <button

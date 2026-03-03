@@ -30,6 +30,16 @@ export interface CreateAgentPayload {
   initialPrompt?: string;
 }
 
+export interface UpdateAgentPayload {
+  name?: string;
+  projectPath?: string;
+  model?: string;
+  thinkingEnabled?: boolean;
+  permissionMode?: string;
+  claudeMd?: string | null;
+  initialPrompt?: string | null;
+}
+
 interface AgentStatusEvent {
   agentId: string;
   status: string;
@@ -44,6 +54,7 @@ interface AgentsState {
   connected: boolean;
   fetchAgents: () => Promise<void>;
   createAgent: (payload: CreateAgentPayload) => Promise<Agent | null>;
+  updateAgent: (id: string, payload: UpdateAgentPayload) => Promise<Agent | null>;
   deleteAgent: (id: string) => Promise<boolean>;
   startAgent: (id: string) => void;
   stopAgent: (id: string) => void;
@@ -89,6 +100,30 @@ export const useAgentsStore = create<AgentsState>((set, get) => ({
       }
       const agent: Agent = await res.json();
       set((state) => ({ agents: [...state.agents, agent] }));
+      return agent;
+    } catch {
+      set({ error: "Connection failed" });
+      return null;
+    }
+  },
+
+  updateAgent: async (id, payload) => {
+    try {
+      const res = await fetch(`/api/agents/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        set({ error: data.error || "Failed to update agent" });
+        return null;
+      }
+      const agent: Agent = await res.json();
+      set((state) => ({
+        agents: state.agents.map((a) => (a.id === id ? agent : a)),
+      }));
       return agent;
     } catch {
       set({ error: "Connection failed" });
