@@ -33,7 +33,13 @@ export function TerminalView({ agentId }: TerminalViewProps) {
     const fitAddon = new FitAddon();
     terminal.loadAddon(fitAddon);
     terminal.open(termRef.current);
-    fitAddon.fit();
+
+    // Delay initial fit to ensure the container has final dimensions after React layout
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        fitAddon.fit();
+      });
+    });
 
     terminalRef.current = terminal;
 

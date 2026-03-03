@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Loader2, Cpu, Plus, Terminal } from "lucide-react";
+import { Loader2, Cpu, Plus, Terminal, Menu } from "lucide-react";
 import { useAgentsStore, type Agent } from "../stores/agents";
 import { onEvent, emitEvent } from "../stores/socket";
 import { AgentSidebar } from "../components/sidebar/AgentSidebar";
@@ -23,6 +23,7 @@ export function Dashboard() {
   const [splitMode, setSplitMode] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editAgent, setEditAgent] = useState<Agent | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [cliVersion, setCliVersion] = useState<string | null>(null);
   const [contextUsage, setContextUsage] = useState<string | null>(null);
   const [secondContextUsage, setSecondContextUsage] = useState<string | null>(null);
@@ -87,6 +88,7 @@ export function Dashboard() {
     } else {
       setSelectedAgentId(id);
     }
+    setSidebarOpen(false);
   }, [splitMode, selectedAgentId, secondAgentId]);
 
   const handleToggleSplit = useCallback(() => {
@@ -143,18 +145,46 @@ export function Dashboard() {
   }, []);
 
   return (
-    <div className="flex h-screen bg-app-bg p-3 gap-3">
+    <div className="flex h-screen flex-col bg-app-bg md:flex-row md:p-3 md:gap-3">
+      {/* Mobile header */}
+      <div className="flex items-center h-12 px-4 bg-neutral-bg2 border-b border-stroke shrink-0 md:hidden">
+        <button
+          type="button"
+          onClick={() => setSidebarOpen(true)}
+          className="rounded-lg p-1.5 text-neutral-fg2 transition-colors duration-200 hover:text-neutral-fg1"
+          aria-label="Open menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <div className="flex items-center gap-2 ml-3">
+          <div className="h-2 w-2 rounded-full bg-brand" />
+          <span className="text-sm font-semibold text-neutral-fg1 tracking-tight">Pulse</span>
+        </div>
+        <div className="ml-auto flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setDialogOpen(true)}
+            className="rounded-lg p-1.5 text-neutral-fg2 transition-colors duration-200 hover:text-brand"
+            aria-label="Create agent"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
       <AgentSidebar
         agents={agents}
         selectedAgentId={selectedAgentId}
         secondAgentId={secondAgentId}
         splitMode={splitMode}
         onSelectAgent={handleSelectAgent}
-        onCreateAgent={() => setDialogOpen(true)}
+        onCreateAgent={() => { setDialogOpen(true); setSidebarOpen(false); }}
         onToggleSplit={handleToggleSplit}
+        mobileOpen={sidebarOpen}
+        onCloseMobile={() => setSidebarOpen(false)}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col bg-neutral-bg2 md:border md:border-stroke md:rounded-2xl md:shadow-2 overflow-hidden">
         {loading ? (
           <div className="flex flex-1 items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-brand" />

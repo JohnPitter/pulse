@@ -685,6 +685,17 @@ function ApiKeyReconfigure({
 // --------------------------------------------------------------------------
 
 function PluginsSection() {
+  const [plugins, setPlugins] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/settings/plugins", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : { plugins: [] }))
+      .then((data: { plugins: string[] }) => setPlugins(data.plugins))
+      .catch(() => setPlugins([]))
+      .finally(() => setIsLoading(false));
+  }, []);
+
   return (
     <GlassCard className="p-6">
       <div className="flex items-center gap-3 mb-4">
@@ -692,16 +703,36 @@ function PluginsSection() {
           <Puzzle className="h-4 w-4 text-neutral-fg2" />
         </div>
         <div>
-          <h2 className="text-sm font-semibold">Installed Plugins</h2>
-          <p className="text-xs text-neutral-fg3">Manage your extensions</p>
+          <h2 className="text-sm font-semibold">Claude Code Plugins</h2>
+          <p className="text-xs text-neutral-fg3">Extensions installed on the server</p>
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-2 py-8 text-center">
-        <Puzzle className="h-8 w-8 text-neutral-fg-disabled" />
-        <p className="text-sm text-neutral-fg3">No plugins installed</p>
-        <p className="text-xs text-neutral-fg-disabled">Plugin support coming soon</p>
-      </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="h-5 w-5 animate-spin text-neutral-fg3" />
+        </div>
+      ) : plugins.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 py-6 text-center">
+          <Puzzle className="h-8 w-8 text-neutral-fg-disabled" />
+          <p className="text-sm text-neutral-fg3">No plugins detected</p>
+          <p className="text-xs text-neutral-fg-disabled">
+            Install plugins via Claude Code CLI on the server
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {plugins.map((name) => (
+            <div
+              key={name}
+              className="flex items-center gap-3 rounded-lg border border-stroke bg-neutral-bg3 px-3 py-2.5"
+            >
+              <Puzzle className="h-4 w-4 text-brand shrink-0" />
+              <span className="text-sm text-neutral-fg1 truncate">{name}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </GlassCard>
   );
 }

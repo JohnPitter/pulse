@@ -1,7 +1,7 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { randomBytes } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { eq } from "drizzle-orm";
@@ -333,6 +333,31 @@ router.post("/oauth-exchange", async (req: Request, res: Response) => {
   } catch (err) {
     logger.error("OAuth token exchange failed", CONTEXT, { error: String(err) });
     res.status(500).json({ error: "Failed to exchange authorization code. Please try again." });
+  }
+});
+
+// --------------------------------------------------------------------------
+// GET /plugins — List Claude Code plugins installed on the server
+// --------------------------------------------------------------------------
+router.get("/plugins", async (_req: Request, res: Response) => {
+  try {
+    const pluginsDir = join(homedir(), ".claude", "plugins");
+    let entries: string[];
+    try {
+      entries = await readdir(pluginsDir);
+    } catch {
+      // Directory doesn't exist — no plugins
+      res.json({ plugins: [] });
+      return;
+    }
+
+    // Each subdirectory in plugins/ is a plugin
+    const plugins = entries.filter((e) => !e.startsWith("."));
+    logger.info(`Found ${plugins.length} Claude Code plugins`, CONTEXT);
+    res.json({ plugins });
+  } catch (err) {
+    logger.error("Failed to list plugins", CONTEXT, { error: String(err) });
+    res.json({ plugins: [] });
   }
 });
 

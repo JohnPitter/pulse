@@ -13,6 +13,8 @@ interface AgentSidebarProps {
   onSelectAgent: (id: string) => void;
   onCreateAgent: () => void;
   onToggleSplit: () => void;
+  mobileOpen: boolean;
+  onCloseMobile: () => void;
 }
 
 interface StatusGroup {
@@ -79,6 +81,8 @@ export function AgentSidebar({
   onSelectAgent,
   onCreateAgent,
   onToggleSplit,
+  mobileOpen,
+  onCloseMobile,
 }: AgentSidebarProps) {
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
@@ -93,7 +97,20 @@ export function AgentSidebar({
   };
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
+    <>
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm md:hidden"
+          onClick={onCloseMobile}
+        />
+      )}
+    <aside className={`
+      fixed inset-y-0 left-0 z-40 w-64 flex flex-col bg-neutral-bg2 border-r border-stroke shadow-16
+      transform transition-transform duration-300 ease-in-out
+      md:relative md:z-auto md:border md:rounded-2xl md:shadow-2 md:shrink-0 md:transform-none md:transition-none
+      ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+    `}>
       {/* Header: brand + actions */}
       <div className="flex items-center justify-between px-4 h-12 border-b border-stroke">
         <div className="flex items-center gap-2">
@@ -215,5 +232,6 @@ export function AgentSidebar({
         )}
       </div>
     </aside>
+    </>
   );
 }
