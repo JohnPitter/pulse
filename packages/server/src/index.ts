@@ -1,4 +1,5 @@
 import path from "node:path";
+import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
@@ -72,6 +73,18 @@ ${success ? '<p style="font-size:13px;color:#a8a29e">Return to the Pulse app.</p
 
 app.get("/api/health", (_req: Request, res: Response) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// --- System info (no auth required) ---
+app.get("/api/system/version", (_req: Request, res: Response) => {
+  execFile("claude", ["--version"], { timeout: 5000 }, (error, stdout) => {
+    if (error) {
+      logger.warn(`Failed to get Claude CLI version: ${error.message}`, "system");
+      res.json({ version: "unknown" });
+      return;
+    }
+    res.json({ version: stdout.trim() || "unknown" });
+  });
 });
 
 // --- OAuth callback (NO auth required — called by browser redirect from Anthropic) ---

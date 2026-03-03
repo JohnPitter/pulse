@@ -84,10 +84,6 @@ export function TerminalView({ agentId }: TerminalViewProps) {
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5 bg-stone-900/60">
-        <span className="h-2 w-2 rounded-full bg-orange-500" aria-hidden="true" />
-        <span className="text-[11px] font-mono text-stone-500">TTY</span>
-      </div>
       <div
         ref={termRef}
         className="flex-1 w-full min-h-0"

@@ -5,7 +5,6 @@ import { Loader2 } from "lucide-react";
 import { useAuthStore } from "./stores/auth";
 import { Login, SetupPassword } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
-import { AgentView } from "./pages/AgentView";
 import { Settings } from "./pages/Settings";
 
 function LoadingSpinner() {
@@ -45,12 +44,6 @@ export function App() {
           path="/"
           element={
             isAuthenticated ? <Dashboard /> : <Navigate to="/login" />
-          }
-        />
-        <Route
-          path="/agent/:id"
-          element={
-            isAuthenticated ? <AgentView /> : <Navigate to="/login" />
           }
         />
         <Route
