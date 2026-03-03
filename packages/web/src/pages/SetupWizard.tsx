@@ -10,23 +10,23 @@ export function SetupWizard() {
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null);
 
   return (
-    <div className="min-h-screen bg-stone-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-neutral-bg1 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white tracking-tight">
+          <h1 className="text-3xl font-bold text-neutral-fg1 tracking-tight">
             Setup
           </h1>
-          <p className="text-sm text-stone-400 mt-2">
+          <p className="text-sm text-neutral-fg2 mt-2">
             Connect your Claude account
           </p>
         </div>
 
         {/* Step indicator */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="h-1.5 w-8 rounded-full bg-orange-500" />
+          <div className="h-1.5 w-8 rounded-full bg-brand" />
           <div
             className={`h-1.5 w-8 rounded-full transition-colors duration-200 ${
-              authMethod ? "bg-orange-500" : "bg-stone-700"
+              authMethod ? "bg-brand" : "bg-neutral-fg-disabled"
             }`}
           />
         </div>
@@ -62,20 +62,20 @@ function MethodSelection({
     <div className="space-y-4">
       <button
         onClick={() => onSelect("oauth")}
-        className="w-full rounded-xl border border-stone-800 bg-stone-900 p-6 text-left transition-all duration-200 hover:shadow-md hover:border-stone-600 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+        className="card-interactive w-full p-6 text-left"
       >
         <div className="flex items-start gap-4">
-          <div className="rounded-lg bg-orange-500/10 p-2.5">
-            <Scan className="h-5 w-5 text-orange-500" />
+          <div className="rounded-lg bg-brand-light p-2.5">
+            <Scan className="h-5 w-5 text-brand" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-white">OAuth</span>
-              <span className="rounded-full bg-orange-500/10 px-2 py-0.5 text-xs text-orange-400">
+              <span className="text-sm font-semibold text-neutral-fg1">OAuth</span>
+              <span className="badge badge-primary">
                 Recommended
               </span>
             </div>
-            <p className="text-xs text-stone-400 mt-1">
+            <p className="text-xs text-neutral-fg2 mt-1">
               Scan a QR code or paste a token to authenticate with Claude
             </p>
           </div>
@@ -84,15 +84,15 @@ function MethodSelection({
 
       <button
         onClick={() => onSelect("apikey")}
-        className="w-full rounded-xl border border-stone-800 bg-stone-900 p-6 text-left transition-all duration-200 hover:shadow-md hover:border-stone-600 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+        className="card-interactive w-full p-6 text-left"
       >
         <div className="flex items-start gap-4">
-          <div className="rounded-lg bg-stone-800 p-2.5">
-            <Key className="h-5 w-5 text-stone-400" />
+          <div className="rounded-lg bg-neutral-bg3 p-2.5">
+            <Key className="h-5 w-5 text-neutral-fg2" />
           </div>
           <div>
-            <span className="text-sm font-semibold text-white">API Key</span>
-            <p className="text-xs text-stone-400 mt-1">
+            <span className="text-sm font-semibold text-neutral-fg1">API Key</span>
+            <p className="text-xs text-neutral-fg2 mt-1">
               Enter your Anthropic API key starting with sk-ant-...
             </p>
           </div>
@@ -149,7 +149,7 @@ function OAuthSetup({
     <div className="space-y-6">
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-stone-400 transition-colors duration-200 hover:text-white"
+        className="flex items-center gap-1.5 text-sm text-neutral-fg2 transition-colors duration-200 hover:text-neutral-fg1"
       >
         <ArrowLeft className="h-4 w-4" />
         Back
@@ -157,26 +157,26 @@ function OAuthSetup({
 
       {success ? (
         <div className="flex flex-col items-center gap-3 py-8">
-          <CheckCircle2 className="h-12 w-12 text-green-500" />
-          <p className="text-sm font-medium text-white">
+          <CheckCircle2 className="h-12 w-12 text-success" />
+          <p className="text-sm font-medium text-neutral-fg1">
             Connected successfully
           </p>
         </div>
       ) : (
         <>
           <div className="flex flex-col items-center gap-4">
-            <div className="rounded-xl border border-stone-800 bg-white p-4">
+            <div className="rounded-xl border border-stroke bg-white p-4">
               <QRCodeSVG value={oauthUrl} size={180} />
             </div>
-            <p className="text-xs text-stone-500 text-center">
+            <p className="text-xs text-neutral-fg3 text-center">
               Scan with your phone or paste the token below
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-stone-800" />
-            <span className="text-xs text-stone-500">or paste token</span>
-            <div className="h-px flex-1 bg-stone-800" />
+            <div className="h-px flex-1 bg-stroke" />
+            <span className="text-xs text-neutral-fg3">or paste token</span>
+            <div className="h-px flex-1 bg-stroke" />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -185,17 +185,17 @@ function OAuthSetup({
               value={token}
               onChange={(e) => setToken(e.target.value)}
               placeholder="Paste OAuth token here"
-              className="w-full rounded-xl border border-stone-700 bg-stone-900 py-3 px-4 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+              className="input-fluent w-full py-3"
             />
 
             {error && (
-              <p className="text-sm text-red-400 text-center">{error}</p>
+              <p className="text-sm text-danger text-center">{error}</p>
             )}
 
             <button
               type="submit"
               disabled={isSubmitting || !token.trim()}
-              className="w-full rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+              className="btn-primary w-full py-3 text-sm"
             >
               {isSubmitting ? (
                 <Loader2 className="mx-auto h-4 w-4 animate-spin" />
@@ -254,7 +254,7 @@ function ApiKeySetup({
     <div className="space-y-6">
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-stone-400 transition-colors duration-200 hover:text-white"
+        className="flex items-center gap-1.5 text-sm text-neutral-fg2 transition-colors duration-200 hover:text-neutral-fg1"
       >
         <ArrowLeft className="h-4 w-4" />
         Back
@@ -262,8 +262,8 @@ function ApiKeySetup({
 
       {success ? (
         <div className="flex flex-col items-center gap-3 py-8">
-          <CheckCircle2 className="h-12 w-12 text-green-500" />
-          <p className="text-sm font-medium text-white">
+          <CheckCircle2 className="h-12 w-12 text-success" />
+          <p className="text-sm font-medium text-neutral-fg1">
             API key validated successfully
           </p>
         </div>
@@ -272,7 +272,7 @@ function ApiKeySetup({
           <div>
             <label
               htmlFor="apikey-input"
-              className="block text-xs text-stone-400 mb-2"
+              className="block text-xs text-neutral-fg2 mb-2"
             >
               Anthropic API Key
             </label>
@@ -282,18 +282,18 @@ function ApiKeySetup({
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="sk-ant-..."
-              className="w-full rounded-xl border border-stone-700 bg-stone-900 py-3 px-4 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+              className="input-fluent w-full py-3"
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-400 text-center">{error}</p>
+            <p className="text-sm text-danger text-center">{error}</p>
           )}
 
           <button
             type="submit"
             disabled={isSubmitting || !apiKey.trim()}
-            className="w-full rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+            className="btn-primary w-full py-3 text-sm"
           >
             {isSubmitting ? (
               <Loader2 className="mx-auto h-4 w-4 animate-spin" />

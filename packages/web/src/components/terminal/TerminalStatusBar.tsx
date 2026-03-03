@@ -25,11 +25,11 @@ export function TerminalStatusBar({ cliVersion }: TerminalStatusBarProps) {
   }, [loginTime]);
 
   return (
-    <div className="flex h-8 items-center justify-between border-t border-white/5 bg-stone-900/60 px-4">
-      <span className="text-[11px] font-mono text-stone-600">
+    <div className="flex h-8 items-center justify-between border-t border-stroke bg-neutral-bg2 px-4">
+      <span className="text-[11px] font-mono text-neutral-fg3">
         {cliVersion ? `Claude CLI ${cliVersion}` : "CLI version loading..."}
       </span>
-      <span className="text-[11px] font-mono text-stone-600 tabular-nums">
+      <span className="text-[11px] font-mono text-neutral-fg3 tabular-nums">
         {elapsed ? `Logged in ${elapsed}` : "pulse"}
       </span>
     </div>

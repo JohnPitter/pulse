@@ -61,7 +61,7 @@ export function AgentCard({ agent, index = 0 }: AgentCardProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
             <StatusDot status={agent.status} size="md" />
-            <span className="text-sm font-semibold tracking-tight text-white truncate">
+            <span className="text-sm font-semibold tracking-tight text-neutral-fg1 truncate">
               {agent.name}
             </span>
           </div>
@@ -71,8 +71,8 @@ export function AgentCard({ agent, index = 0 }: AgentCardProps) {
             aria-label={isRunning ? "Stop agent" : "Start agent"}
             className={`shrink-0 rounded-lg p-1.5 transition-all duration-200 ${
               isRunning
-                ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
-                : "bg-green-500/10 text-green-400 hover:bg-green-500/20"
+                ? "bg-danger-light text-danger hover:bg-danger-light"
+                : "bg-success-light text-success hover:bg-success-light"
             }`}
           >
             {isRunning ? (
@@ -85,15 +85,15 @@ export function AgentCard({ agent, index = 0 }: AgentCardProps) {
 
         {/* Project path */}
         <div className="mt-2 flex items-center gap-1.5">
-          <FolderOpen className="h-3 w-3 shrink-0 text-stone-500" />
-          <span className="text-xs text-stone-500 truncate">
+          <FolderOpen className="h-3 w-3 shrink-0 text-neutral-fg3" />
+          <span className="text-xs text-neutral-fg3 truncate">
             {agent.projectPath}
           </span>
         </div>
 
         {/* Badges row */}
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
-          <Badge variant="orange">
+          <Badge variant="primary">
             {MODEL_LABELS[agent.model] ?? agent.model}
           </Badge>
           {agent.thinkingEnabled === 1 && (
@@ -103,14 +103,14 @@ export function AgentCard({ agent, index = 0 }: AgentCardProps) {
 
         {/* Last message preview */}
         {agent.lastMessage && (
-          <p className="mt-3 text-xs text-stone-400 line-clamp-2">
+          <p className="mt-3 text-xs text-neutral-fg2 line-clamp-2">
             {agent.lastMessage}
           </p>
         )}
 
         {/* Time ago */}
         {agent.lastActiveAt && (
-          <p className="mt-2 text-[11px] text-stone-600">
+          <p className="mt-2 text-[11px] text-neutral-fg-disabled">
             {formatTimeAgo(agent.lastActiveAt)}
           </p>
         )}

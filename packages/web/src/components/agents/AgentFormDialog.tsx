@@ -138,19 +138,19 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.2 }}
-            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl border border-white/5 bg-stone-900/95 backdrop-blur-md p-6"
+            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-stroke bg-neutral-bg2 backdrop-blur-md shadow-16 p-6"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-white tracking-tight">
+              <h2 className="text-lg font-semibold text-neutral-fg1 tracking-tight">
                 {isEditMode ? "Edit Agent" : "Create Agent"}
               </h2>
               <button
                 type="button"
                 onClick={handleClose}
                 aria-label="Close dialog"
-                className="rounded-lg p-1.5 text-stone-400 transition-colors duration-200 hover:bg-stone-800 hover:text-white"
+                className="rounded-lg p-1.5 text-neutral-fg2 transition-colors duration-200 hover:bg-neutral-bg3 hover:text-neutral-fg1"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -161,7 +161,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
               <div>
                 <label
                   htmlFor="agent-name"
-                  className="block text-xs font-medium text-stone-400 mb-1.5"
+                  className="block text-xs font-medium text-neutral-fg2 mb-1.5"
                 >
                   Name
                 </label>
@@ -172,7 +172,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                   onChange={(e) => setName(e.target.value)}
                   placeholder="My Agent"
                   required
-                  className="w-full rounded-xl border border-white/5 bg-stone-800/80 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+                  className="input-fluent w-full"
                 />
               </div>
 
@@ -180,7 +180,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
               <div>
                 <label
                   htmlFor="agent-path"
-                  className="block text-xs font-medium text-stone-400 mb-1.5"
+                  className="block text-xs font-medium text-neutral-fg2 mb-1.5"
                 >
                   Project Path
                 </label>
@@ -193,13 +193,13 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                     placeholder="/home/user/project"
                     required
                     readOnly={isEditMode}
-                    className={`flex-1 rounded-xl border border-white/5 bg-stone-800/80 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900 ${isEditMode ? "opacity-60 cursor-not-allowed" : ""}`}
+                    className={`input-fluent flex-1 ${isEditMode ? "opacity-60 cursor-not-allowed" : ""}`}
                   />
                   {!isEditMode && (
                     <button
                       type="button"
                       onClick={() => setPickerOpen(true)}
-                      className="shrink-0 rounded-xl border border-white/5 bg-stone-800/80 px-3 py-2.5 text-stone-400 transition-all duration-200 hover:bg-stone-700 hover:text-orange-400 active:scale-[0.98]"
+                      className="btn-secondary shrink-0 px-3 py-2.5"
                       aria-label="Browse directories"
                     >
                       <FolderSearch className="h-4 w-4" />
@@ -218,7 +218,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
 
               {/* Model */}
               <fieldset>
-                <legend className="block text-xs font-medium text-stone-400 mb-2">
+                <legend className="block text-xs font-medium text-neutral-fg2 mb-2">
                   Model
                 </legend>
                 <div className="flex gap-2">
@@ -227,8 +227,8 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                       key={m.value}
                       className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center text-sm transition-all duration-200 ${
                         model === m.value
-                          ? "border-orange-500 bg-orange-500/10 text-orange-400"
-                          : "border-white/5 bg-stone-800/80 text-stone-400 hover:border-white/10"
+                          ? "border-brand bg-brand-light text-brand"
+                          : "border-stroke bg-neutral-bg3 text-neutral-fg2 hover:border-[var(--card-hover-border)]"
                       }`}
                     >
                       <input
@@ -254,17 +254,17 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                     onChange={(e) => setThinkingEnabled(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="h-5 w-9 rounded-full bg-stone-700 transition-colors duration-200 peer-checked:bg-orange-500" />
+                  <div className="h-5 w-9 rounded-full bg-neutral-bg3 transition-colors duration-200 peer-checked:bg-brand" />
                   <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-200 peer-checked:translate-x-4" />
                 </div>
-                <span className="text-sm text-stone-300">
+                <span className="text-sm text-neutral-fg2">
                   Enable extended thinking
                 </span>
               </label>
 
               {/* Permission Mode */}
               <fieldset>
-                <legend className="block text-xs font-medium text-stone-400 mb-2">
+                <legend className="block text-xs font-medium text-neutral-fg2 mb-2">
                   Permission Level
                 </legend>
                 <div className="grid grid-cols-2 gap-2">
@@ -273,8 +273,8 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                       key={p.value}
                       className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-sm transition-all duration-200 ${
                         permissionMode === p.value
-                          ? "border-orange-500 bg-orange-500/10 text-orange-400"
-                          : "border-white/5 bg-stone-800/80 text-stone-400 hover:border-white/10"
+                          ? "border-brand bg-brand-light text-brand"
+                          : "border-stroke bg-neutral-bg3 text-neutral-fg2 hover:border-[var(--card-hover-border)]"
                       }`}
                     >
                       <input
@@ -295,10 +295,10 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
               <div>
                 <label
                   htmlFor="agent-claudemd"
-                  className="block text-xs font-medium text-stone-400 mb-1.5"
+                  className="block text-xs font-medium text-neutral-fg2 mb-1.5"
                 >
                   CLAUDE.md{" "}
-                  <span className="text-stone-600">(optional)</span>
+                  <span className="text-neutral-fg-disabled">(optional)</span>
                 </label>
                 <textarea
                   id="agent-claudemd"
@@ -306,7 +306,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                   onChange={(e) => setClaudeMd(e.target.value)}
                   placeholder="Custom instructions for this agent..."
                   rows={3}
-                  className="w-full resize-none rounded-xl border border-white/5 bg-stone-800/80 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+                  className="input-fluent w-full resize-none"
                 />
               </div>
 
@@ -314,10 +314,10 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
               <div>
                 <label
                   htmlFor="agent-prompt"
-                  className="block text-xs font-medium text-stone-400 mb-1.5"
+                  className="block text-xs font-medium text-neutral-fg2 mb-1.5"
                 >
                   Initial Prompt{" "}
-                  <span className="text-stone-600">(optional)</span>
+                  <span className="text-neutral-fg-disabled">(optional)</span>
                 </label>
                 <textarea
                   id="agent-prompt"
@@ -325,13 +325,13 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                   onChange={(e) => setInitialPrompt(e.target.value)}
                   placeholder="What should the agent work on?"
                   rows={3}
-                  className="w-full resize-none rounded-xl border border-white/5 bg-stone-800/80 py-2.5 px-3 text-sm text-white placeholder-stone-500 outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900"
+                  className="input-fluent w-full resize-none"
                 />
               </div>
 
               {/* Error */}
               {error && (
-                <p className="text-sm text-red-400 text-center">{error}</p>
+                <p className="text-sm text-danger text-center">{error}</p>
               )}
 
               {/* Actions */}
@@ -339,14 +339,14 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="flex-1 rounded-xl border border-white/5 bg-stone-800/80 py-2.5 text-sm font-medium text-stone-300 transition-all duration-200 hover:bg-stone-700 active:scale-[0.98]"
+                  className="btn-secondary flex-1 py-2.5 text-sm font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || !name.trim() || !projectPath.trim()}
-                  className="flex-1 rounded-xl bg-orange-500 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+                  className="btn-primary flex-1 py-2.5 text-sm"
                 >
                   {isSubmitting ? (
                     <Loader2 className="mx-auto h-4 w-4 animate-spin" />

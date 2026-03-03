@@ -48,10 +48,10 @@ function groupAgents(agents: Agent[], query: string): StatusGroup[] {
   }
 
   const groups: StatusGroup[] = [];
-  if (active.length > 0) groups.push({ label: "Active", agents: active, color: "bg-green-500" });
-  if (needInput.length > 0) groups.push({ label: "Need Input", agents: needInput, color: "bg-yellow-500" });
-  if (done.length > 0) groups.push({ label: "Done", agents: done, color: "bg-blue-500" });
-  if (stopped.length > 0) groups.push({ label: "Stopped", agents: stopped, color: "bg-stone-600" });
+  if (active.length > 0) groups.push({ label: "Active", agents: active, color: "bg-success" });
+  if (needInput.length > 0) groups.push({ label: "Need Input", agents: needInput, color: "bg-warning" });
+  if (done.length > 0) groups.push({ label: "Done", agents: done, color: "bg-info" });
+  if (stopped.length > 0) groups.push({ label: "Stopped", agents: stopped, color: "bg-neutral-fg3" });
 
   return groups;
 }
@@ -85,12 +85,12 @@ export function AgentSidebar({
   const counts = useMemo(() => countByStatus(agents), [agents]);
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col bg-[#0d0d14] border-r border-white/5">
+    <aside className="flex w-64 shrink-0 flex-col bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
       {/* Header: brand + actions */}
-      <div className="flex items-center justify-between px-4 h-12 border-b border-white/5">
+      <div className="flex items-center justify-between px-4 h-12 border-b border-stroke">
         <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-orange-500" />
-          <span className="text-[15px] font-semibold text-white tracking-tight">
+          <div className="h-2 w-2 rounded-full bg-brand" />
+          <span className="text-[15px] font-semibold text-neutral-fg1 tracking-tight">
             Pulse
           </span>
         </div>
@@ -101,8 +101,8 @@ export function AgentSidebar({
             aria-label={splitMode ? "Single view" : "Split view"}
             className={`flex h-7 w-7 items-center justify-center rounded-lg transition-all duration-200 ${
               splitMode
-                ? "bg-orange-500/10 text-orange-400"
-                : "text-stone-500 hover:bg-white/[0.05] hover:text-stone-300"
+                ? "bg-brand-light text-brand"
+                : "text-neutral-fg3 hover:bg-neutral-bg-hover hover:text-neutral-fg2"
             }`}
           >
             <Columns2 className="h-3.5 w-3.5" />
@@ -111,13 +111,13 @@ export function AgentSidebar({
             type="button"
             onClick={onCreateAgent}
             aria-label="Create new agent"
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-stone-400 transition-all duration-200 hover:bg-orange-500/10 hover:text-orange-400 active:scale-[0.95]"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-fg2 transition-all duration-200 hover:bg-brand-light hover:text-brand active:scale-[0.95]"
           >
             <Plus className="h-4 w-4" />
           </button>
           <Link
             to="/settings"
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-stone-500 transition-all duration-200 hover:bg-white/[0.05] hover:text-stone-300"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-fg3 transition-all duration-200 hover:bg-neutral-bg-hover hover:text-neutral-fg2"
             aria-label="Settings"
           >
             <Settings className="h-3.5 w-3.5" />
@@ -127,46 +127,46 @@ export function AgentSidebar({
 
       {/* Status indicators */}
       {agents.length > 0 && (
-        <div className="flex items-center gap-3 px-4 py-2 border-b border-white/5">
+        <div className="flex items-center gap-3 px-4 py-2 border-b border-stroke">
           <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-            <span className="text-[11px] tabular-nums text-stone-500">{counts.active}</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-success" />
+            <span className="text-[11px] tabular-nums text-neutral-fg3">{counts.active}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-yellow-500" />
-            <span className="text-[11px] tabular-nums text-stone-500">{counts.needInput}</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-warning" />
+            <span className="text-[11px] tabular-nums text-neutral-fg3">{counts.needInput}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-            <span className="text-[11px] tabular-nums text-stone-500">{counts.done}</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-info" />
+            <span className="text-[11px] tabular-nums text-neutral-fg3">{counts.done}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-stone-600" />
-            <span className="text-[11px] tabular-nums text-stone-500">{counts.stopped}</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-neutral-fg3" />
+            <span className="text-[11px] tabular-nums text-neutral-fg3">{counts.stopped}</span>
           </div>
-          <span className="ml-auto text-[10px] text-stone-700">{counts.total} total</span>
+          <span className="ml-auto text-[10px] text-neutral-fg-disabled">{counts.total} total</span>
         </div>
       )}
 
       {/* Search */}
       <div className="px-3 py-3">
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-600" />
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-fg-disabled" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search agents..."
-            className="w-full rounded-lg border border-white/5 bg-white/[0.03] py-1.5 pl-8 pr-3 text-[13px] text-stone-300 placeholder-stone-600 outline-none transition-all duration-200 focus-visible:border-orange-500/30 focus-visible:ring-1 focus-visible:ring-orange-500/20"
+            className="input-fluent w-full py-1.5 pl-8 pr-3 text-[13px]"
           />
         </div>
       </div>
 
       {/* Agent list */}
-      <div className="flex-1 overflow-y-auto px-2 pb-2 scrollbar-thin">
+      <div className="flex-1 overflow-y-auto px-2 pb-2">
         {groups.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-center">
-            <p className="text-xs text-stone-600">
+            <p className="text-xs text-neutral-fg-disabled">
               {agents.length === 0 ? "No agents yet" : "No matches"}
             </p>
           </div>
@@ -176,11 +176,11 @@ export function AgentSidebar({
               <div className="flex items-center justify-between px-2.5 mb-1">
                 <div className="flex items-center gap-1.5">
                   <span className={`h-1.5 w-1.5 rounded-full ${group.color}`} />
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-stone-600">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-fg3">
                     {group.label}
                   </span>
                 </div>
-                <span className="text-[10px] tabular-nums text-stone-700">
+                <span className="text-[10px] tabular-nums text-neutral-fg-disabled">
                   {group.agents.length}
                 </span>
               </div>

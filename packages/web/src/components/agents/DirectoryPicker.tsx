@@ -117,38 +117,38 @@ export function DirectoryPicker({ open, onClose, onSelect, initialPath }: Direct
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
-        className="w-full max-w-lg rounded-xl border border-stone-800 bg-stone-900 overflow-hidden"
+        className="w-full max-w-lg rounded-2xl border border-stroke bg-neutral-bg2 shadow-16 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-stone-800 px-5 py-3.5">
+        <div className="flex items-center justify-between border-b border-stroke px-5 py-3.5">
           <div className="flex items-center gap-2.5">
-            <FolderSearch className="h-4 w-4 text-orange-500" />
-            <h2 className="text-sm font-semibold text-white">Browse Directory</h2>
+            <FolderSearch className="h-4 w-4 text-brand" />
+            <h2 className="text-sm font-semibold text-neutral-fg1">Browse Directory</h2>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-stone-400 transition-colors duration-200 hover:bg-stone-800 hover:text-white"
+            className="rounded-lg p-1.5 text-neutral-fg2 transition-colors duration-200 hover:bg-neutral-bg3 hover:text-neutral-fg1"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Breadcrumb */}
-        <div className="flex items-center gap-1 border-b border-stone-800 px-5 py-2 bg-stone-950 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1 border-b border-stroke px-5 py-2 bg-neutral-bg1 overflow-x-auto scrollbar-none">
           {separator === "\\" ? (
             <button
               onClick={() => {
                 if (pathSegments[0]) browse(pathSegments[0] + separator);
               }}
-              className="shrink-0 rounded px-1.5 py-0.5 font-mono text-[11px] font-medium text-stone-400 transition-colors hover:bg-stone-800 hover:text-orange-400"
+              className="shrink-0 rounded px-1.5 py-0.5 font-mono text-[11px] font-medium text-neutral-fg2 transition-colors hover:bg-neutral-bg3 hover:text-brand"
             >
               {pathSegments[0]}
             </button>
           ) : (
             <button
               onClick={() => browse("/")}
-              className="shrink-0 rounded px-1.5 py-0.5 font-mono text-[11px] font-medium text-stone-400 transition-colors hover:bg-stone-800 hover:text-orange-400"
+              className="shrink-0 rounded px-1.5 py-0.5 font-mono text-[11px] font-medium text-neutral-fg2 transition-colors hover:bg-neutral-bg3 hover:text-brand"
             >
               /
             </button>
@@ -161,10 +161,10 @@ export function DirectoryPicker({ open, onClose, onSelect, initialPath }: Direct
                 : separator + pathSegments.slice(0, idx + 1).join(separator);
             return (
               <div key={segmentPath} className="flex items-center gap-1 shrink-0">
-                <ChevronRight className="h-3 w-3 text-stone-600" />
+                <ChevronRight className="h-3 w-3 text-neutral-fg-disabled" />
                 <button
                   onClick={() => browse(segmentPath)}
-                  className="rounded px-1.5 py-0.5 font-mono text-[11px] font-medium text-stone-400 transition-colors hover:bg-stone-800 hover:text-orange-400"
+                  className="rounded px-1.5 py-0.5 font-mono text-[11px] font-medium text-neutral-fg2 transition-colors hover:bg-neutral-bg3 hover:text-brand"
                 >
                   {segment}
                 </button>
@@ -177,16 +177,16 @@ export function DirectoryPicker({ open, onClose, onSelect, initialPath }: Direct
         <div className="h-[300px] overflow-y-auto px-2 py-1.5">
           {loading ? (
             <div className="flex flex-col items-center justify-center h-full gap-2">
-              <Loader2 className="h-5 w-5 animate-spin text-stone-500" />
-              <span className="text-xs text-stone-500">Loading...</span>
+              <Loader2 className="h-5 w-5 animate-spin text-neutral-fg3" />
+              <span className="text-xs text-neutral-fg3">Loading...</span>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center h-full gap-2 px-6">
-              <AlertCircle className="h-5 w-5 text-red-400" />
-              <span className="text-xs text-red-400 text-center">{error}</span>
+              <AlertCircle className="h-5 w-5 text-danger" />
+              <span className="text-xs text-danger text-center">{error}</span>
               <button
                 onClick={() => browse(currentPath)}
-                className="mt-1 text-[11px] font-medium text-orange-400 transition-colors hover:text-orange-300"
+                className="mt-1 text-[11px] font-medium text-brand transition-colors hover:text-brand-hover"
               >
                 Retry
               </button>
@@ -197,10 +197,10 @@ export function DirectoryPicker({ open, onClose, onSelect, initialPath }: Direct
               {parentPath && (
                 <button
                   onClick={() => browse(parentPath)}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-stone-800 group"
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-neutral-bg-hover group"
                 >
-                  <FolderOpen className="h-4 w-4 text-stone-500 group-hover:text-orange-400 transition-colors" />
-                  <span className="text-sm font-medium text-stone-400 group-hover:text-stone-200">..</span>
+                  <FolderOpen className="h-4 w-4 text-neutral-fg3 group-hover:text-brand transition-colors" />
+                  <span className="text-sm font-medium text-neutral-fg2 group-hover:text-neutral-fg1">..</span>
                 </button>
               )}
 
@@ -209,17 +209,17 @@ export function DirectoryPicker({ open, onClose, onSelect, initialPath }: Direct
                 <button
                   key={dir.path}
                   onClick={() => browse(dir.path)}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-stone-800 group"
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors duration-150 hover:bg-neutral-bg-hover group"
                 >
-                  <Folder className="h-4 w-4 text-orange-500/60 group-hover:text-orange-400 transition-colors" />
-                  <span className="text-sm text-stone-300 truncate">{dir.name}</span>
+                  <Folder className="h-4 w-4 text-brand/60 group-hover:text-brand transition-colors" />
+                  <span className="text-sm text-neutral-fg2 truncate">{dir.name}</span>
                 </button>
               ))}
 
               {/* New folder input */}
               {creatingFolder && (
                 <div className="flex items-center gap-2 rounded-lg px-3 py-2">
-                  <FolderPlus className="h-4 w-4 text-orange-500 shrink-0" />
+                  <FolderPlus className="h-4 w-4 text-brand shrink-0" />
                   <input
                     ref={newFolderInputRef}
                     type="text"
@@ -233,13 +233,13 @@ export function DirectoryPicker({ open, onClose, onSelect, initialPath }: Direct
                       }
                     }}
                     placeholder="Folder name..."
-                    className="flex-1 rounded-lg border border-stone-700 bg-stone-950 px-2.5 py-1.5 text-sm text-white placeholder-stone-500 outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-1 focus-visible:ring-offset-stone-900"
+                    className="input-fluent flex-1 py-1.5 px-2.5 text-sm"
                     disabled={creatingInProgress}
                   />
                   <button
                     onClick={handleCreateFolder}
                     disabled={!newFolderName.trim() || creatingInProgress}
-                    className="shrink-0 rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-medium text-white transition-all hover:bg-orange-600 disabled:opacity-50"
+                    className="btn-primary shrink-0 px-3 py-1.5 text-xs"
                   >
                     {creatingInProgress ? <Loader2 className="h-3 w-3 animate-spin" /> : "Create"}
                   </button>
@@ -249,8 +249,8 @@ export function DirectoryPicker({ open, onClose, onSelect, initialPath }: Direct
               {/* Empty state */}
               {directories.length === 0 && !parentPath && !creatingFolder && (
                 <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Folder className="h-6 w-6 text-stone-700" />
-                  <span className="text-xs text-stone-500">No subdirectories</span>
+                  <Folder className="h-6 w-6 text-neutral-fg-disabled" />
+                  <span className="text-xs text-neutral-fg3">No subdirectories</span>
                 </div>
               )}
             </>
@@ -258,14 +258,14 @@ export function DirectoryPicker({ open, onClose, onSelect, initialPath }: Direct
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-stone-800 px-5 py-3.5">
+        <div className="flex items-center justify-between border-t border-stroke px-5 py-3.5">
           <button
             onClick={() => {
               setCreatingFolder(true);
               setNewFolderName("");
             }}
             disabled={loading || !!error}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-stone-400 transition-colors hover:bg-stone-800 hover:text-stone-200 disabled:opacity-50"
+            className="btn-ghost flex items-center gap-1.5 px-3 py-2 text-xs font-medium disabled:opacity-50"
           >
             <FolderPlus className="h-3.5 w-3.5" />
             New Folder
@@ -274,7 +274,7 @@ export function DirectoryPicker({ open, onClose, onSelect, initialPath }: Direct
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="rounded-lg border border-stone-700 bg-stone-950 px-4 py-2 text-sm font-medium text-stone-300 transition-all duration-200 hover:bg-stone-800 active:scale-[0.98]"
+              className="btn-secondary px-4 py-2 text-sm"
             >
               Cancel
             </button>
@@ -284,7 +284,7 @@ export function DirectoryPicker({ open, onClose, onSelect, initialPath }: Direct
                 onClose();
               }}
               disabled={!currentPath || loading}
-              className="flex items-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-600 hover:shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary flex items-center gap-1.5 px-4 py-2 text-sm"
             >
               <FolderOpen className="h-3.5 w-3.5" />
               Select

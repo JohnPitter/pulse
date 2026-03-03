@@ -29,14 +29,12 @@ export function Dashboard() {
 
   const prevAgentRef = useRef<string | null>(null);
 
-  // Fetch agents + connect socket on mount
   useEffect(() => {
     fetchAgents();
     connectSocket();
     return () => disconnectSocket();
   }, [fetchAgents, connectSocket, disconnectSocket]);
 
-  // Fetch CLI version once
   useEffect(() => {
     fetch("/api/system/version", { credentials: "include" })
       .then((r) => r.json())
@@ -44,7 +42,6 @@ export function Dashboard() {
       .catch(() => setCliVersion("unknown"));
   }, []);
 
-  // Parse context usage from terminal output (primary)
   useEffect(() => {
     if (!selectedAgentId) return;
     if (prevAgentRef.current !== selectedAgentId) {
@@ -60,7 +57,6 @@ export function Dashboard() {
     return unsub;
   }, [selectedAgentId]);
 
-  // Parse context usage from terminal output (secondary)
   useEffect(() => {
     if (!secondAgentId) return;
     setSecondContextUsage(null);
@@ -73,21 +69,17 @@ export function Dashboard() {
     return unsub;
   }, [secondAgentId]);
 
-  // Agent selection — in split mode, second click fills second pane
   const handleSelectAgent = useCallback((id: string) => {
     if (splitMode) {
-      if (id === selectedAgentId) return; // already primary
+      if (id === selectedAgentId) return;
       if (id === secondAgentId) {
-        // clicking secondary agent — swap to primary
         setSecondAgentId(selectedAgentId);
         setSelectedAgentId(id);
         return;
       }
-      // If primary is set, fill secondary; otherwise fill primary
       if (selectedAgentId && !secondAgentId) {
         setSecondAgentId(id);
       } else if (selectedAgentId && secondAgentId) {
-        // Both set — replace secondary
         setSecondAgentId(id);
       } else {
         setSelectedAgentId(id);
@@ -100,7 +92,6 @@ export function Dashboard() {
   const handleToggleSplit = useCallback(() => {
     setSplitMode((prev) => {
       if (prev) {
-        // Exiting split — clear secondary
         setSecondAgentId(null);
         setSecondContextUsage(null);
       }
@@ -108,7 +99,6 @@ export function Dashboard() {
     });
   }, []);
 
-  // Auto-select first agent if none selected
   useEffect(() => {
     if (!selectedAgentId && agents.length > 0) {
       setSelectedAgentId(agents[0].id);
@@ -118,7 +108,6 @@ export function Dashboard() {
   const selectedAgent = agents.find((a) => a.id === selectedAgentId) ?? null;
   const secondAgent = agents.find((a) => a.id === secondAgentId) ?? null;
 
-  // Agent control handlers (factory to support both panes)
   const makeToggleHandler = useCallback((agent: typeof selectedAgent) => () => {
     if (!agent) return;
     const isRunning = agent.status === "running" || agent.status === "waiting";
@@ -154,7 +143,7 @@ export function Dashboard() {
   }, []);
 
   return (
-    <div className="flex h-screen bg-stone-950">
+    <div className="flex h-screen bg-app-bg p-3 gap-3">
       <AgentSidebar
         agents={agents}
         selectedAgentId={selectedAgentId}
@@ -165,15 +154,13 @@ export function Dashboard() {
         onToggleSplit={handleToggleSplit}
       />
 
-      {/* Main terminal area */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
         {loading ? (
           <div className="flex flex-1 items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
+            <Loader2 className="h-6 w-6 animate-spin text-brand" />
           </div>
         ) : selectedAgent ? (
           <div className="flex flex-1 min-h-0">
-            {/* Primary pane */}
             <div className="flex min-w-0 flex-1 flex-col min-h-0">
               <TerminalInfoBar
                 agent={selectedAgent}
@@ -187,10 +174,9 @@ export function Dashboard() {
               <TerminalStatusBar cliVersion={cliVersion} />
             </div>
 
-            {/* Secondary pane (split mode) */}
             {splitMode && secondAgent && (
               <>
-                <div className="w-px bg-white/5 shrink-0" />
+                <div className="w-px bg-stroke shrink-0" />
                 <div className="flex min-w-0 flex-1 flex-col min-h-0">
                   <TerminalInfoBar
                     agent={secondAgent}
@@ -206,12 +192,11 @@ export function Dashboard() {
               </>
             )}
 
-            {/* Split mode placeholder when no second agent */}
             {splitMode && !secondAgent && (
               <>
-                <div className="w-px bg-white/5 shrink-0" />
+                <div className="w-px bg-stroke shrink-0" />
                 <div className="flex min-w-0 flex-1 flex-col min-h-0 items-center justify-center">
-                  <p className="text-[13px] text-stone-600">
+                  <p className="text-[13px] text-neutral-fg-disabled">
                     Select a second agent
                   </p>
                 </div>
@@ -235,14 +220,14 @@ export function Dashboard() {
 function EmptyState() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center px-6">
-      <div className="rounded-xl border border-white/5 bg-stone-900/80 p-4">
-        <Monitor className="h-8 w-8 text-stone-600" />
+      <div className="rounded-xl border border-stroke bg-neutral-bg3 p-4">
+        <Monitor className="h-8 w-8 text-neutral-fg-disabled" />
       </div>
       <div>
-        <p className="text-sm font-medium text-stone-400">
+        <p className="text-sm font-medium text-neutral-fg2">
           Select an agent to begin
         </p>
-        <p className="mt-1 text-xs text-stone-600">
+        <p className="mt-1 text-xs text-neutral-fg3">
           Choose an agent from the sidebar to open its terminal
         </p>
       </div>

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-type BadgeVariant = "orange" | "green" | "yellow" | "red" | "stone" | "purple";
+type BadgeVariant = "primary" | "success" | "warning" | "danger" | "neutral" | "purple" | "info";
 
 interface BadgeProps {
   children: ReactNode;
@@ -9,19 +9,18 @@ interface BadgeProps {
 }
 
 const VARIANT_CLASSES: Record<BadgeVariant, string> = {
-  orange: "bg-orange-500/10 text-orange-400 border-orange-500/20",
-  green: "bg-green-500/10 text-green-400 border-green-500/20",
-  yellow: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
-  red: "bg-red-500/10 text-red-400 border-red-500/20",
-  stone: "bg-stone-500/10 text-stone-400 border-stone-500/20",
-  purple: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  primary: "badge-primary",
+  success: "badge-success",
+  warning: "badge-warning",
+  danger: "badge-danger",
+  neutral: "badge-neutral",
+  purple: "badge-purple",
+  info: "badge-info",
 };
 
-export function Badge({ children, variant = "stone", className = "" }: BadgeProps) {
+export function Badge({ children, variant = "neutral", className = "" }: BadgeProps) {
   return (
-    <span
-      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${VARIANT_CLASSES[variant]} ${className}`}
-    >
+    <span className={`badge ${VARIANT_CLASSES[variant]} ${className}`}>
       {children}
     </span>
   );

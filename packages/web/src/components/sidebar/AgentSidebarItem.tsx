@@ -52,8 +52,8 @@ export function AgentSidebarItem({ agent, selected, onSelect }: AgentSidebarItem
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect(agent.id); }}
       className={`group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left cursor-pointer transition-all duration-150 ${
         selected
-          ? "bg-white/[0.07] text-white"
-          : "text-stone-400 hover:bg-white/[0.03] hover:text-stone-200"
+          ? "bg-brand-light text-neutral-fg1"
+          : "text-neutral-fg2 hover:bg-neutral-bg-hover hover:text-neutral-fg1"
       }`}
     >
       <StatusDot status={agent.status} size="sm" />
@@ -63,30 +63,30 @@ export function AgentSidebarItem({ agent, selected, onSelect }: AgentSidebarItem
           <p className="truncate text-[13px] font-medium leading-tight">
             {agent.name}
           </p>
-          <span className="shrink-0 rounded px-1 py-px text-[9px] font-medium bg-white/5 text-stone-600">
+          <span className="shrink-0 rounded px-1 py-px text-[9px] font-medium bg-neutral-bg3 text-neutral-fg3">
             {MODEL_LABELS[agent.model] ?? agent.model}
           </span>
           {agent.thinkingEnabled === 1 && (
-            <Brain className="h-2.5 w-2.5 shrink-0 text-purple-400" />
+            <Brain className="h-2.5 w-2.5 shrink-0 text-purple" />
           )}
         </div>
 
         {/* Last message / activity */}
         <div className="flex items-center gap-1.5 mt-0.5">
           {agent.lastMessage ? (
-            <p className="truncate text-[11px] text-stone-500">
+            <p className="truncate text-[11px] text-neutral-fg3">
               {agent.lastMessage}
             </p>
           ) : (
             <div className="flex items-center gap-1">
-              <FolderOpen className="h-2.5 w-2.5 shrink-0 text-stone-600" />
-              <p className="truncate text-[11px] text-stone-600">
+              <FolderOpen className="h-2.5 w-2.5 shrink-0 text-neutral-fg-disabled" />
+              <p className="truncate text-[11px] text-neutral-fg-disabled">
                 {agent.projectPath.split("/").pop() || agent.projectPath}
               </p>
             </div>
           )}
           {elapsed && (
-            <span className="shrink-0 text-[10px] text-stone-600 tabular-nums">
+            <span className="shrink-0 text-[10px] text-neutral-fg-disabled tabular-nums">
               {elapsed}
             </span>
           )}
@@ -95,7 +95,7 @@ export function AgentSidebarItem({ agent, selected, onSelect }: AgentSidebarItem
 
       {/* Status badge for waiting agents */}
       {agent.status === "waiting" && (
-        <span className="shrink-0 rounded-full bg-yellow-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-yellow-400">
+        <span className="shrink-0 badge badge-warning text-[9px] font-semibold">
           Input
         </span>
       )}
@@ -109,8 +109,8 @@ export function AgentSidebarItem({ agent, selected, onSelect }: AgentSidebarItem
           selected ? "opacity-100" : ""
         } ${
           isRunning
-            ? "text-red-400 hover:bg-red-500/15"
-            : "text-green-400 hover:bg-green-500/15"
+            ? "text-danger hover:bg-danger-light"
+            : "text-success hover:bg-success-light"
         }`}
       >
         {isRunning ? (

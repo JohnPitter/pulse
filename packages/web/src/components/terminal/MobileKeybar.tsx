@@ -28,13 +28,13 @@ export function MobileKeybar({ agentId }: MobileKeybarProps) {
   };
 
   return (
-    <div className="flex gap-1.5 overflow-x-auto px-3 py-2 border-t border-white/5 bg-stone-900/90 backdrop-blur-sm sm:hidden">
+    <div className="flex gap-1.5 overflow-x-auto px-3 py-2 border-t border-stroke bg-neutral-bg2/90 backdrop-blur-sm sm:hidden">
       {KEYS.map((k) => (
         <button
           key={k.label}
           type="button"
           onClick={() => sendKey(k.key)}
-          className="shrink-0 rounded-md border border-white/10 bg-stone-800/80 px-2.5 py-1.5 text-[11px] font-mono text-stone-300 transition-all duration-150 hover:bg-stone-700 active:scale-[0.95]"
+          className="shrink-0 rounded-md border border-stroke bg-neutral-bg3 px-2.5 py-1.5 text-[11px] font-mono text-neutral-fg2 transition-all duration-150 hover:bg-neutral-bg-hover active:scale-[0.95]"
         >
           {k.label}
         </button>

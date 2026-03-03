@@ -19,14 +19,14 @@ export function TerminalView({ agentId }: TerminalViewProps) {
       cursorBlink: true,
       cursorStyle: "bar",
       theme: {
-        background: "#0c0a09",
-        foreground: "#e7e5e4",
-        cursor: "#f97316",
-        cursorAccent: "#0c0a09",
+        background: "#08080A",
+        foreground: "#EDEDEF",
+        cursor: "#F97316",
+        cursorAccent: "#08080A",
         selectionBackground: "rgba(249, 115, 22, 0.3)",
       },
       fontSize: 14,
-      fontFamily: '"Geist Mono", ui-monospace, SFMono-Regular, monospace',
+      fontFamily: 'ui-monospace, SFMono-Regular, "Cascadia Code", monospace',
       lineHeight: 1.2,
     });
 

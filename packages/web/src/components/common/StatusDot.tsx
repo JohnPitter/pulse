@@ -10,11 +10,11 @@ const SIZE_MAP = {
 } as const;
 
 const STATUS_COLORS: Record<string, string> = {
-  running: "bg-green-500",
-  waiting: "bg-yellow-500",
-  error: "bg-red-500",
-  idle: "bg-stone-500",
-  stopped: "bg-stone-600",
+  running: "bg-success",
+  waiting: "bg-warning",
+  error: "bg-danger",
+  idle: "bg-neutral-fg3",
+  stopped: "bg-neutral-fg3",
 };
 
 const ANIMATED_STATUSES = new Set(["running", "waiting"]);

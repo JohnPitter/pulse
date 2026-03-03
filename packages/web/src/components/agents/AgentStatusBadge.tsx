@@ -18,7 +18,7 @@ export function AgentStatusBadge({ status }: AgentStatusBadgeProps) {
   return (
     <span className="inline-flex items-center gap-1.5">
       <StatusDot status={status} size="sm" />
-      <span className="text-xs text-stone-400">{label}</span>
+      <span className="text-xs text-neutral-fg2">{label}</span>
     </span>
   );
 }
