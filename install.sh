@@ -376,7 +376,7 @@ npm run build
 success "Build completed successfully"
 
 # -------------------------------------------------------------------------
-# 10. Open firewall port
+# 10. Open firewall port (only when running as root)
 # -------------------------------------------------------------------------
 step "Configuring firewall"
 
@@ -384,38 +384,39 @@ step "Configuring firewall"
 PULSE_PORT="$(grep -E '^PORT=' "$ENV_FILE" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]')"
 PULSE_PORT="${PULSE_PORT:-3000}"
 
-open_firewall_port() {
-  local port="$1"
-  local SUDO
-  SUDO="$(need_sudo)"
+if [ "$(id -u)" -eq 0 ]; then
+  open_firewall_port() {
+    local port="$1"
+    if command -v ufw &>/dev/null; then
+      ufw allow "${port}/tcp" >/dev/null 2>&1 && success "ufw: allowed port ${port}/tcp" || warn "ufw: failed to allow port ${port}"
+    elif command -v firewall-cmd &>/dev/null; then
+      firewall-cmd --permanent --add-port="${port}/tcp" >/dev/null 2>&1 \
+        && firewall-cmd --reload >/dev/null 2>&1 \
+        && success "firewalld: allowed port ${port}/tcp" \
+        || warn "firewalld: failed to allow port ${port}"
+    elif command -v iptables &>/dev/null; then
+      iptables -C INPUT -p tcp --dport "$port" -j ACCEPT 2>/dev/null \
+        || iptables -A INPUT -p tcp --dport "$port" -j ACCEPT 2>/dev/null
+      success "iptables: allowed port ${port}/tcp"
+    else
+      warn "No firewall tool found (ufw, firewalld, iptables). Please open port ${port}/tcp manually."
+    fi
+  }
 
-  if command -v ufw &>/dev/null; then
-    $SUDO ufw allow "${port}/tcp" >/dev/null 2>&1 && success "ufw: allowed port ${port}/tcp" || warn "ufw: failed to allow port ${port}"
-  elif command -v firewall-cmd &>/dev/null; then
-    $SUDO firewall-cmd --permanent --add-port="${port}/tcp" >/dev/null 2>&1 \
-      && $SUDO firewall-cmd --reload >/dev/null 2>&1 \
-      && success "firewalld: allowed port ${port}/tcp" \
-      || warn "firewalld: failed to allow port ${port}"
-  elif command -v iptables &>/dev/null; then
-    $SUDO iptables -C INPUT -p tcp --dport "$port" -j ACCEPT 2>/dev/null \
-      || $SUDO iptables -A INPUT -p tcp --dport "$port" -j ACCEPT 2>/dev/null
-    success "iptables: allowed port ${port}/tcp"
-  else
-    warn "No firewall tool found (ufw, firewalld, iptables). Please open port ${port}/tcp manually."
-  fi
-}
-
-case "$OS_TYPE" in
-  debian|rhel|arch|suse)
-    open_firewall_port "$PULSE_PORT"
-    ;;
-  macos)
-    info "macOS — firewall port opening is usually not needed for local development"
-    ;;
-  *)
-    warn "Could not detect firewall. Please ensure port ${PULSE_PORT}/tcp is open."
-    ;;
-esac
+  case "$OS_TYPE" in
+    debian|rhel|arch|suse)
+      open_firewall_port "$PULSE_PORT"
+      ;;
+    macos)
+      info "macOS — firewall port opening is usually not needed for local development"
+      ;;
+    *)
+      warn "Could not detect firewall. Please ensure port ${PULSE_PORT}/tcp is open."
+      ;;
+  esac
+else
+  info "Not running as root — skipping firewall config (setup.sh handles this)"
+fi
 
 # -------------------------------------------------------------------------
 # 11. Done!
