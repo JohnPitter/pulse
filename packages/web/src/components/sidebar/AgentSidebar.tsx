@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, Plus, Settings } from "lucide-react";
+import { Search, Plus, Settings, Columns2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Agent } from "../../stores/agents";
 import { AgentSidebarItem } from "./AgentSidebarItem";
@@ -7,8 +7,11 @@ import { AgentSidebarItem } from "./AgentSidebarItem";
 interface AgentSidebarProps {
   agents: Agent[];
   selectedAgentId: string | null;
+  secondAgentId: string | null;
+  splitMode: boolean;
   onSelectAgent: (id: string) => void;
   onCreateAgent: () => void;
+  onToggleSplit: () => void;
 }
 
 interface StatusGroup {
@@ -48,19 +51,35 @@ function groupAgents(agents: Agent[], query: string): StatusGroup[] {
   return groups;
 }
 
+function countByStatus(agents: Agent[]) {
+  let active = 0;
+  let idle = 0;
+  let stopped = 0;
+  for (const a of agents) {
+    if (a.status === "running" || a.status === "waiting") active++;
+    else if (a.status === "idle") idle++;
+    else stopped++;
+  }
+  return { active, idle, stopped, total: agents.length };
+}
+
 export function AgentSidebar({
   agents,
   selectedAgentId,
+  secondAgentId,
+  splitMode,
   onSelectAgent,
   onCreateAgent,
+  onToggleSplit,
 }: AgentSidebarProps) {
   const [search, setSearch] = useState("");
 
   const groups = useMemo(() => groupAgents(agents, search), [agents, search]);
+  const counts = useMemo(() => countByStatus(agents), [agents]);
 
   return (
     <aside className="flex w-64 shrink-0 flex-col bg-[#0d0d14] border-r border-white/5">
-      {/* Header: brand + new agent */}
+      {/* Header: brand + actions */}
       <div className="flex items-center justify-between px-4 h-12 border-b border-white/5">
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-orange-500" />
@@ -68,15 +87,48 @@ export function AgentSidebar({
             Pulse
           </span>
         </div>
-        <button
-          type="button"
-          onClick={onCreateAgent}
-          aria-label="Create new agent"
-          className="flex h-7 w-7 items-center justify-center rounded-lg text-stone-400 transition-all duration-200 hover:bg-orange-500/10 hover:text-orange-400 active:scale-[0.95]"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onToggleSplit}
+            aria-label={splitMode ? "Single view" : "Split view"}
+            className={`flex h-7 w-7 items-center justify-center rounded-lg transition-all duration-200 ${
+              splitMode
+                ? "bg-orange-500/10 text-orange-400"
+                : "text-stone-500 hover:bg-white/[0.05] hover:text-stone-300"
+            }`}
+          >
+            <Columns2 className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onCreateAgent}
+            aria-label="Create new agent"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-stone-400 transition-all duration-200 hover:bg-orange-500/10 hover:text-orange-400 active:scale-[0.95]"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
       </div>
+
+      {/* Status indicators */}
+      {agents.length > 0 && (
+        <div className="flex items-center gap-3 px-4 py-2 border-b border-white/5">
+          <div className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+            <span className="text-[11px] tabular-nums text-stone-500">{counts.active}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-stone-500" />
+            <span className="text-[11px] tabular-nums text-stone-500">{counts.idle}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-stone-600" />
+            <span className="text-[11px] tabular-nums text-stone-500">{counts.stopped}</span>
+          </div>
+          <span className="ml-auto text-[10px] text-stone-700">{counts.total} total</span>
+        </div>
+      )}
 
       {/* Search */}
       <div className="px-3 py-3">
@@ -116,7 +168,7 @@ export function AgentSidebar({
                   <AgentSidebarItem
                     key={agent.id}
                     agent={agent}
-                    selected={agent.id === selectedAgentId}
+                    selected={agent.id === selectedAgentId || agent.id === secondAgentId}
                     onSelect={onSelectAgent}
                   />
                 ))}

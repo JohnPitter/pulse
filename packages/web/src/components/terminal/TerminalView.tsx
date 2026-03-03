@@ -86,10 +86,10 @@ export function TerminalView({ agentId }: TerminalViewProps) {
   }, [agentId]);
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <div className="relative flex-1 min-h-0 min-w-0 overflow-hidden">
       <div
         ref={termRef}
-        className="flex-1 w-full min-h-0"
+        className="absolute inset-0"
       />
     </div>
   );

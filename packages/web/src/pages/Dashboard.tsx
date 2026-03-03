@@ -16,13 +16,16 @@ export function Dashboard() {
   const fetchAgents = useAgentsStore((s) => s.fetchAgents);
   const connectSocket = useAgentsStore((s) => s.connectSocket);
   const disconnectSocket = useAgentsStore((s) => s.disconnectSocket);
+  const createAgent = useAgentsStore((s) => s.createAgent);
 
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [secondAgentId, setSecondAgentId] = useState<string | null>(null);
+  const [splitMode, setSplitMode] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [cliVersion, setCliVersion] = useState<string | null>(null);
   const [contextUsage, setContextUsage] = useState<string | null>(null);
+  const [secondContextUsage, setSecondContextUsage] = useState<string | null>(null);
 
-  // Track previous agent to clear context usage on switch
   const prevAgentRef = useRef<string | null>(null);
 
   // Fetch agents + connect socket on mount
@@ -40,81 +43,116 @@ export function Dashboard() {
       .catch(() => setCliVersion("unknown"));
   }, []);
 
-  // Parse context usage from terminal output
+  // Parse context usage from terminal output (primary)
   useEffect(() => {
     if (!selectedAgentId) return;
-
-    // Clear on agent switch
     if (prevAgentRef.current !== selectedAgentId) {
       setContextUsage(null);
       prevAgentRef.current = selectedAgentId;
     }
-
     const unsub = onEvent("terminal:output", (data: unknown) => {
       const payload = data as { agentId: string; data: string };
       if (payload.agentId !== selectedAgentId) return;
       const match = CONTEXT_RE.exec(payload.data);
-      if (match) {
-        setContextUsage(`${match[1]} / ${match[2]}`);
-      }
+      if (match) setContextUsage(`${match[1]} / ${match[2]}`);
     });
-
     return unsub;
   }, [selectedAgentId]);
 
-  const createAgent = useAgentsStore((s) => s.createAgent);
+  // Parse context usage from terminal output (secondary)
+  useEffect(() => {
+    if (!secondAgentId) return;
+    setSecondContextUsage(null);
+    const unsub = onEvent("terminal:output", (data: unknown) => {
+      const payload = data as { agentId: string; data: string };
+      if (payload.agentId !== secondAgentId) return;
+      const match = CONTEXT_RE.exec(payload.data);
+      if (match) setSecondContextUsage(`${match[1]} / ${match[2]}`);
+    });
+    return unsub;
+  }, [secondAgentId]);
 
+  // Agent selection — in split mode, second click fills second pane
   const handleSelectAgent = useCallback((id: string) => {
-    setSelectedAgentId(id);
+    if (splitMode) {
+      if (id === selectedAgentId) return; // already primary
+      if (id === secondAgentId) {
+        // clicking secondary agent — swap to primary
+        setSecondAgentId(selectedAgentId);
+        setSelectedAgentId(id);
+        return;
+      }
+      // If primary is set, fill secondary; otherwise fill primary
+      if (selectedAgentId && !secondAgentId) {
+        setSecondAgentId(id);
+      } else if (selectedAgentId && secondAgentId) {
+        // Both set — replace secondary
+        setSecondAgentId(id);
+      } else {
+        setSelectedAgentId(id);
+      }
+    } else {
+      setSelectedAgentId(id);
+    }
+  }, [splitMode, selectedAgentId, secondAgentId]);
+
+  const handleToggleSplit = useCallback(() => {
+    setSplitMode((prev) => {
+      if (prev) {
+        // Exiting split — clear secondary
+        setSecondAgentId(null);
+        setSecondContextUsage(null);
+      }
+      return !prev;
+    });
   }, []);
 
-  const selectedAgent = agents.find((a) => a.id === selectedAgentId) ?? null;
-
-  const handleToggleAgent = useCallback(() => {
-    if (!selectedAgent) return;
-    const isRunning = selectedAgent.status === "running" || selectedAgent.status === "waiting";
-    if (isRunning) {
-      emitEvent("agent:stop", { agentId: selectedAgent.id });
-    } else {
-      emitEvent("agent:start", { agentId: selectedAgent.id });
-    }
-  }, [selectedAgent]);
-
-  const handleStopAgent = useCallback(() => {
-    if (!selectedAgent) return;
-    emitEvent("agent:stop", { agentId: selectedAgent.id });
-  }, [selectedAgent]);
-
-  const handleDuplicateAgent = useCallback(async () => {
-    if (!selectedAgent) return;
-    const duplicate = await createAgent({
-      name: `${selectedAgent.name} (copy)`,
-      projectPath: selectedAgent.projectPath,
-      model: selectedAgent.model,
-      thinkingEnabled: selectedAgent.thinkingEnabled === 1,
-      permissionMode: selectedAgent.permissionMode,
-      claudeMd: selectedAgent.claudeMd ?? undefined,
-      initialPrompt: selectedAgent.initialPrompt ?? undefined,
-    });
-    if (duplicate) {
-      setSelectedAgentId(duplicate.id);
-    }
-  }, [selectedAgent, createAgent]);
-
-  // Auto-select first agent if none selected and agents are loaded
+  // Auto-select first agent if none selected
   useEffect(() => {
     if (!selectedAgentId && agents.length > 0) {
       setSelectedAgentId(agents[0].id);
     }
   }, [agents, selectedAgentId]);
 
+  const selectedAgent = agents.find((a) => a.id === selectedAgentId) ?? null;
+  const secondAgent = agents.find((a) => a.id === secondAgentId) ?? null;
+
+  // Agent control handlers (factory to support both panes)
+  const makeToggleHandler = useCallback((agent: typeof selectedAgent) => () => {
+    if (!agent) return;
+    const isRunning = agent.status === "running" || agent.status === "waiting";
+    emitEvent(isRunning ? "agent:stop" : "agent:start", { agentId: agent.id });
+  }, []);
+
+  const makeStopHandler = useCallback((agent: typeof selectedAgent) => () => {
+    if (!agent) return;
+    emitEvent("agent:stop", { agentId: agent.id });
+  }, []);
+
+  const makeDuplicateHandler = useCallback((agent: typeof selectedAgent) => async () => {
+    if (!agent) return;
+    const duplicate = await createAgent({
+      name: `${agent.name} (copy)`,
+      projectPath: agent.projectPath,
+      model: agent.model,
+      thinkingEnabled: agent.thinkingEnabled === 1,
+      permissionMode: agent.permissionMode,
+      claudeMd: agent.claudeMd ?? undefined,
+      initialPrompt: agent.initialPrompt ?? undefined,
+    });
+    if (duplicate) setSelectedAgentId(duplicate.id);
+  }, [createAgent]);
+
   return (
     <div className="flex h-screen bg-stone-950">
       <AgentSidebar
         agents={agents}
         selectedAgentId={selectedAgentId}
+        secondAgentId={secondAgentId}
+        splitMode={splitMode}
         onSelectAgent={handleSelectAgent}
         onCreateAgent={() => setDialogOpen(true)}
+        onToggleSplit={handleToggleSplit}
       />
 
       {/* Main terminal area */}
@@ -124,17 +162,50 @@ export function Dashboard() {
             <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
           </div>
         ) : selectedAgent ? (
-          <>
-            <TerminalInfoBar
-              agent={selectedAgent}
-              contextUsage={contextUsage}
-              onToggleAgent={handleToggleAgent}
-              onDuplicateAgent={handleDuplicateAgent}
-              onStopAgent={handleStopAgent}
-            />
-            <TerminalView agentId={selectedAgent.id} />
-            <TerminalStatusBar cliVersion={cliVersion} />
-          </>
+          <div className="flex flex-1 min-h-0">
+            {/* Primary pane */}
+            <div className="flex min-w-0 flex-1 flex-col min-h-0">
+              <TerminalInfoBar
+                agent={selectedAgent}
+                contextUsage={contextUsage}
+                onToggleAgent={makeToggleHandler(selectedAgent)}
+                onDuplicateAgent={makeDuplicateHandler(selectedAgent)}
+                onStopAgent={makeStopHandler(selectedAgent)}
+              />
+              <TerminalView agentId={selectedAgent.id} />
+              <TerminalStatusBar cliVersion={cliVersion} />
+            </div>
+
+            {/* Secondary pane (split mode) */}
+            {splitMode && secondAgent && (
+              <>
+                <div className="w-px bg-white/5 shrink-0" />
+                <div className="flex min-w-0 flex-1 flex-col min-h-0">
+                  <TerminalInfoBar
+                    agent={secondAgent}
+                    contextUsage={secondContextUsage}
+                    onToggleAgent={makeToggleHandler(secondAgent)}
+                    onDuplicateAgent={makeDuplicateHandler(secondAgent)}
+                    onStopAgent={makeStopHandler(secondAgent)}
+                  />
+                  <TerminalView agentId={secondAgent.id} />
+                  <TerminalStatusBar cliVersion={cliVersion} />
+                </div>
+              </>
+            )}
+
+            {/* Split mode placeholder when no second agent */}
+            {splitMode && !secondAgent && (
+              <>
+                <div className="w-px bg-white/5 shrink-0" />
+                <div className="flex min-w-0 flex-1 flex-col min-h-0 items-center justify-center">
+                  <p className="text-[13px] text-stone-600">
+                    Select a second agent
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
         ) : (
           <EmptyState />
         )}
@@ -148,7 +219,6 @@ export function Dashboard() {
   );
 }
 
-/** Shown when no agent is selected */
 function EmptyState() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center px-6">
