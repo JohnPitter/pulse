@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Search, Plus, Settings, Columns2, LogOut } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { Search, Plus, Settings, Columns2, LogOut, Cpu } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import type { Agent } from "../../stores/agents";
 import { useAuthStore } from "../../stores/auth";
@@ -21,9 +21,19 @@ interface StatusGroup {
   label: string;
   agents: Agent[];
   color: string;
+  key: StatusKey;
 }
 
-function groupAgents(agents: Agent[], query: string): StatusGroup[] {
+type StatusKey = "active" | "needInput" | "done" | "stopped";
+
+function classifyAgent(agent: Agent): StatusKey {
+  if (agent.status === "running") return "active";
+  if (agent.status === "waiting") return "needInput";
+  if (agent.lastMessage) return "done";
+  return "stopped";
+}
+
+function groupAgents(agents: Agent[], query: string, filter: Set<StatusKey>): StatusGroup[] {
   const q = query.toLowerCase().trim();
   const filtered = q
     ? agents.filter(
@@ -33,29 +43,33 @@ function groupAgents(agents: Agent[], query: string): StatusGroup[] {
       )
     : agents;
 
-  const active: Agent[] = [];
-  const needInput: Agent[] = [];
-  const done: Agent[] = [];
-  const stopped: Agent[] = [];
+  const buckets: Record<StatusKey, Agent[]> = {
+    active: [],
+    needInput: [],
+    done: [],
+    stopped: [],
+  };
 
   for (const agent of filtered) {
-    if (agent.status === "running") {
-      active.push(agent);
-    } else if (agent.status === "waiting") {
-      needInput.push(agent);
-    } else if (agent.lastMessage) {
-      done.push(agent);
-    } else {
-      stopped.push(agent);
+    const key = classifyAgent(agent);
+    if (filter.size === 0 || filter.has(key)) {
+      buckets[key].push(agent);
     }
   }
 
-  const groups: StatusGroup[] = [];
-  if (active.length > 0) groups.push({ label: "Active", agents: active, color: "bg-success" });
-  if (needInput.length > 0) groups.push({ label: "Need Input", agents: needInput, color: "bg-warning" });
-  if (done.length > 0) groups.push({ label: "Done", agents: done, color: "bg-info" });
-  if (stopped.length > 0) groups.push({ label: "Stopped", agents: stopped, color: "bg-neutral-fg3" });
+  const defs: Array<{ key: StatusKey; label: string; color: string }> = [
+    { key: "active", label: "Active", color: "bg-success" },
+    { key: "needInput", label: "Need Input", color: "bg-warning" },
+    { key: "done", label: "Done", color: "bg-info" },
+    { key: "stopped", label: "Stopped", color: "bg-neutral-fg3" },
+  ];
 
+  const groups: StatusGroup[] = [];
+  for (const def of defs) {
+    if (buckets[def.key].length > 0) {
+      groups.push({ ...def, agents: buckets[def.key] });
+    }
+  }
   return groups;
 }
 
@@ -65,13 +79,24 @@ function countByStatus(agents: Agent[]) {
   let done = 0;
   let stopped = 0;
   for (const a of agents) {
-    if (a.status === "running") active++;
-    else if (a.status === "waiting") needInput++;
-    else if (a.lastMessage) done++;
+    const key = classifyAgent(a);
+    if (key === "active") active++;
+    else if (key === "needInput") needInput++;
+    else if (key === "done") done++;
     else stopped++;
   }
   return { active, needInput, done, stopped, total: agents.length };
 }
+
+const FILTER_PILLS: Array<{
+  key: StatusKey;
+  dotBg: string;
+}> = [
+  { key: "active", dotBg: "bg-success" },
+  { key: "needInput", dotBg: "bg-warning" },
+  { key: "done", dotBg: "bg-info" },
+  { key: "stopped", dotBg: "bg-neutral-fg3" },
+];
 
 export function AgentSidebar({
   agents,
@@ -85,16 +110,31 @@ export function AgentSidebar({
   onCloseMobile,
 }: AgentSidebarProps) {
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<Set<StatusKey>>(new Set());
   const navigate = useNavigate();
   const logout = useAuthStore((s) => s.logout);
 
-  const groups = useMemo(() => groupAgents(agents, search), [agents, search]);
+  const groups = useMemo(() => groupAgents(agents, search, statusFilter), [agents, search, statusFilter]);
   const counts = useMemo(() => countByStatus(agents), [agents]);
+
+  const toggleFilter = useCallback((key: StatusKey) => {
+    setStatusFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }, []);
 
   const handleLogout = async () => {
     await logout();
     navigate("/login");
   };
+
+  const countFor = (key: StatusKey) => counts[key === "needInput" ? "needInput" : key];
 
   return (
     <>
@@ -105,152 +145,151 @@ export function AgentSidebar({
           onClick={onCloseMobile}
         />
       )}
-    <aside className={`
-      fixed inset-y-0 left-0 z-40 w-64 flex flex-col bg-neutral-bg2 border-r border-stroke shadow-16
-      transform transition-transform duration-300 ease-in-out
-      md:relative md:z-auto md:border md:rounded-2xl md:shadow-2 md:shrink-0 md:transform-none md:transition-none
-      ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-    `}>
-      {/* Header: brand + actions */}
-      <div className="flex items-center justify-between px-4 h-12 border-b border-stroke">
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-brand" />
-          <span className="text-[15px] font-semibold text-neutral-fg1 tracking-tight">
-            Pulse
-          </span>
+      <aside className={`
+        fixed inset-y-0 left-0 z-40 w-64 flex flex-col bg-neutral-bg2 border-r border-stroke
+        transform transition-transform duration-300 ease-in-out
+        md:relative md:z-auto md:border md:rounded-2xl md:shadow-2 md:shrink-0 md:transform-none md:transition-none
+        ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+      `}>
+        {/* Header: brand + actions */}
+        <div className="flex items-center justify-between px-4 h-14 border-b border-stroke">
+          <div className="flex items-center gap-2.5">
+            <div className="h-7 w-7 rounded-lg bg-brand flex items-center justify-center shrink-0">
+              <Cpu className="h-4 w-4 text-white" />
+            </div>
+            <span className="text-[15px] font-bold text-neutral-fg1 tracking-tight">Pulse</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={onToggleSplit}
+              aria-label={splitMode ? "Single view" : "Split view"}
+              className={`flex h-7 w-7 items-center justify-center rounded-lg transition-all duration-150 ${
+                splitMode
+                  ? "bg-brand-light text-brand"
+                  : "text-neutral-fg3 hover:bg-neutral-bg3 hover:text-neutral-fg1"
+              }`}
+            >
+              <Columns2 className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={onCreateAgent}
+              aria-label="Create new agent"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-fg3 transition-all duration-150 hover:bg-neutral-bg3 hover:text-neutral-fg1 active:scale-[0.95]"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+            <Link
+              to="/settings"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-fg3 transition-all duration-150 hover:bg-neutral-bg3 hover:text-neutral-fg1"
+              aria-label="Settings"
+            >
+              <Settings className="h-3.5 w-3.5" />
+            </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              aria-label="Logout"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-fg3 transition-all duration-150 hover:bg-neutral-bg3 hover:text-danger"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={onToggleSplit}
-            aria-label={splitMode ? "Single view" : "Split view"}
-            className={`flex h-7 w-7 items-center justify-center rounded-lg transition-all duration-200 ${
-              splitMode
-                ? "bg-brand-light text-brand"
-                : "text-neutral-fg3 hover:bg-neutral-bg-hover hover:text-neutral-fg2"
-            }`}
-          >
-            <Columns2 className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={onCreateAgent}
-            aria-label="Create new agent"
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-fg2 transition-all duration-200 hover:bg-brand-light hover:text-brand active:scale-[0.95]"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
-          <Link
-            to="/settings"
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-fg3 transition-all duration-200 hover:bg-neutral-bg-hover hover:text-neutral-fg2"
-            aria-label="Settings"
-          >
-            <Settings className="h-3.5 w-3.5" />
-          </Link>
-          <button
-            type="button"
-            onClick={handleLogout}
-            aria-label="Logout"
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-fg3 transition-all duration-200 hover:bg-neutral-bg-hover hover:text-danger"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </div>
 
-      {/* Status indicators */}
-      {agents.length > 0 && (
-        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-stroke">
-          {/* Active */}
-          <div className="flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 transition-all duration-200">
-            <span className="relative inline-flex">
-              {counts.active > 0 && (
-                <span className="absolute inline-flex h-2 w-2 rounded-full bg-success opacity-75 animate-ping" />
+        {/* Status filter pills */}
+        {agents.length > 0 && (
+          <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-stroke">
+            {FILTER_PILLS.map((pill) => {
+              const count = countFor(pill.key);
+              const isSelected = statusFilter.has(pill.key);
+              const isNoFilter = statusFilter.size === 0;
+              return (
+                <button
+                  key={pill.key}
+                  type="button"
+                  onClick={() => toggleFilter(pill.key)}
+                  className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all duration-150 cursor-pointer ${
+                    isSelected
+                      ? "bg-neutral-fg1 text-neutral-bg2"
+                      : isNoFilter
+                      ? "bg-neutral-bg3 text-neutral-fg2 hover:bg-neutral-bg-hover"
+                      : "bg-neutral-bg3/60 text-neutral-fg3 hover:bg-neutral-bg3"
+                  }`}
+                  aria-pressed={isSelected}
+                  aria-label={`Filter by ${pill.key}`}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${isSelected ? "bg-white" : pill.dotBg}`} />
+                  <span className="tabular-nums">{count}</span>
+                </button>
+              );
+            })}
+            <span className="ml-auto text-[11px] font-medium tabular-nums text-neutral-fg3">{counts.total} total</span>
+          </div>
+        )}
+
+        {/* Search */}
+        <div className="px-3 py-2.5">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-fg3" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search agents..."
+              className="w-full rounded-full border border-stroke bg-neutral-bg3 py-1.5 pl-8 pr-4 text-[13px] text-neutral-fg1 placeholder:text-neutral-fg3 outline-none focus:border-brand focus:bg-neutral-bg2 transition-all duration-150"
+            />
+          </div>
+        </div>
+
+        {/* Agent list */}
+        <div className="flex-1 overflow-y-auto px-2 pb-2">
+          {groups.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <p className="text-[12px] text-neutral-fg3">
+                {agents.length === 0
+                  ? "No agents yet"
+                  : statusFilter.size > 0
+                  ? "No agents match this filter"
+                  : "No matches"}
+              </p>
+              {statusFilter.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter(new Set())}
+                  className="mt-2 text-[11px] text-brand hover:underline"
+                >
+                  Clear filters
+                </button>
               )}
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
-            </span>
-            <span className="text-[12px] font-semibold tabular-nums text-success">{counts.active}</span>
-          </div>
-          {/* Need Input */}
-          <div className="flex items-center gap-1.5 rounded-full bg-warning/10 px-2.5 py-1 transition-all duration-200">
-            <span className="relative inline-flex">
-              {counts.needInput > 0 && (
-                <span className="absolute inline-flex h-2 w-2 rounded-full bg-warning opacity-75 animate-pulse" />
-              )}
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-warning" />
-            </span>
-            <span className="text-[12px] font-semibold tabular-nums text-warning">{counts.needInput}</span>
-          </div>
-          {/* Done */}
-          <div className="flex items-center gap-1.5 rounded-full bg-info/10 px-2.5 py-1 transition-all duration-200">
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-info" />
-            <span className="text-[12px] font-semibold tabular-nums text-info">{counts.done}</span>
-          </div>
-          {/* Stopped */}
-          <div className="flex items-center gap-1.5 rounded-full bg-neutral-fg3/10 px-2.5 py-1 transition-all duration-200">
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-neutral-fg3" />
-            <span className="text-[12px] font-semibold tabular-nums text-neutral-fg2">{counts.stopped}</span>
-          </div>
-          <span className="ml-auto text-[11px] font-medium tabular-nums text-neutral-fg2">{counts.total}</span>
-        </div>
-      )}
-
-      {/* Search */}
-      <div className="px-3 py-3">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-fg-disabled" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search agents..."
-            className="input-fluent w-full py-1.5 pl-8 pr-3 text-[13px]"
-          />
-        </div>
-      </div>
-
-      {/* Agent list */}
-      <div className="flex-1 overflow-y-auto px-2 pb-2">
-        {groups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <p className="text-xs text-neutral-fg-disabled">
-              {agents.length === 0 ? "No agents yet" : "No matches"}
-            </p>
-          </div>
-        ) : (
-          groups.map((group) => (
-            <div key={group.label} className="mb-3">
-              <div className="flex items-center justify-between px-2.5 mb-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="relative inline-flex">
-                    {(group.label === "Active" || group.label === "Need Input") && (
-                      <span className={`absolute inline-flex h-1.5 w-1.5 rounded-full ${group.color} opacity-60 ${group.label === "Active" ? "animate-ping" : "animate-pulse"}`} />
-                    )}
-                    <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${group.color}`} />
-                  </span>
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-fg2">
+            </div>
+          ) : (
+            groups.map((group) => (
+              <div key={group.label} className="mb-4">
+                <div className="flex items-center justify-between px-2 mb-1.5">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-fg3">
                     {group.label}
                   </span>
+                  <span className="text-[10px] font-semibold text-neutral-fg3 tabular-nums">
+                    {group.agents.length}
+                  </span>
                 </div>
-                <span className="text-[11px] font-semibold tabular-nums text-neutral-fg2">
-                  {group.agents.length}
-                </span>
+                <div className="space-y-1">
+                  {group.agents.map((agent) => (
+                    <AgentSidebarItem
+                      key={agent.id}
+                      agent={agent}
+                      selected={agent.id === selectedAgentId || agent.id === secondAgentId}
+                      onSelect={onSelectAgent}
+                    />
+                  ))}
+                </div>
               </div>
-              <div className="space-y-1.5">
-                {group.agents.map((agent) => (
-                  <AgentSidebarItem
-                    key={agent.id}
-                    agent={agent}
-                    selected={agent.id === selectedAgentId || agent.id === secondAgentId}
-                    onSelect={onSelectAgent}
-                  />
-                ))}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </aside>
+            ))
+          )}
+        </div>
+      </aside>
     </>
   );
 }
