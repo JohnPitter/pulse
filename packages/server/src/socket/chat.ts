@@ -5,6 +5,7 @@ import { db } from "../db/index.js";
 import { chatMessages } from "../db/schema.js";
 import type { AgentManager } from "../services/agent-manager.js";
 import { captureTmuxPane, tmuxSessionName, sessionExists } from "../services/tmux.js";
+import { resizeTerminal } from "../services/terminal.js";
 import * as logger from "../lib/logger.js";
 
 const CONTEXT = "socket:chat";
@@ -94,12 +95,22 @@ export function setupChatHandlers(
     }
   });
 
-  socket.on("agent:subscribe", async (data: { agentId: string }) => {
+  socket.on("agent:subscribe", async (data: { agentId: string; cols?: number; rows?: number }) => {
     socket.join(data.agentId);
     logger.info("Socket subscribed to agent room", CONTEXT, {
       agentId: data.agentId,
       socketId: socket.id,
+      cols: data.cols,
+      rows: data.rows,
     });
+
+    // Resize the tmux pane to match client terminal dimensions before capturing.
+    // This lets tmux reflow content at the correct width so history isn't corrupted.
+    if (data.cols && data.rows) {
+      resizeTerminal(data.agentId, data.cols, data.rows);
+      // Brief pause for tmux to reflow content at new dimensions
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
 
     // Send tmux history if session is alive
     const tmuxName = tmuxSessionName(data.agentId);

@@ -45,19 +45,10 @@ export function TerminalView({ agentId }: TerminalViewProps) {
       }
     };
 
-    // Delay initial fit to ensure the container has final dimensions after React layout
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        safeFit();
-      });
-    });
-
     terminalRef.current = terminal;
 
-    // Subscribe to the agent's socket room (required to receive terminal events)
-    emitEvent("agent:subscribe", { agentId });
-
-    // Listen for terminal history replay (tmux capture-pane on reconnect)
+    // Set up socket listeners early — they guard with disposed flag.
+    // History and output only arrive AFTER subscribe (deferred below).
     const unsubHistory = onEvent(
       "terminal:history",
       (data: unknown) => {
@@ -68,7 +59,6 @@ export function TerminalView({ agentId }: TerminalViewProps) {
       },
     );
 
-    // Listen for live terminal output from server
     const unsubOutput = onEvent(
       "terminal:output",
       (data: unknown) => {
@@ -95,6 +85,21 @@ export function TerminalView({ agentId }: TerminalViewProps) {
       }
     });
     observer.observe(termRef.current);
+
+    // FIT FIRST, then resize server PTY, then subscribe.
+    // This ensures tmux reflows content at correct dimensions before capture.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (disposed) return;
+        safeFit();
+
+        const { cols, rows } = terminal;
+        emitEvent("terminal:resize", { agentId, cols, rows });
+
+        // Subscribe with dimensions so server can resize tmux pane before capturing history
+        emitEvent("agent:subscribe", { agentId, cols, rows });
+      });
+    });
 
     return () => {
       disposed = true;
