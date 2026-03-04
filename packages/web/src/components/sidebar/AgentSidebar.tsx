@@ -210,7 +210,7 @@ export function AgentSidebar({
                   key={pill.key}
                   type="button"
                   onClick={() => toggleFilter(pill.key)}
-                  className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all duration-150 cursor-pointer ${
+                  className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-1 ${
                     isSelected
                       ? "bg-neutral-fg1 text-neutral-bg2"
                       : isNoFilter

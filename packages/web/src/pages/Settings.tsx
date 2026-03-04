@@ -263,7 +263,7 @@ function ClaudeAuthSection() {
           <h3 className="text-[15px] font-semibold text-neutral-fg1">Claude Authentication</h3>
           <p className="text-[13px] text-neutral-fg2 mt-0.5">Configure how Pulse connects to Claude</p>
         </div>
-        <div className="px-6 py-5 flex items-center justify-center py-8">
+        <div className="px-6 py-8 flex items-center justify-center">
           <Loader2 className="h-5 w-5 animate-spin text-neutral-fg3" />
         </div>
       </div>

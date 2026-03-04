@@ -462,6 +462,11 @@ code, pre, .font-mono, kbd {
   transform: translateY(0);
 }
 
+.btn-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(245,158,11,0.40), var(--shadow-brand);
+}
+
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -483,6 +488,11 @@ code, pre, .font-mono, kbd {
   color: var(--color-neutral-fg1);
   border-color: var(--card-hover-border);
   transform: translateY(-1px);
+}
+
+.btn-secondary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(245,158,11,0.25);
 }
 
 .btn-ghost {
