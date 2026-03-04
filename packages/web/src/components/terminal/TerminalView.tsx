@@ -16,6 +16,8 @@ export function TerminalView({ agentId }: TerminalViewProps) {
     if (!termRef.current) return;
 
     let disposed = false;
+    let subscribed = false;
+    let lastCols = 0;
 
     const terminal = new Terminal({
       cursorBlink: true,
@@ -48,12 +50,13 @@ export function TerminalView({ agentId }: TerminalViewProps) {
     terminalRef.current = terminal;
 
     // Set up socket listeners early — they guard with disposed flag.
-    // History and output only arrive AFTER subscribe (deferred below).
     const unsubHistory = onEvent(
       "terminal:history",
       (data: unknown) => {
         const payload = data as { agentId: string; data: string };
         if (payload.agentId === agentId && !disposed) {
+          // Clear screen + cursor home before writing history for a clean render
+          terminal.write("\x1b[2J\x1b[H");
           terminal.write(payload.data);
         }
       },
@@ -76,28 +79,46 @@ export function TerminalView({ agentId }: TerminalViewProps) {
       }
     });
 
-    // Handle resize — notify server of new dimensions
+    /** Subscribe (or re-subscribe) with current terminal dimensions */
+    const subscribe = () => {
+      if (disposed) return;
+      const { cols, rows } = terminal;
+      lastCols = cols;
+      emitEvent("terminal:resize", { agentId, cols, rows });
+      emitEvent("agent:subscribe", { agentId, cols, rows });
+      subscribed = true;
+    };
+
+    // Handle resize — notify server of new dimensions.
+    // When cols change significantly, re-subscribe to get fresh history
+    // at the correct dimensions (SIGWINCH makes Claude CLI re-render).
     const observer = new ResizeObserver(() => {
       safeFit();
-      if (!disposed) {
-        const { cols, rows } = terminal;
-        emitEvent("terminal:resize", { agentId, cols, rows });
+      if (disposed) return;
+
+      const { cols, rows } = terminal;
+      emitEvent("terminal:resize", { agentId, cols, rows });
+
+      // If cols changed significantly after initial subscribe, re-subscribe
+      // so the server re-captures tmux after the CLI re-renders at new width.
+      if (subscribed && Math.abs(cols - lastCols) > 2) {
+        lastCols = cols;
+        // Wait for CLI to re-render at new dimensions after SIGWINCH
+        setTimeout(() => {
+          if (disposed) return;
+          emitEvent("agent:subscribe", { agentId, cols, rows });
+        }, 300);
       }
     });
     observer.observe(termRef.current);
 
-    // FIT FIRST, then resize server PTY, then subscribe.
-    // This ensures tmux reflows content at correct dimensions before capture.
+    // FIT FIRST, then subscribe.
+    // Double rAF ensures container has final dimensions after React layout.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         if (disposed) return;
         safeFit();
-
-        const { cols, rows } = terminal;
-        emitEvent("terminal:resize", { agentId, cols, rows });
-
-        // Subscribe with dimensions so server can resize tmux pane before capturing history
-        emitEvent("agent:subscribe", { agentId, cols, rows });
+        subscribe();
       });
     });
 

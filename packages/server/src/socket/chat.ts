@@ -105,11 +105,11 @@ export function setupChatHandlers(
     });
 
     // Resize the tmux pane to match client terminal dimensions before capturing.
-    // This lets tmux reflow content at the correct width so history isn't corrupted.
+    // After resize, tmux sends SIGWINCH → Claude CLI re-renders at new width.
+    // We wait for the re-render to complete before capturing the pane content.
     if (data.cols && data.rows) {
       resizeTerminal(data.agentId, data.cols, data.rows);
-      // Brief pause for tmux to reflow content at new dimensions
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 300));
     }
 
     // Send tmux history if session is alive
