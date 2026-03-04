@@ -127,7 +127,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4"
           onClick={handleClose}
           role="dialog"
           aria-modal="true"
@@ -138,30 +138,30 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.2 }}
-            className="glass-strong w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl shadow-16 p-6"
+            className="bg-neutral-bg2 border border-stroke rounded-2xl shadow-16 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-neutral-fg1 tracking-tight">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-stroke">
+              <h2 className="text-[18px] font-bold text-neutral-fg1 tracking-tight">
                 {isEditMode ? "Edit Agent" : "Create Agent"}
               </h2>
               <button
                 type="button"
                 onClick={handleClose}
                 aria-label="Close dialog"
-                className="rounded-lg p-1.5 text-neutral-fg2 transition-colors duration-200 hover:bg-neutral-bg3 hover:text-neutral-fg1"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-fg3 hover:bg-neutral-bg3 hover:text-neutral-fg1 transition-all duration-150"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form id="agent-form" onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
               {/* Name */}
               <div>
                 <label
                   htmlFor="agent-name"
-                  className="block text-xs font-medium text-neutral-fg2 mb-1.5"
+                  className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block"
                 >
                   Name
                 </label>
@@ -180,7 +180,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
               <div>
                 <label
                   htmlFor="agent-path"
-                  className="block text-xs font-medium text-neutral-fg2 mb-1.5"
+                  className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block"
                 >
                   Project Path
                 </label>
@@ -220,16 +220,16 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
 
               {/* Model */}
               <fieldset>
-                <legend className="block text-xs font-medium text-neutral-fg2 mb-2">
+                <legend className="text-[11px] font-semibold uppercase tracking-wider text-neutral-fg3 mb-2">
                   Model
                 </legend>
                 <div className="flex gap-2">
                   {MODELS.map((m) => (
                     <label
                       key={m.value}
-                      className={`flex-1 cursor-pointer rounded-lg border px-3 py-2.5 text-center transition-all duration-200 ${
+                      className={`flex-1 cursor-pointer rounded-xl border px-3 py-3 text-center transition-all duration-200 ${
                         model === m.value
-                          ? `${m.borderColor} ${m.bgColor} ${m.textColor}`
+                          ? `border-brand/40 bg-brand-light ${m.textColor}`
                           : "border-stroke bg-neutral-bg3 text-neutral-fg2 hover:border-[var(--card-hover-border)]"
                       }`}
                     >
@@ -241,7 +241,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                         onChange={() => setModel(m.value)}
                         className="sr-only"
                       />
-                      <span className="block text-sm font-medium">{m.label}</span>
+                      <span className="block text-[13px] font-bold">{m.label}</span>
                       <span className={`block text-[10px] mt-0.5 ${model === m.value ? "opacity-80" : "text-neutral-fg3"}`}>
                         {m.description}
                       </span>
@@ -251,36 +251,37 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
               </fieldset>
 
               {/* Thinking toggle */}
-              <label className="flex items-center gap-3 cursor-pointer">
-                <div className="relative">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-neutral-bg3 border border-stroke">
+                <div>
+                  <p className="text-[13px] font-medium text-neutral-fg1">Extended thinking</p>
+                  <p className="text-[11px] text-neutral-fg3">Enables deeper reasoning (Sonnet/Opus only)</p>
+                </div>
+                <label className="relative cursor-pointer shrink-0">
                   <input
                     type="checkbox"
                     checked={thinkingEnabled}
                     onChange={(e) => setThinkingEnabled(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="h-5 w-9 rounded-full bg-neutral-bg3 transition-colors duration-200 peer-checked:bg-brand" />
-                  <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-200 peer-checked:translate-x-4" />
-                </div>
-                <span className="text-sm text-neutral-fg2">
-                  Enable extended thinking
-                </span>
-              </label>
+                  <div className="h-5 w-9 rounded-full bg-neutral-bg2 border border-stroke transition-colors duration-200 peer-checked:bg-brand peer-checked:border-brand" />
+                  <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 peer-checked:translate-x-4" />
+                </label>
+              </div>
 
               <div className="border-b border-stroke/50" />
 
               {/* Permission Mode */}
               <fieldset>
-                <legend className="block text-xs font-medium text-neutral-fg2 mb-2">
+                <legend className="text-[11px] font-semibold uppercase tracking-wider text-neutral-fg3 mb-2">
                   Permission Level
                 </legend>
                 <div className="grid grid-cols-2 gap-2">
                   {PERMISSION_MODES.map((p) => (
                     <label
                       key={p.value}
-                      className={`cursor-pointer rounded-lg border px-3 py-2.5 transition-all duration-200 ${
+                      className={`cursor-pointer rounded-xl border px-3 py-3 transition-all duration-200 ${
                         permissionMode === p.value
-                          ? "border-brand bg-brand-light text-brand"
+                          ? "border-brand/40 bg-brand-light text-brand"
                           : "border-stroke bg-neutral-bg3 text-neutral-fg2 hover:border-[var(--card-hover-border)]"
                       }`}
                     >
@@ -292,7 +293,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                         onChange={() => setPermissionMode(p.value)}
                         className="sr-only"
                       />
-                      <span className="block text-sm font-medium">{p.label}</span>
+                      <span className="block text-[13px] font-bold">{p.label}</span>
                       <span className={`block text-[10px] mt-0.5 ${permissionMode === p.value ? "opacity-80" : "text-neutral-fg3"}`}>
                         {p.description}
                       </span>
@@ -307,7 +308,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
               <div>
                 <label
                   htmlFor="agent-claudemd"
-                  className="block text-xs font-medium text-neutral-fg2 mb-1.5"
+                  className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block"
                 >
                   CLAUDE.md{" "}
                   <span className="text-neutral-fg-disabled">(optional)</span>
@@ -326,7 +327,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
               <div>
                 <label
                   htmlFor="agent-prompt"
-                  className="block text-xs font-medium text-neutral-fg2 mb-1.5"
+                  className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block"
                 >
                   Initial Prompt{" "}
                   <span className="text-neutral-fg-disabled">(optional)</span>
@@ -348,31 +349,32 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                   <p className="text-sm text-danger">{error}</p>
                 </div>
               )}
-
-              {/* Actions */}
-              <div className="flex gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className="btn-secondary flex-1 py-2.5 text-sm font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !name.trim() || !projectPath.trim()}
-                  className="btn-primary flex-1 py-2.5 text-sm"
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="mx-auto h-4 w-4 animate-spin" />
-                  ) : isEditMode ? (
-                    "Save"
-                  ) : (
-                    "Create"
-                  )}
-                </button>
-              </div>
             </form>
+
+            {/* Footer */}
+            <div className="flex justify-end gap-2 px-6 py-4 border-t border-stroke">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="btn-secondary px-4 py-2 text-[14px]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="agent-form"
+                disabled={isSubmitting || !name.trim() || !projectPath.trim()}
+                className="btn-primary px-4 py-2 text-[14px]"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                ) : isEditMode ? (
+                  "Save Changes"
+                ) : (
+                  "Create Agent"
+                )}
+              </button>
+            </div>
           </motion.div>
         </motion.div>
       )}

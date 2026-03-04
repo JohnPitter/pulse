@@ -252,22 +252,19 @@ export function Dashboard() {
 function NoAgentsState({ onCreateAgent }: { onCreateAgent: () => void }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6">
-      <div className="glass rounded-2xl p-8 flex flex-col items-center gap-5 max-w-md w-full relative overflow-hidden">
-        <div className="absolute inset-0 bg-dot-pattern opacity-50 pointer-events-none" />
-        <div className="relative">
-          <div className="rounded-2xl bg-brand-light p-5 animate-glow">
-            <Cpu className="h-10 w-10 text-brand" />
-          </div>
+      <div className="bg-neutral-bg2 border border-stroke rounded-2xl p-10 flex flex-col items-center gap-6 max-w-md w-full shadow-4">
+        <div className="rounded-2xl bg-brand-light p-5">
+          <Cpu className="h-10 w-10 text-brand" />
         </div>
-        <div className="relative text-center space-y-2">
-          <h2 className="text-lg font-semibold text-neutral-fg1 tracking-tight">No agents yet</h2>
-          <p className="text-sm text-neutral-fg2 leading-relaxed">
-            Create your first Claude agent to get started. Each agent runs in its own terminal with a dedicated Claude session.
+        <div className="text-center space-y-2">
+          <h2 className="text-[22px] font-bold text-neutral-fg1 tracking-tight">No agents yet</h2>
+          <p className="text-[14px] text-neutral-fg2 leading-relaxed max-w-xs">
+            Create your first Claude agent to get started. Each agent runs in its own terminal session.
           </p>
         </div>
         <button
           onClick={onCreateAgent}
-          className="btn-primary relative flex items-center gap-2 px-6 py-2.5 text-sm"
+          className="btn-primary flex items-center gap-2 px-6 py-2.5 text-[14px]"
         >
           <Plus className="h-4 w-4" />
           Create Agent
@@ -280,17 +277,15 @@ function NoAgentsState({ onCreateAgent }: { onCreateAgent: () => void }) {
 function SelectAgentState() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6">
-      <div className="glass rounded-2xl p-8 flex flex-col items-center gap-4 max-w-sm w-full">
-        <Terminal className="h-8 w-8 text-neutral-fg3" />
-        <div className="text-center space-y-1.5">
-          <p className="text-sm font-medium text-neutral-fg1">Select an agent</p>
-          <p className="text-xs text-neutral-fg2 leading-relaxed">
-            Choose an agent from the sidebar to view its live terminal output
-          </p>
+      <div className="bg-neutral-bg2 border border-stroke rounded-2xl p-8 flex flex-col items-center gap-4 max-w-sm w-full shadow-2">
+        <div className="rounded-xl bg-neutral-bg3 p-4">
+          <Terminal className="h-7 w-7 text-neutral-fg3" />
         </div>
-        <div className="flex items-center gap-1 text-neutral-fg-disabled">
-          <span className="text-xs">Waiting</span>
-          <span className="inline-block w-0.5 h-4 bg-neutral-fg3 animate-[blink_1s_step-end_infinite]" />
+        <div className="text-center space-y-1">
+          <p className="text-[15px] font-semibold text-neutral-fg1">Select an agent</p>
+          <p className="text-[13px] text-neutral-fg2 leading-relaxed">
+            Choose an agent from the sidebar to view its terminal output
+          </p>
         </div>
       </div>
     </div>
