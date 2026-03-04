@@ -1,7 +1,7 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { randomBytes } from "node:crypto";
-import { readFile, readdir } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { eq } from "drizzle-orm";
@@ -341,18 +341,39 @@ router.post("/oauth-exchange", async (req: Request, res: Response) => {
 // --------------------------------------------------------------------------
 router.get("/plugins", async (_req: Request, res: Response) => {
   try {
-    const pluginsDir = join(homedir(), ".claude", "plugins");
-    let entries: string[];
+    const installedPath = join(homedir(), ".claude", "plugins", "installed_plugins.json");
+    let raw: string;
     try {
-      entries = await readdir(pluginsDir);
+      raw = await readFile(installedPath, "utf-8");
     } catch {
-      // Directory doesn't exist — no plugins
+      // File doesn't exist — no plugins
       res.json({ plugins: [] });
       return;
     }
 
-    // Each subdirectory in plugins/ is a plugin
-    const plugins = entries.filter((e) => !e.startsWith("."));
+    const data = JSON.parse(raw) as {
+      plugins?: Record<string, Array<{ version: string; installedAt: string }>>;
+    };
+
+    if (!data.plugins) {
+      res.json({ plugins: [] });
+      return;
+    }
+
+    // Parse "pluginName@marketplace" keys into structured objects
+    const plugins = Object.entries(data.plugins).map(([key, installs]) => {
+      const atIdx = key.indexOf("@");
+      const name = atIdx > 0 ? key.slice(0, atIdx) : key;
+      const marketplace = atIdx > 0 ? key.slice(atIdx + 1) : "unknown";
+      const latest = installs[0];
+      return {
+        name,
+        marketplace,
+        version: latest?.version ?? "unknown",
+        installedAt: latest?.installedAt ?? null,
+      };
+    });
+
     logger.info(`Found ${plugins.length} Claude Code plugins`, CONTEXT);
     res.json({ plugins });
   } catch (err) {

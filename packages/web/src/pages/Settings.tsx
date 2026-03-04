@@ -684,14 +684,21 @@ function ApiKeyReconfigure({
 // Plugins Section
 // --------------------------------------------------------------------------
 
+interface PluginInfo {
+  name: string;
+  marketplace: string;
+  version: string;
+  installedAt: string | null;
+}
+
 function PluginsSection() {
-  const [plugins, setPlugins] = useState<string[]>([]);
+  const [plugins, setPlugins] = useState<PluginInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/settings/plugins", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : { plugins: [] }))
-      .then((data: { plugins: string[] }) => setPlugins(data.plugins))
+      .then((data: { plugins: PluginInfo[] }) => setPlugins(data.plugins))
       .catch(() => setPlugins([]))
       .finally(() => setIsLoading(false));
   }, []);
@@ -704,7 +711,11 @@ function PluginsSection() {
         </div>
         <div>
           <h2 className="text-sm font-semibold">Claude Code Plugins</h2>
-          <p className="text-xs text-neutral-fg3">Extensions installed on the server</p>
+          <p className="text-xs text-neutral-fg3">
+            {plugins.length > 0
+              ? `${plugins.length} plugin${plugins.length > 1 ? "s" : ""} installed on the server`
+              : "Extensions installed on the server"}
+          </p>
         </div>
       </div>
 
@@ -722,13 +733,23 @@ function PluginsSection() {
         </div>
       ) : (
         <div className="space-y-2">
-          {plugins.map((name) => (
+          {plugins.map((plugin) => (
             <div
-              key={name}
+              key={`${plugin.name}@${plugin.marketplace}`}
               className="flex items-center gap-3 rounded-lg border border-stroke bg-neutral-bg3 px-3 py-2.5"
             >
               <Puzzle className="h-4 w-4 text-brand shrink-0" />
-              <span className="text-sm text-neutral-fg1 truncate">{name}</span>
+              <div className="min-w-0 flex-1">
+                <span className="text-sm font-medium text-neutral-fg1 truncate block">
+                  {plugin.name}
+                </span>
+                <span className="text-[11px] text-neutral-fg3">
+                  {plugin.marketplace}
+                </span>
+              </div>
+              <span className="shrink-0 rounded-md bg-neutral-bg2 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-neutral-fg3">
+                v{plugin.version}
+              </span>
             </div>
           ))}
         </div>
