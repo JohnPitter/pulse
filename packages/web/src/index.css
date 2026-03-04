@@ -399,6 +399,11 @@ code, pre, .font-mono, kbd {
 .stagger-4 { animation-delay: 0.2s; }
 .stagger-5 { animation-delay: 0.25s; }
 
+.bg-dot-pattern {
+  background-image: radial-gradient(circle, var(--dot-pattern-color) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
 /* ═══ Component styles — wrapped in @layer so Tailwind utilities can override ═══ */
 
 @layer components {

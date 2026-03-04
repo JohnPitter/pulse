@@ -1,4 +1,4 @@
-import { Play, Pause, Copy, Square, Brain, Pencil } from "lucide-react";
+import { Play, Pause, Copy, Square, Brain, Pencil, ActivitySquare } from "lucide-react";
 import { StatusDot } from "../common/StatusDot";
 import type { Agent } from "../../stores/agents";
 
@@ -17,6 +17,12 @@ const MODEL_LABELS: Record<string, string> = {
   haiku: "Haiku 4",
 };
 
+const MODEL_COLORS: Record<string, string> = {
+  haiku: "bg-info-light text-info",
+  sonnet: "bg-brand-light text-brand",
+  opus: "bg-purple-light text-purple",
+};
+
 export function TerminalInfoBar({
   agent,
   contextUsage,
@@ -26,9 +32,10 @@ export function TerminalInfoBar({
   onStopAgent,
 }: TerminalInfoBarProps) {
   const isRunning = agent.status === "running" || agent.status === "waiting";
+  const modelColor = MODEL_COLORS[agent.model] ?? "bg-neutral-bg3 text-neutral-fg2";
 
   return (
-    <div className="flex h-10 items-center justify-between border-b border-stroke bg-neutral-bg2 px-4">
+    <div className="flex h-12 items-center justify-between border-b border-stroke bg-neutral-bg2 px-4">
       {/* Left: status + name + model */}
       <div className="flex items-center gap-2.5 min-w-0">
         <StatusDot status={agent.status} size="sm" />
@@ -36,7 +43,7 @@ export function TerminalInfoBar({
           {agent.name}
         </span>
         <span className="text-neutral-fg-disabled">&middot;</span>
-        <span className="rounded-md bg-neutral-bg3 px-2 py-0.5 text-[11px] font-medium text-neutral-fg2">
+        <span className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${modelColor}`}>
           {MODEL_LABELS[agent.model] ?? agent.model}
         </span>
         {agent.thinkingEnabled === 1 && (
@@ -51,7 +58,8 @@ export function TerminalInfoBar({
         {contextUsage && (
           <>
             <span className="text-neutral-fg-disabled">&middot;</span>
-            <span className="text-[11px] font-mono text-neutral-fg3">
+            <span className="flex items-center gap-1 rounded-md bg-neutral-bg3 px-2 py-0.5 text-[11px] font-mono text-neutral-fg3">
+              <ActivitySquare className="h-3 w-3" />
               {contextUsage}
             </span>
           </>
@@ -65,7 +73,7 @@ export function TerminalInfoBar({
           type="button"
           onClick={onToggleAgent}
           aria-label={isRunning ? "Pause agent" : "Start agent"}
-          className={`flex h-7 w-7 items-center justify-center rounded-md transition-all duration-150 ${
+          className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-150 ${
             isRunning
               ? "text-brand hover:bg-brand-light"
               : "text-success hover:bg-success-light"
@@ -78,12 +86,15 @@ export function TerminalInfoBar({
           )}
         </button>
 
+        {/* Divider */}
+        <div className="h-5 w-px bg-stroke mx-0.5" />
+
         {/* Edit */}
         <button
           type="button"
           onClick={onEditAgent}
           aria-label="Edit agent"
-          className="flex h-7 w-7 items-center justify-center rounded-md text-neutral-fg3 transition-all duration-150 hover:bg-neutral-bg-hover hover:text-neutral-fg2"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-fg3 transition-all duration-150 hover:bg-neutral-bg-hover hover:text-neutral-fg2"
         >
           <Pencil className="h-3.5 w-3.5" />
         </button>
@@ -93,7 +104,7 @@ export function TerminalInfoBar({
           type="button"
           onClick={onDuplicateAgent}
           aria-label="Duplicate agent"
-          className="flex h-7 w-7 items-center justify-center rounded-md text-neutral-fg3 transition-all duration-150 hover:bg-neutral-bg-hover hover:text-neutral-fg2"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-fg3 transition-all duration-150 hover:bg-neutral-bg-hover hover:text-neutral-fg2"
         >
           <Copy className="h-3.5 w-3.5" />
         </button>
@@ -104,7 +115,7 @@ export function TerminalInfoBar({
           onClick={onStopAgent}
           aria-label="Stop agent"
           disabled={!isRunning}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-danger transition-all duration-150 hover:bg-danger-light disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-danger transition-all duration-150 hover:bg-danger-light disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
         >
           <Square className="h-3.5 w-3.5" />
         </button>

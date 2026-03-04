@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from "react";
-import { X, Loader2, FolderSearch } from "lucide-react";
+import { X, Loader2, FolderSearch, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   useAgentsStore,
@@ -16,16 +16,16 @@ interface AgentFormDialogProps {
 }
 
 const MODELS = [
-  { value: "haiku", label: "Haiku" },
-  { value: "sonnet", label: "Sonnet" },
-  { value: "opus", label: "Opus" },
+  { value: "haiku", label: "Haiku", description: "Fast & efficient", borderColor: "border-info", bgColor: "bg-info/8", textColor: "text-info" },
+  { value: "sonnet", label: "Sonnet", description: "Balanced", borderColor: "border-brand", bgColor: "bg-brand-light", textColor: "text-brand" },
+  { value: "opus", label: "Opus", description: "Most capable", borderColor: "border-purple", bgColor: "bg-purple-light", textColor: "text-purple" },
 ] as const;
 
 const PERMISSION_MODES = [
-  { value: "bypassPermissions", label: "Bypass" },
-  { value: "acceptEdits", label: "Accept Edits" },
-  { value: "default", label: "Default" },
-  { value: "plan", label: "Plan" },
+  { value: "bypassPermissions", label: "Bypass", description: "No confirmations" },
+  { value: "acceptEdits", label: "Accept Edits", description: "Auto-accept file changes" },
+  { value: "default", label: "Default", description: "Ask for each action" },
+  { value: "plan", label: "Plan", description: "Require plan approval" },
 ] as const;
 
 export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) {
@@ -138,7 +138,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.2 }}
-            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-stroke bg-neutral-bg2 backdrop-blur-md shadow-16 p-6"
+            className="glass-strong w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl shadow-16 p-6"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -216,6 +216,8 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                 )}
               </div>
 
+              <div className="border-b border-stroke/50" />
+
               {/* Model */}
               <fieldset>
                 <legend className="block text-xs font-medium text-neutral-fg2 mb-2">
@@ -225,9 +227,9 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                   {MODELS.map((m) => (
                     <label
                       key={m.value}
-                      className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center text-sm transition-all duration-200 ${
+                      className={`flex-1 cursor-pointer rounded-lg border px-3 py-2.5 text-center transition-all duration-200 ${
                         model === m.value
-                          ? "border-brand bg-brand-light text-brand"
+                          ? `${m.borderColor} ${m.bgColor} ${m.textColor}`
                           : "border-stroke bg-neutral-bg3 text-neutral-fg2 hover:border-[var(--card-hover-border)]"
                       }`}
                     >
@@ -239,7 +241,10 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                         onChange={() => setModel(m.value)}
                         className="sr-only"
                       />
-                      {m.label}
+                      <span className="block text-sm font-medium">{m.label}</span>
+                      <span className={`block text-[10px] mt-0.5 ${model === m.value ? "opacity-80" : "text-neutral-fg3"}`}>
+                        {m.description}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -262,6 +267,8 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                 </span>
               </label>
 
+              <div className="border-b border-stroke/50" />
+
               {/* Permission Mode */}
               <fieldset>
                 <legend className="block text-xs font-medium text-neutral-fg2 mb-2">
@@ -271,7 +278,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                   {PERMISSION_MODES.map((p) => (
                     <label
                       key={p.value}
-                      className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-sm transition-all duration-200 ${
+                      className={`cursor-pointer rounded-lg border px-3 py-2.5 transition-all duration-200 ${
                         permissionMode === p.value
                           ? "border-brand bg-brand-light text-brand"
                           : "border-stroke bg-neutral-bg3 text-neutral-fg2 hover:border-[var(--card-hover-border)]"
@@ -285,11 +292,16 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                         onChange={() => setPermissionMode(p.value)}
                         className="sr-only"
                       />
-                      {p.label}
+                      <span className="block text-sm font-medium">{p.label}</span>
+                      <span className={`block text-[10px] mt-0.5 ${permissionMode === p.value ? "opacity-80" : "text-neutral-fg3"}`}>
+                        {p.description}
+                      </span>
                     </label>
                   ))}
                 </div>
               </fieldset>
+
+              <div className="border-b border-stroke/50" />
 
               {/* CLAUDE.md */}
               <div>
@@ -331,7 +343,10 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
 
               {/* Error */}
               {error && (
-                <p className="text-sm text-danger text-center">{error}</p>
+                <div className="flex items-center gap-2 rounded-lg border border-danger/20 bg-danger/10 px-3 py-2">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-danger" />
+                  <p className="text-sm text-danger">{error}</p>
+                </div>
               )}
 
               {/* Actions */}

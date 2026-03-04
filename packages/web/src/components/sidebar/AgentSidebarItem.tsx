@@ -16,6 +16,12 @@ const MODEL_LABELS: Record<string, string> = {
   haiku: "Haiku 4",
 };
 
+const MODEL_BADGE_COLORS: Record<string, string> = {
+  haiku: "bg-info/10 text-info",
+  sonnet: "bg-brand-light text-brand",
+  opus: "bg-purple-light text-purple",
+};
+
 const STATUS_CONFIG: Record<string, { label: string; color: string; textColor: string; bgColor: string; border: string }> = {
   running: { label: "Running", color: "bg-success", textColor: "text-success", bgColor: "bg-success/10", border: "border-l-success" },
   waiting: { label: "Waiting", color: "bg-warning", textColor: "text-warning", bgColor: "bg-warning/10", border: "border-l-warning" },
@@ -27,6 +33,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; textColor: s
 export function AgentSidebarItem({ agent, selected, onSelect }: AgentSidebarItemProps) {
   const isRunning = agent.status === "running" || agent.status === "waiting";
   const statusCfg = STATUS_CONFIG[agent.status] ?? STATUS_CONFIG.stopped;
+  const modelBadgeColor = MODEL_BADGE_COLORS[agent.model] ?? "bg-neutral-bg3 text-neutral-fg3";
   const [elapsed, setElapsed] = useState(() =>
     agent.startedAt && isRunning ? formatElapsedTime(agent.startedAt) : "",
   );
@@ -60,7 +67,7 @@ export function AgentSidebarItem({ agent, selected, onSelect }: AgentSidebarItem
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect(agent.id); }}
       className={`group relative flex w-full gap-3 rounded-xl border-l-[3px] px-3 py-3 text-left cursor-pointer transition-all duration-200 ${statusCfg.border} ${
         selected
-          ? "bg-brand-light/60 shadow-sm"
+          ? "bg-brand-light/60 shadow-sm ring-1 ring-brand/20"
           : "bg-neutral-bg2 hover:bg-neutral-bg-hover hover:shadow-sm"
       }`}
     >
@@ -68,10 +75,10 @@ export function AgentSidebarItem({ agent, selected, onSelect }: AgentSidebarItem
       <div className="min-w-0 flex-1">
         {/* Row 1: Name + model */}
         <div className="flex items-center gap-2">
-          <p className={`truncate text-[13px] font-semibold leading-snug ${selected ? "text-neutral-fg1" : "text-neutral-fg1"}`}>
+          <p className="truncate text-[13px] font-semibold leading-snug text-neutral-fg1">
             {agent.name}
           </p>
-          <span className="shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide bg-neutral-bg3 text-neutral-fg3">
+          <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${modelBadgeColor}`}>
             {MODEL_LABELS[agent.model] ?? agent.model}
           </span>
           {agent.thinkingEnabled === 1 && (
