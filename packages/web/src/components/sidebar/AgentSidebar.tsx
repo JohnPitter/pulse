@@ -160,24 +160,38 @@ export function AgentSidebar({
 
       {/* Status indicators */}
       {agents.length > 0 && (
-        <div className="flex items-center gap-3 px-4 py-2 border-b border-stroke">
-          <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-success" />
-            <span className="text-[11px] tabular-nums text-neutral-fg3">{counts.active}</span>
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-stroke">
+          {/* Active */}
+          <div className="flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 transition-all duration-200">
+            <span className="relative inline-flex">
+              {counts.active > 0 && (
+                <span className="absolute inline-flex h-2 w-2 rounded-full bg-success opacity-75 animate-ping" />
+              )}
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
+            </span>
+            <span className="text-[12px] font-semibold tabular-nums text-success">{counts.active}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-warning" />
-            <span className="text-[11px] tabular-nums text-neutral-fg3">{counts.needInput}</span>
+          {/* Need Input */}
+          <div className="flex items-center gap-1.5 rounded-full bg-warning/10 px-2.5 py-1 transition-all duration-200">
+            <span className="relative inline-flex">
+              {counts.needInput > 0 && (
+                <span className="absolute inline-flex h-2 w-2 rounded-full bg-warning opacity-75 animate-pulse" />
+              )}
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-warning" />
+            </span>
+            <span className="text-[12px] font-semibold tabular-nums text-warning">{counts.needInput}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-info" />
-            <span className="text-[11px] tabular-nums text-neutral-fg3">{counts.done}</span>
+          {/* Done */}
+          <div className="flex items-center gap-1.5 rounded-full bg-info/10 px-2.5 py-1 transition-all duration-200">
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-info" />
+            <span className="text-[12px] font-semibold tabular-nums text-info">{counts.done}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-neutral-fg3" />
-            <span className="text-[11px] tabular-nums text-neutral-fg3">{counts.stopped}</span>
+          {/* Stopped */}
+          <div className="flex items-center gap-1.5 rounded-full bg-neutral-fg3/10 px-2.5 py-1 transition-all duration-200">
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-neutral-fg3" />
+            <span className="text-[12px] font-semibold tabular-nums text-neutral-fg2">{counts.stopped}</span>
           </div>
-          <span className="ml-auto text-[10px] text-neutral-fg-disabled">{counts.total} total</span>
+          <span className="ml-auto text-[11px] font-medium tabular-nums text-neutral-fg2">{counts.total}</span>
         </div>
       )}
 
@@ -208,16 +222,21 @@ export function AgentSidebar({
             <div key={group.label} className="mb-3">
               <div className="flex items-center justify-between px-2.5 mb-1">
                 <div className="flex items-center gap-1.5">
-                  <span className={`h-1.5 w-1.5 rounded-full ${group.color}`} />
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-fg3">
+                  <span className="relative inline-flex">
+                    {(group.label === "Active" || group.label === "Need Input") && (
+                      <span className={`absolute inline-flex h-1.5 w-1.5 rounded-full ${group.color} opacity-60 ${group.label === "Active" ? "animate-ping" : "animate-pulse"}`} />
+                    )}
+                    <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${group.color}`} />
+                  </span>
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-neutral-fg2">
                     {group.label}
                   </span>
                 </div>
-                <span className="text-[10px] tabular-nums text-neutral-fg-disabled">
+                <span className="text-[11px] font-semibold tabular-nums text-neutral-fg2">
                   {group.agents.length}
                 </span>
               </div>
-              <div className="space-y-0.5">
+              <div className="space-y-1.5">
                 {group.agents.map((agent) => (
                   <AgentSidebarItem
                     key={agent.id}

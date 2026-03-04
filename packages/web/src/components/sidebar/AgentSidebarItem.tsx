@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { Play, Square, FolderOpen, Brain } from "lucide-react";
-import { StatusDot } from "../common/StatusDot";
+import { Play, Square, FolderOpen, Brain, Clock } from "lucide-react";
 import type { Agent } from "../../stores/agents";
 import { emitEvent } from "../../stores/socket";
 import { formatElapsedTime } from "../../lib/format-time";
@@ -17,8 +16,17 @@ const MODEL_LABELS: Record<string, string> = {
   haiku: "Haiku 4",
 };
 
+const STATUS_CONFIG: Record<string, { label: string; color: string; textColor: string; bgColor: string; border: string }> = {
+  running: { label: "Running", color: "bg-success", textColor: "text-success", bgColor: "bg-success/10", border: "border-l-success" },
+  waiting: { label: "Waiting", color: "bg-warning", textColor: "text-warning", bgColor: "bg-warning/10", border: "border-l-warning" },
+  error:   { label: "Error",   color: "bg-danger",  textColor: "text-danger",  bgColor: "bg-danger/10",  border: "border-l-danger" },
+  idle:    { label: "Idle",    color: "bg-neutral-fg3", textColor: "text-neutral-fg3", bgColor: "bg-neutral-fg3/10", border: "border-l-neutral-fg3" },
+  stopped: { label: "Stopped", color: "bg-neutral-fg3", textColor: "text-neutral-fg3", bgColor: "bg-neutral-fg3/10", border: "border-l-neutral-fg3" },
+};
+
 export function AgentSidebarItem({ agent, selected, onSelect }: AgentSidebarItemProps) {
   const isRunning = agent.status === "running" || agent.status === "waiting";
+  const statusCfg = STATUS_CONFIG[agent.status] ?? STATUS_CONFIG.stopped;
   const [elapsed, setElapsed] = useState(() =>
     agent.startedAt && isRunning ? formatElapsedTime(agent.startedAt) : "",
   );
@@ -50,62 +58,69 @@ export function AgentSidebarItem({ agent, selected, onSelect }: AgentSidebarItem
       tabIndex={0}
       onClick={() => onSelect(agent.id)}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect(agent.id); }}
-      className={`group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left cursor-pointer transition-all duration-150 ${
+      className={`group relative flex w-full gap-3 rounded-xl border-l-[3px] px-3 py-3 text-left cursor-pointer transition-all duration-200 ${statusCfg.border} ${
         selected
-          ? "bg-brand-light text-neutral-fg1"
-          : "text-neutral-fg2 hover:bg-neutral-bg-hover hover:text-neutral-fg1"
+          ? "bg-brand-light/60 shadow-sm"
+          : "bg-neutral-bg2 hover:bg-neutral-bg-hover hover:shadow-sm"
       }`}
     >
-      <StatusDot status={agent.status} size="sm" />
-
+      {/* Content */}
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <p className="truncate text-[13px] font-medium leading-tight">
+        {/* Row 1: Name + model */}
+        <div className="flex items-center gap-2">
+          <p className={`truncate text-[13px] font-semibold leading-snug ${selected ? "text-neutral-fg1" : "text-neutral-fg1"}`}>
             {agent.name}
           </p>
-          <span className="shrink-0 rounded px-1 py-px text-[9px] font-medium bg-neutral-bg3 text-neutral-fg3">
+          <span className="shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide bg-neutral-bg3 text-neutral-fg3">
             {MODEL_LABELS[agent.model] ?? agent.model}
           </span>
           {agent.thinkingEnabled === 1 && (
-            <Brain className="h-2.5 w-2.5 shrink-0 text-purple" />
+            <Brain className="h-3 w-3 shrink-0 text-purple" />
           )}
         </div>
 
-        {/* Last message / activity */}
-        <div className="flex items-center gap-1.5 mt-0.5">
+        {/* Row 2: Status badge + elapsed */}
+        <div className="flex items-center gap-2 mt-1.5">
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusCfg.bgColor} ${statusCfg.textColor}`}>
+            <span className="relative inline-flex">
+              {(agent.status === "running" || agent.status === "waiting") && (
+                <span className={`absolute inline-flex h-1.5 w-1.5 rounded-full ${statusCfg.color} opacity-75 animate-ping`} />
+              )}
+              <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${statusCfg.color}`} />
+            </span>
+            {statusCfg.label}
+          </span>
+          {elapsed && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] text-neutral-fg3 tabular-nums">
+              <Clock className="h-2.5 w-2.5" />
+              {elapsed}
+            </span>
+          )}
+        </div>
+
+        {/* Row 3: Last message or project path */}
+        <div className="mt-1.5">
           {agent.lastMessage ? (
-            <p className="truncate text-[11px] text-neutral-fg3">
+            <p className="truncate text-[11px] text-neutral-fg3 leading-relaxed">
               {agent.lastMessage}
             </p>
           ) : (
             <div className="flex items-center gap-1">
-              <FolderOpen className="h-2.5 w-2.5 shrink-0 text-neutral-fg-disabled" />
+              <FolderOpen className="h-3 w-3 shrink-0 text-neutral-fg-disabled" />
               <p className="truncate text-[11px] text-neutral-fg-disabled">
                 {agent.projectPath.split("/").pop() || agent.projectPath}
               </p>
             </div>
           )}
-          {elapsed && (
-            <span className="shrink-0 text-[10px] text-neutral-fg-disabled tabular-nums">
-              {elapsed}
-            </span>
-          )}
         </div>
       </div>
-
-      {/* Status badge for waiting agents */}
-      {agent.status === "waiting" && (
-        <span className="shrink-0 badge badge-warning text-[9px] font-semibold">
-          Input
-        </span>
-      )}
 
       {/* Play/Stop toggle — visible on hover or when selected */}
       <button
         type="button"
         onClick={handleToggle}
         aria-label={isRunning ? "Stop agent" : "Start agent"}
-        className={`shrink-0 rounded-md p-1 opacity-0 transition-all duration-150 group-hover:opacity-100 ${
+        className={`shrink-0 self-center rounded-lg p-1.5 opacity-0 transition-all duration-150 group-hover:opacity-100 ${
           selected ? "opacity-100" : ""
         } ${
           isRunning
@@ -114,9 +129,9 @@ export function AgentSidebarItem({ agent, selected, onSelect }: AgentSidebarItem
         }`}
       >
         {isRunning ? (
-          <Square className="h-3 w-3" />
+          <Square className="h-3.5 w-3.5" />
         ) : (
-          <Play className="h-3 w-3" />
+          <Play className="h-3.5 w-3.5" />
         )}
       </button>
     </div>
