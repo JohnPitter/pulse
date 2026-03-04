@@ -78,7 +78,35 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Splash screen — replaced when React mounts -->
+      <style>
+        #splash{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#08080A;gap:24px;font-family:Inter,system-ui,sans-serif}
+        #splash .logo-wrap{position:relative;display:flex;align-items:center;justify-content:center}
+        #splash .logo{width:64px;height:64px;border-radius:16px;background:#0c0a09;border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+        #splash .logo span{font-size:28px;font-weight:700;color:#F97316}
+        #splash .ring{position:absolute;inset:-8px;border-radius:24px;border:2px solid rgba(249,115,22,0.15);animation:splash-ring 2s ease-in-out infinite}
+        #splash .ring-2{position:absolute;inset:-16px;border-radius:32px;border:1.5px solid rgba(249,115,22,0.08);animation:splash-ring 2s ease-in-out infinite 0.4s}
+        #splash .brand{font-size:18px;font-weight:600;color:#EDEDEF;letter-spacing:-0.02em}
+        #splash .sub{font-size:13px;color:#5C5C66;margin-top:-12px}
+        #splash .dots{display:flex;gap:6px;margin-top:8px}
+        #splash .dots span{width:5px;height:5px;border-radius:50%;background:#F97316;animation:splash-dot 1.4s ease-in-out infinite}
+        #splash .dots span:nth-child(2){animation-delay:0.2s}
+        #splash .dots span:nth-child(3){animation-delay:0.4s}
+        @keyframes splash-ring{0%,100%{opacity:0.4;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
+        @keyframes splash-dot{0%,80%,100%{opacity:0.3;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}
+      </style>
+      <div id="splash">
+        <div class="logo-wrap">
+          <div class="ring"></div>
+          <div class="ring-2"></div>
+          <div class="logo"><span>P</span></div>
+        </div>
+        <div class="brand">Pulse</div>
+        <div class="sub">Remote Agent Manager</div>
+        <div class="dots"><span></span><span></span><span></span></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

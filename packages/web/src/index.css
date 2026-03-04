@@ -354,6 +354,16 @@ code, pre, .font-mono, kbd {
   51%, 100% { opacity: 0; }
 }
 
+@keyframes splash-ring {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes splash-dot {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
 .animate-fade-up {
   animation: fade-up 0.3s ease-out both;
 }
