@@ -15,6 +15,8 @@ export function TerminalView({ agentId }: TerminalViewProps) {
   useEffect(() => {
     if (!termRef.current) return;
 
+    let disposed = false;
+
     const terminal = new Terminal({
       cursorBlink: true,
       cursorStyle: "bar",
@@ -34,10 +36,19 @@ export function TerminalView({ agentId }: TerminalViewProps) {
     terminal.loadAddon(fitAddon);
     terminal.open(termRef.current);
 
+    const safeFit = () => {
+      if (disposed) return;
+      try {
+        fitAddon.fit();
+      } catch {
+        // Terminal may be mid-dispose — ignore
+      }
+    };
+
     // Delay initial fit to ensure the container has final dimensions after React layout
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        fitAddon.fit();
+        safeFit();
       });
     });
 
@@ -51,7 +62,7 @@ export function TerminalView({ agentId }: TerminalViewProps) {
       "terminal:history",
       (data: unknown) => {
         const payload = data as { agentId: string; data: string };
-        if (payload.agentId === agentId) {
+        if (payload.agentId === agentId && !disposed) {
           terminal.write(payload.data);
         }
       },
@@ -62,7 +73,7 @@ export function TerminalView({ agentId }: TerminalViewProps) {
       "terminal:output",
       (data: unknown) => {
         const payload = data as { agentId: string; data: string };
-        if (payload.agentId === agentId) {
+        if (payload.agentId === agentId && !disposed) {
           terminal.write(payload.data);
         }
       },
@@ -70,18 +81,23 @@ export function TerminalView({ agentId }: TerminalViewProps) {
 
     // Send terminal input to server
     const disposeData = terminal.onData((data: string) => {
-      emitEvent("terminal:input", { agentId, data });
+      if (!disposed) {
+        emitEvent("terminal:input", { agentId, data });
+      }
     });
 
     // Handle resize — notify server of new dimensions
     const observer = new ResizeObserver(() => {
-      fitAddon.fit();
-      const { cols, rows } = terminal;
-      emitEvent("terminal:resize", { agentId, cols, rows });
+      safeFit();
+      if (!disposed) {
+        const { cols, rows } = terminal;
+        emitEvent("terminal:resize", { agentId, cols, rows });
+      }
     });
     observer.observe(termRef.current);
 
     return () => {
+      disposed = true;
       observer.disconnect();
       disposeData.dispose();
       unsubOutput();
