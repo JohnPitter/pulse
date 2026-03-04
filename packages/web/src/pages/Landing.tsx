@@ -1,286 +1,259 @@
 import { Link } from "react-router-dom";
-import { Terminal, Cpu, SplitSquareVertical, Activity, ArrowRight, ChevronRight, Download, Settings, Rocket, BarChart3 } from "lucide-react";
+import { Cpu, Zap, ArrowRight, Copy, Check, Monitor, Users, Activity } from "lucide-react";
+import { useState } from "react";
+
+export function Landing() {
+  return (
+    <div className="min-h-screen bg-app-bg">
+      <Topbar />
+      <Hero />
+      <Features />
+      <HowItWorks />
+      <CtaBanner />
+      <Footer />
+    </div>
+  );
+}
+
+function Topbar() {
+  return (
+    <header className="sticky top-0 z-50 bg-neutral-bg2/90 backdrop-blur-md border-b border-stroke">
+      <div className="max-w-5xl mx-auto px-6 h-14 flex items-center gap-6">
+        <div className="flex items-center gap-2.5">
+          <div className="h-7 w-7 rounded-lg bg-brand flex items-center justify-center">
+            <Cpu className="h-4 w-4 text-white" />
+          </div>
+          <span className="text-[16px] font-bold text-neutral-fg1 tracking-tight">Pulse</span>
+        </div>
+        <nav className="hidden md:flex items-center gap-1 ml-2">
+          <a href="#features" className="text-[13px] text-neutral-fg2 hover:text-neutral-fg1 px-3 py-1.5 rounded-lg hover:bg-neutral-bg3 transition-all duration-150">Features</a>
+          <a href="#how-it-works" className="text-[13px] text-neutral-fg2 hover:text-neutral-fg1 px-3 py-1.5 rounded-lg hover:bg-neutral-bg3 transition-all duration-150">How it works</a>
+        </nav>
+        <div className="ml-auto flex items-center gap-2">
+          <a
+            href="https://github.com/bigbig6/pulse"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden md:flex items-center gap-1.5 text-[13px] text-neutral-fg2 hover:text-neutral-fg1 px-3 py-1.5 rounded-lg hover:bg-neutral-bg3 border border-stroke transition-all duration-150"
+          >
+            GitHub
+          </a>
+          <Link to="/dashboard" className="btn-primary px-4 py-1.5 text-[13px]">
+            Open App
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function Hero() {
+  return (
+    <section className="max-w-5xl mx-auto px-6 pt-20 pb-16 text-center">
+      {/* Badge */}
+      <div className="inline-flex items-center gap-2 rounded-full border border-stroke bg-neutral-bg2 px-4 py-1.5 mb-8 shadow-xs">
+        <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+        <span className="text-[12px] font-medium text-neutral-fg2">Multi-agent Claude Code orchestrator</span>
+      </div>
+
+      {/* Headline */}
+      <h1 className="text-[52px] font-bold text-neutral-fg1 tracking-tight leading-[1.1] mb-5">
+        Orchestrate Claude agents<br />
+        <span className="text-brand">at scale</span>
+      </h1>
+
+      {/* Subtitle */}
+      <p className="text-[18px] text-neutral-fg2 leading-relaxed max-w-2xl mx-auto mb-10">
+        Run multiple Claude Code instances in parallel. Monitor, control, and manage AI agents through a clean dashboard.
+      </p>
+
+      {/* CTAs */}
+      <div className="flex items-center justify-center gap-3 mb-16 flex-wrap">
+        <Link to="/dashboard" className="btn-primary flex items-center gap-2 px-6 py-3 text-[15px]">
+          Get Started
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+        <a
+          href="https://github.com/bigbig6/pulse"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-secondary flex items-center gap-2 px-6 py-3 text-[15px]"
+        >
+          View on GitHub
+        </a>
+      </div>
+
+      {/* Terminal preview */}
+      <div className="bg-neutral-fg1 rounded-2xl overflow-hidden shadow-16 text-left border border-neutral-fg3/20 max-w-3xl mx-auto">
+        {/* Window chrome */}
+        <div className="flex items-center gap-1.5 px-4 py-3 bg-[#1a1a1e] border-b border-white/10">
+          <span className="h-3 w-3 rounded-full bg-danger/70" />
+          <span className="h-3 w-3 rounded-full bg-warning/70" />
+          <span className="h-3 w-3 rounded-full bg-success/70" />
+          <span className="ml-3 text-[12px] text-white/40 font-mono">pulse — dashboard</span>
+        </div>
+        {/* Terminal content */}
+        <div className="px-5 py-4 font-mono text-[13px] space-y-1.5 bg-[#0e0e11]">
+          <div className="flex items-center gap-2">
+            <span className="text-success">●</span>
+            <span className="text-white/80 font-semibold">Frontend Dev</span>
+            <span className="text-white/40 text-[11px] ml-auto">Running · 4m 12s</span>
+          </div>
+          <p className="text-white/50 pl-5 text-[12px]">✓ Created Button component</p>
+          <p className="text-white/50 pl-5 text-[12px]">✓ Updated routing config</p>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-warning">●</span>
+            <span className="text-white/80 font-semibold">Backend API</span>
+            <span className="text-white/40 text-[11px] ml-auto">Waiting · 1m 33s</span>
+          </div>
+          <p className="text-white/50 pl-5 text-[12px]">? Should I use PostgreSQL or SQLite?</p>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-neutral-fg3">●</span>
+            <span className="text-white/60 font-semibold">Test Runner</span>
+            <span className="text-white/40 text-[11px] ml-auto">Idle</span>
+          </div>
+          <p className="text-brand/80 pl-5 text-[12px] animate-pulse">█ _</p>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 const FEATURES = [
   {
-    icon: Cpu,
+    icon: Users,
     title: "Multi-Agent Management",
-    description: "Run multiple Claude agents simultaneously, each with its own model, permissions, and system prompt. Manage them all from one place.",
+    description: "Run multiple Claude Code instances simultaneously. Each agent gets its own terminal session and context.",
   },
   {
-    icon: SplitSquareVertical,
-    title: "Split View Terminal",
-    description: "View two agent terminals side-by-side to compare outputs, monitor parallel tasks, or debug issues across agents.",
+    icon: Monitor,
+    title: "Split View",
+    description: "Monitor two agents side by side. Compare outputs, coordinate work, and stay in full control.",
   },
   {
     icon: Activity,
     title: "Real-time Monitoring",
-    description: "Watch agent output as it streams. Track context window usage, elapsed time, and status changes for every running session.",
+    description: "Live terminal output, context window usage, and status tracking. Never miss what your agents are doing.",
   },
   {
-    icon: Terminal,
-    title: "One-Click Deploy",
-    description: "Spin up new agents instantly with pre-configured models, permission modes, and custom instructions. No SSH required.",
+    icon: Zap,
+    title: "Instant Deploy",
+    description: "Get started in minutes. Install the CLI, configure your project path, and your agents are running.",
   },
-] as const;
+];
 
-const HOW_IT_WORKS = [
-  {
-    step: 1,
-    icon: Download,
-    title: "Install",
-    description: "Run the install command on your remote server to set up the Pulse daemon.",
-  },
-  {
-    step: 2,
-    icon: Settings,
-    title: "Configure",
-    description: "Set an admin password and connect your Claude account via OAuth or API key.",
-  },
-  {
-    step: 3,
-    icon: Rocket,
-    title: "Deploy",
-    description: "Create agents with custom models, system prompts, and permission modes.",
-  },
-  {
-    step: 4,
-    icon: BarChart3,
-    title: "Monitor",
-    description: "Watch your agents work in real-time through live split-view terminals.",
-  },
-] as const;
-
-const TERMINAL_LINES = [
-  { type: "prompt", text: "$ pulse start --agent backend-dev" },
-  { type: "system", text: "[pulse] Starting agent backend-dev..." },
-  { type: "system", text: "[pulse] Model: claude-sonnet-4 | Mode: bypass" },
-  { type: "success", text: "[pulse] Agent connected. Terminal attached." },
-  { type: "output", text: "" },
-  { type: "agent", text: "I'll start by reviewing the project structure..." },
-  { type: "agent", text: "Reading src/routes/api.ts and src/services/" },
-  { type: "output", text: "" },
-  { type: "prompt", text: "$ pulse status" },
-  { type: "table", text: "  backend-dev   running   sonnet   2m 34s" },
-  { type: "table", text: "  frontend-ui   waiting   haiku    5m 12s" },
-  { type: "table", text: "  test-runner   idle      sonnet   --" },
-] as const;
-
-export function Landing() {
+function Features() {
   return (
-    <div className="min-h-screen bg-neutral-bg1 text-neutral-fg1 overflow-hidden">
-      {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="h-2.5 w-2.5 rounded-full bg-brand" />
-          <span className="text-lg font-bold tracking-tight">Pulse</span>
-        </div>
-        <Link
-          to="/login"
-          className="btn-ghost px-4 py-2 text-sm flex items-center gap-1.5"
+    <section id="features" className="max-w-5xl mx-auto px-6 py-16">
+      <div className="text-center mb-12">
+        <h2 className="text-[32px] font-bold text-neutral-fg1 tracking-tight mb-3">Everything you need</h2>
+        <p className="text-[16px] text-neutral-fg2">Purpose-built for AI-powered development workflows</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {FEATURES.map((f) => (
+          <div key={f.title} className="bg-neutral-bg2 border border-stroke rounded-2xl p-6 shadow-2 hover:shadow-4 hover:border-[rgba(0,0,0,0.12)] transition-all duration-200">
+            <div className="h-10 w-10 rounded-xl bg-brand-light flex items-center justify-center mb-4">
+              <f.icon className="h-5 w-5 text-brand" />
+            </div>
+            <h3 className="text-[15px] font-semibold text-neutral-fg1 mb-2">{f.title}</h3>
+            <p className="text-[13px] text-neutral-fg2 leading-relaxed">{f.description}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+const STEPS = [
+  { n: "01", title: "Install", description: "Run npm install -g @pulse/cli to install the CLI globally." },
+  { n: "02", title: "Configure", description: "Set up your Claude authentication (OAuth or API key) via the setup wizard." },
+  { n: "03", title: "Create Agents", description: "Point each agent at a project directory. Configure model and permissions." },
+  { n: "04", title: "Monitor", description: "Watch agents work in real-time. Send input, split views, stop or restart anytime." },
+];
+
+function HowItWorks() {
+  return (
+    <section id="how-it-works" className="max-w-5xl mx-auto px-6 py-16 border-t border-stroke">
+      <div className="text-center mb-12">
+        <h2 className="text-[32px] font-bold text-neutral-fg1 tracking-tight mb-3">How it works</h2>
+        <p className="text-[16px] text-neutral-fg2">Up and running in four steps</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {STEPS.map((step) => (
+          <div key={step.n} className="flex flex-col gap-3">
+            <span className="text-[28px] font-bold text-brand/40 leading-none">{step.n}</span>
+            <h3 className="text-[15px] font-semibold text-neutral-fg1">{step.title}</h3>
+            <p className="text-[13px] text-neutral-fg2 leading-relaxed">{step.description}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CtaBanner() {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText("npm install -g @pulse/cli");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <section className="max-w-5xl mx-auto px-6 py-16">
+      <div className="bg-neutral-fg1 rounded-2xl p-10 md:p-14 text-center">
+        <h2 className="text-[28px] md:text-[36px] font-bold text-white tracking-tight mb-3">
+          Ready to start?
+        </h2>
+        <p className="text-[15px] text-white/60 mb-8 max-w-md mx-auto">
+          Install Pulse and start orchestrating your Claude agents in minutes.
+        </p>
+        <button
+          onClick={copy}
+          className="inline-flex items-center gap-3 bg-white/10 hover:bg-white/15 rounded-xl px-5 py-3 font-mono text-[14px] text-white mb-6 transition-all duration-150 border border-white/10"
         >
-          Sign in
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      </nav>
+          <span className="text-white/40">$</span>
+          <span>npm install -g @pulse/cli</span>
+          {copied ? (
+            <Check className="h-4 w-4 text-success ml-2" />
+          ) : (
+            <Copy className="h-4 w-4 text-white/40 ml-2" />
+          )}
+        </button>
+        <div className="flex items-center justify-center gap-3">
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center gap-2 bg-brand hover:bg-brand-hover text-white font-semibold px-6 py-2.5 rounded-xl text-[14px] transition-colors duration-150"
+          >
+            Open Dashboard
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
 
-      {/* Hero */}
-      <section className="relative px-6 pt-16 pb-24 max-w-6xl mx-auto text-center">
-        {/* Ambient glow */}
-        <div className="glow-orb glow-orb-brand w-[500px] h-[500px] -top-48 left-1/2 -translate-x-1/2 opacity-40" />
-        <div className="glow-orb glow-orb-purple w-[300px] h-[300px] top-20 -right-20 opacity-30" />
-
-        <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 rounded-full border border-stroke bg-neutral-bg2 px-4 py-1.5 text-xs font-medium text-neutral-fg2 mb-8 animate-fade-up">
-            <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-            Remote Agent Manager
+function Footer() {
+  return (
+    <footer className="border-t border-stroke">
+      <div className="max-w-5xl mx-auto px-6 py-8 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-6 w-6 rounded-md bg-brand flex items-center justify-center">
+            <Cpu className="h-3.5 w-3.5 text-white" />
           </div>
-
-          <h1 className="text-display max-w-3xl mx-auto mb-6 animate-fade-up stagger-1" style={{ fontFamily: '"Sora", var(--font-sans)' }}>
-            Manage Claude agents{" "}
-            <span className="text-gradient-brand">from anywhere</span>
-          </h1>
-
-          <p className="text-subtitle max-w-xl mx-auto mb-10 animate-fade-up stagger-2">
-            Deploy, monitor, and control multiple Claude Code agents on your remote server
-            through a beautiful web interface.
-          </p>
-
-          <div className="flex items-center justify-center gap-4 animate-fade-up stagger-3">
-            <Link
-              to="/login"
-              className="btn-primary px-8 py-3 text-sm flex items-center gap-2"
-            >
-              Get Started
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-secondary px-8 py-3 text-sm"
-            >
-              View on GitHub
-            </a>
-          </div>
+          <span className="text-[14px] font-semibold text-neutral-fg1">Pulse</span>
         </div>
-      </section>
-
-      {/* Terminal Demo */}
-      <section className="px-6 pb-24 max-w-4xl mx-auto">
-        <div className="glass rounded-2xl overflow-hidden shadow-16 animate-fade-up stagger-4">
-          {/* Terminal title bar */}
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-stroke">
-            <div className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded-full bg-danger/60" />
-              <span className="h-3 w-3 rounded-full bg-warning/60" />
-              <span className="h-3 w-3 rounded-full bg-success/60" />
-            </div>
-            <span className="text-[11px] font-mono text-neutral-fg3 ml-2">
-              pulse &mdash; terminal
-            </span>
-          </div>
-
-          {/* Terminal content */}
-          <div className="p-5 font-mono text-[13px] leading-relaxed bg-neutral-bg1">
-            {TERMINAL_LINES.map((line, i) => (
-              <div key={i} className="whitespace-pre">
-                {line.type === "prompt" && (
-                  <span className="text-success">{line.text}</span>
-                )}
-                {line.type === "system" && (
-                  <span className="text-neutral-fg3">{line.text}</span>
-                )}
-                {line.type === "success" && (
-                  <span className="text-brand">{line.text}</span>
-                )}
-                {line.type === "agent" && (
-                  <span className="text-purple">{line.text}</span>
-                )}
-                {line.type === "table" && (
-                  <span className="text-neutral-fg2">{line.text}</span>
-                )}
-                {line.type === "output" && "\u00A0"}
-              </div>
-            ))}
-            <span className="inline-block w-2 h-4 bg-brand animate-pulse ml-0.5" />
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="px-6 pb-24 max-w-6xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-heading text-neutral-fg1 mb-3">
-            Everything you need
-          </h2>
-          <p className="text-subtitle max-w-md mx-auto">
-            A complete toolkit for managing AI coding agents on remote servers.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {FEATURES.map((feature, i) => (
-            <div
-              key={feature.title}
-              className={`card-interactive p-6 animate-fade-up stagger-${i + 1}`}
-            >
-              <div className="flex items-start gap-4">
-                <div className="shrink-0 rounded-lg bg-brand-light p-2.5">
-                  <feature.icon className="h-5 w-5 text-brand" />
-                </div>
-                <div>
-                  <h3 className="text-title text-neutral-fg1 mb-1">
-                    {feature.title}
-                  </h3>
-                  <p className="text-compact text-neutral-fg2">
-                    {feature.description}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="px-6 pb-24 max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-heading text-neutral-fg1 mb-3">
-            How it works
-          </h2>
-          <p className="text-subtitle max-w-md mx-auto">
-            Get up and running in four simple steps.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {HOW_IT_WORKS.map((item) => (
-            <div
-              key={item.step}
-              className={`card-interactive p-5 text-center animate-fade-up stagger-${item.step}`}
-            >
-              <div className="inline-flex items-center justify-center rounded-full bg-brand-light p-3 mb-3">
-                <item.icon className="h-5 w-5 text-brand" />
-              </div>
-              <div className="text-[11px] font-semibold text-brand uppercase tracking-wider mb-1.5">
-                Step {item.step}
-              </div>
-              <h3 className="text-title text-neutral-fg1 mb-1">
-                {item.title}
-              </h3>
-              <p className="text-compact text-neutral-fg2">
-                {item.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="px-6 pb-24 max-w-4xl mx-auto text-center">
-        <div className="card p-10 relative overflow-hidden">
-          <div className="glow-orb glow-orb-brand w-[300px] h-[300px] -bottom-32 left-1/2 -translate-x-1/2 opacity-30" />
-
-          <div className="relative z-10">
-            <h2 className="text-heading mb-3">
-              Ready to get started?
-            </h2>
-            <p className="text-subtitle mb-8 max-w-md mx-auto">
-              Install Pulse on your server and start managing agents in minutes.
-            </p>
-
-            <div className="inline-flex items-center gap-3 rounded-xl border border-stroke bg-neutral-bg1 px-5 py-3 mb-8">
-              <code className="text-sm font-mono text-neutral-fg2">
-                npx pulse-agent-manager
-              </code>
-            </div>
-
-            <div className="flex justify-center">
-              <Link
-                to="/login"
-                className="btn-primary px-8 py-3 text-sm flex items-center gap-2"
-              >
-                Open Dashboard
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-stroke px-6 py-6">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-brand" />
-            <span className="text-sm font-semibold text-neutral-fg2">Pulse</span>
-          </div>
-          <p className="text-xs text-neutral-fg3">
-            Remote Agent Manager
-          </p>
-        </div>
-      </footer>
-    </div>
+        <p className="text-[12px] text-neutral-fg3">Built with Claude Code</p>
+        <a
+          href="https://github.com/bigbig6/pulse"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[13px] text-neutral-fg3 hover:text-neutral-fg1 transition-colors"
+        >
+          GitHub
+        </a>
+      </div>
+    </footer>
   );
 }
