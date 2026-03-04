@@ -1,8 +1,7 @@
 import { useState, useEffect, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
-  Lock,
   Key,
   Shield,
   RefreshCw,
@@ -12,7 +11,6 @@ import {
   Puzzle,
   LogOut,
 } from "lucide-react";
-import { GlassCard } from "../components/common/GlassCard";
 import { useAuthStore } from "../stores/auth";
 
 // --------------------------------------------------------------------------
@@ -38,22 +36,21 @@ export function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-bg1 text-neutral-fg1">
-      {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-stroke bg-neutral-bg1/80 backdrop-blur-md px-4 py-3">
-        <div className="mx-auto flex max-w-lg items-center gap-3">
-          <button
-            onClick={() => navigate("/")}
-            className="rounded-lg p-1.5 text-neutral-fg2 transition-colors duration-200 hover:text-neutral-fg1"
+    <div className="min-h-screen bg-app-bg">
+      <div className="max-w-2xl mx-auto py-8 px-6 space-y-4">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <Link
+            to="/dashboard"
+            className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-neutral-bg3 text-neutral-fg3 hover:text-neutral-fg1 border border-stroke transition-all duration-150"
             aria-label="Back to dashboard"
           >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-lg font-bold tracking-tight">Settings</h1>
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <h1 className="text-[24px] font-bold text-neutral-fg1 tracking-tight">Settings</h1>
         </div>
-      </div>
 
-      <div className="mx-auto max-w-lg space-y-6 p-4">
+        {/* Sections */}
         <ChangePasswordSection />
         <ClaudeAuthSection />
         <PluginsSection />
@@ -121,87 +118,83 @@ function ChangePasswordSection() {
   };
 
   return (
-    <GlassCard className="p-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="rounded-lg bg-neutral-bg3 p-2">
-          <Lock className="h-4 w-4 text-neutral-fg2" />
-        </div>
-        <div>
-          <h2 className="text-sm font-semibold">Change Password</h2>
-          <p className="text-xs text-neutral-fg3">Update your admin password</p>
-        </div>
+    <div className="bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
+      <div className="px-6 py-4 border-b border-stroke">
+        <h3 className="text-[15px] font-semibold text-neutral-fg1">Security</h3>
+        <p className="text-[13px] text-neutral-fg2 mt-0.5">Update your admin password</p>
       </div>
-
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div>
-          <label htmlFor="current-password" className="block text-xs text-neutral-fg2 mb-1.5">
-            Current password
-          </label>
-          <input
-            id="current-password"
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            placeholder="Enter current password"
-            className="input-fluent w-full"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="new-password" className="block text-xs text-neutral-fg2 mb-1.5">
-            New password
-          </label>
-          <input
-            id="new-password"
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="At least 6 characters"
-            className="input-fluent w-full"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="confirm-password" className="block text-xs text-neutral-fg2 mb-1.5">
-            Confirm new password
-          </label>
-          <input
-            id="confirm-password"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Repeat new password"
-            className="input-fluent w-full"
-          />
-        </div>
-
-        {error && (
-          <div className="flex items-center gap-2 text-sm text-danger">
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-            <span>{error}</span>
+      <div className="px-6 py-5">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label htmlFor="current-password" className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block">
+              Current password
+            </label>
+            <input
+              id="current-password"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password"
+              className="input-fluent w-full"
+            />
           </div>
-        )}
 
-        {success && (
-          <div className="flex items-center gap-2 text-sm text-success">
-            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-            <span>Password changed successfully</span>
+          <div>
+            <label htmlFor="new-password" className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block">
+              New password
+            </label>
+            <input
+              id="new-password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="At least 6 characters"
+              className="input-fluent w-full"
+            />
           </div>
-        )}
 
-        <button
-          type="submit"
-          disabled={isSubmitting || !currentPassword || !newPassword || !confirmPassword}
-          className="btn-primary w-full py-2.5 text-sm"
-        >
-          {isSubmitting ? (
-            <Loader2 className="mx-auto h-4 w-4 animate-spin" />
-          ) : (
-            "Update Password"
+          <div>
+            <label htmlFor="confirm-password" className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block">
+              Confirm new password
+            </label>
+            <input
+              id="confirm-password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Repeat new password"
+              className="input-fluent w-full"
+            />
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-2 text-[13px] text-danger">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+              <span>{error}</span>
+            </div>
           )}
-        </button>
-      </form>
-    </GlassCard>
+
+          {success && (
+            <div className="flex items-center gap-2 text-[13px] text-success">
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+              <span>Password changed successfully</span>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isSubmitting || !currentPassword || !newPassword || !confirmPassword}
+            className="btn-primary w-full py-2.5 text-sm"
+          >
+            {isSubmitting ? (
+              <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+            ) : (
+              "Update Password"
+            )}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -265,80 +258,83 @@ function ClaudeAuthSection() {
 
   if (isLoading) {
     return (
-      <GlassCard className="p-6">
-        <div className="flex items-center justify-center py-4">
+      <div className="bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
+        <div className="px-6 py-4 border-b border-stroke">
+          <h3 className="text-[15px] font-semibold text-neutral-fg1">Claude Authentication</h3>
+          <p className="text-[13px] text-neutral-fg2 mt-0.5">Configure how Pulse connects to Claude</p>
+        </div>
+        <div className="px-6 py-5 flex items-center justify-center py-8">
           <Loader2 className="h-5 w-5 animate-spin text-neutral-fg3" />
         </div>
-      </GlassCard>
+      </div>
     );
   }
 
   return (
-    <GlassCard className="p-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="rounded-lg bg-neutral-bg3 p-2">
-          <Shield className="h-4 w-4 text-neutral-fg2" />
+    <div className="bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
+      <div className="px-6 py-4 border-b border-stroke">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-[15px] font-semibold text-neutral-fg1">Claude Authentication</h3>
+            <p className="text-[13px] text-neutral-fg2 mt-0.5">
+              {status?.configured
+                ? `Connected via ${status.type === "oauth" ? "OAuth" : "API Key"}`
+                : "Configure how Pulse connects to Claude"}
+            </p>
+          </div>
+          {status?.configured ? (
+            <span className="badge badge-success">
+              <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden="true" />
+              Active
+            </span>
+          ) : (
+            <span className="badge badge-warning">
+              <span className="h-1.5 w-1.5 rounded-full bg-warning" aria-hidden="true" />
+              Not set
+            </span>
+          )}
         </div>
-        <div className="flex-1">
-          <h2 className="text-sm font-semibold">Claude Authentication</h2>
-          <p className="text-xs text-neutral-fg3">
-            {status?.configured
-              ? `Connected via ${status.type === "oauth" ? "OAuth" : "API Key"}`
-              : "Not configured"}
-          </p>
-        </div>
-        {status?.configured && (
-          <span className="badge badge-success">
-            <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden="true" />
-            Active
-          </span>
+      </div>
+      <div className="px-6 py-5 space-y-3">
+        {refreshMsg && (
+          <div className={`flex items-center gap-2 text-[13px] ${refreshMsg.type === "success" ? "text-success" : "text-danger"}`}>
+            {refreshMsg.type === "success" ? (
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            )}
+            <span>{refreshMsg.text}</span>
+          </div>
         )}
-        {!status?.configured && (
-          <span className="badge badge-warning">
-            <span className="h-1.5 w-1.5 rounded-full bg-warning" aria-hidden="true" />
-            Not set
-          </span>
+
+        {showReconfigure ? (
+          <ReconfigureAuth
+            onCancel={() => setShowReconfigure(false)}
+            onComplete={handleReconfigured}
+          />
+        ) : (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowReconfigure(true)}
+              className="btn-secondary flex flex-1 items-center justify-center gap-2 py-2.5 text-sm"
+            >
+              <Key className="h-3.5 w-3.5" />
+              {status?.configured ? "Reconfigure" : "Configure"}
+            </button>
+            {status?.configured && status.type === "oauth" && (
+              <button
+                onClick={handleRefreshToken}
+                disabled={isRefreshing}
+                className="btn-secondary flex items-center justify-center gap-2 px-4 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Refresh OAuth token"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+              </button>
+            )}
+          </div>
         )}
       </div>
-
-      {refreshMsg && (
-        <div className={`flex items-center gap-2 text-sm mb-3 ${refreshMsg.type === "success" ? "text-success" : "text-danger"}`}>
-          {refreshMsg.type === "success" ? (
-            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-          ) : (
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-          )}
-          <span>{refreshMsg.text}</span>
-        </div>
-      )}
-
-      {showReconfigure ? (
-        <ReconfigureAuth
-          onCancel={() => setShowReconfigure(false)}
-          onComplete={handleReconfigured}
-        />
-      ) : (
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowReconfigure(true)}
-            className="btn-secondary flex flex-1 items-center justify-center gap-2 py-2.5 text-sm"
-          >
-            <Key className="h-3.5 w-3.5" />
-            {status?.configured ? "Reconfigure" : "Configure"}
-          </button>
-          {status?.configured && status.type === "oauth" && (
-            <button
-              onClick={handleRefreshToken}
-              disabled={isRefreshing}
-              className="btn-secondary flex items-center justify-center gap-2 px-4 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Refresh OAuth token"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
-            </button>
-          )}
-        </div>
-      )}
-    </GlassCard>
+    </div>
   );
 }
 
@@ -368,14 +364,14 @@ function ReconfigureAuth({
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => setMethod("oauthtoken")}
-          className="flex flex-col items-center gap-2 rounded-xl border border-stroke bg-neutral-bg3 p-4 text-center transition-all duration-200 hover:bg-neutral-bg-hover hover:border-[var(--card-hover-border)] active:scale-[0.98]"
+          className="border border-stroke bg-neutral-bg3 rounded-xl p-4 cursor-pointer hover:border-neutral-fg3 transition-all flex flex-col items-center gap-2 text-center"
         >
           <Shield className="h-5 w-5 text-brand" />
           <span className="text-xs font-medium text-neutral-fg1">CLI Token</span>
         </button>
         <button
           onClick={() => setMethod("apikey")}
-          className="flex flex-col items-center gap-2 rounded-xl border border-stroke bg-neutral-bg3 p-4 text-center transition-all duration-200 hover:bg-neutral-bg-hover hover:border-[var(--card-hover-border)] active:scale-[0.98]"
+          className="border border-stroke bg-neutral-bg3 rounded-xl p-4 cursor-pointer hover:border-neutral-fg3 transition-all flex flex-col items-center gap-2 text-center"
         >
           <Key className="h-5 w-5 text-neutral-fg2" />
           <span className="text-xs font-medium text-neutral-fg1">API Key</span>
@@ -473,7 +469,7 @@ function OAuthTokenReconfigure({
     return (
       <div className="flex flex-col items-center gap-3 py-6">
         <CheckCircle2 className="h-10 w-10 text-success" />
-        <p className="text-sm font-medium">Token imported successfully</p>
+        <p className="text-[13px] font-medium text-success">Token imported successfully</p>
       </div>
     );
   }
@@ -511,7 +507,7 @@ function OAuthTokenReconfigure({
       </button>
 
       {error && (
-        <div className="flex items-center gap-2 text-sm text-danger">
+        <div className="flex items-center gap-2 text-[13px] text-danger">
           <AlertCircle className="h-3.5 w-3.5 shrink-0" />
           <span>{error}</span>
         </div>
@@ -533,7 +529,7 @@ function OAuthTokenReconfigure({
           </div>
 
           <div>
-            <label htmlFor="oauth-token" className="block text-xs text-neutral-fg2 mb-1.5">
+            <label htmlFor="oauth-token" className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block">
               Access Token
             </label>
             <input
@@ -547,7 +543,7 @@ function OAuthTokenReconfigure({
           </div>
 
           <div>
-            <label htmlFor="oauth-refresh" className="block text-xs text-neutral-fg2 mb-1.5">
+            <label htmlFor="oauth-refresh" className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block">
               Refresh Token <span className="text-neutral-fg-disabled">(optional)</span>
             </label>
             <input
@@ -627,7 +623,7 @@ function ApiKeyReconfigure({
     return (
       <div className="flex flex-col items-center gap-3 py-6">
         <CheckCircle2 className="h-10 w-10 text-success" />
-        <p className="text-sm font-medium">API key saved successfully</p>
+        <p className="text-[13px] font-medium text-success">API key saved successfully</p>
       </div>
     );
   }
@@ -644,7 +640,7 @@ function ApiKeyReconfigure({
 
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label htmlFor="apikey-settings" className="block text-xs text-neutral-fg2 mb-1.5">
+          <label htmlFor="apikey-settings" className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block">
             Anthropic API Key
           </label>
           <input
@@ -658,7 +654,7 @@ function ApiKeyReconfigure({
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 text-sm text-danger">
+          <div className="flex items-center gap-2 text-[13px] text-danger">
             <AlertCircle className="h-3.5 w-3.5 shrink-0" />
             <span>{error}</span>
           </div>
@@ -704,57 +700,42 @@ function PluginsSection() {
   }, []);
 
   return (
-    <GlassCard className="p-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="rounded-lg bg-neutral-bg3 p-2">
-          <Puzzle className="h-4 w-4 text-neutral-fg2" />
-        </div>
-        <div>
-          <h2 className="text-sm font-semibold">Claude Code Plugins</h2>
-          <p className="text-xs text-neutral-fg3">
-            {plugins.length > 0
-              ? `${plugins.length} plugin${plugins.length > 1 ? "s" : ""} installed on the server`
-              : "Extensions installed on the server"}
-          </p>
-        </div>
+    <div className="bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
+      <div className="px-6 py-4 border-b border-stroke">
+        <h3 className="text-[15px] font-semibold text-neutral-fg1">Plugins</h3>
+        <p className="text-[13px] text-neutral-fg2 mt-0.5">Installed Claude Code plugins</p>
       </div>
-
-      {isLoading ? (
-        <div className="flex items-center justify-center py-6">
-          <Loader2 className="h-5 w-5 animate-spin text-neutral-fg3" />
-        </div>
-      ) : plugins.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-6 text-center">
-          <Puzzle className="h-8 w-8 text-neutral-fg-disabled" />
-          <p className="text-sm text-neutral-fg3">No plugins detected</p>
-          <p className="text-xs text-neutral-fg-disabled">
-            Install plugins via Claude Code CLI on the server
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {plugins.map((plugin) => (
-            <div
-              key={`${plugin.name}@${plugin.marketplace}`}
-              className="flex items-center gap-3 rounded-lg border border-stroke bg-neutral-bg3 px-3 py-2.5"
-            >
-              <Puzzle className="h-4 w-4 text-brand shrink-0" />
-              <div className="min-w-0 flex-1">
-                <span className="text-sm font-medium text-neutral-fg1 truncate block">
-                  {plugin.name}
-                </span>
-                <span className="text-[11px] text-neutral-fg3">
-                  {plugin.marketplace}
-                </span>
+      <div className="px-6 py-5">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="h-5 w-5 animate-spin text-neutral-fg3" />
+          </div>
+        ) : plugins.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <Puzzle className="h-8 w-8 text-neutral-fg-disabled" />
+            <p className="text-sm text-neutral-fg3">No plugins detected</p>
+            <p className="text-xs text-neutral-fg-disabled">
+              Install plugins via Claude Code CLI on the server
+            </p>
+          </div>
+        ) : (
+          <div>
+            {plugins.map((plugin) => (
+              <div
+                key={`${plugin.name}@${plugin.marketplace}`}
+                className="flex items-center justify-between py-3 border-b border-stroke last:border-0"
+              >
+                <div>
+                  <p className="text-[14px] font-medium text-neutral-fg1">{plugin.name}</p>
+                  <p className="text-[12px] text-neutral-fg2">{plugin.marketplace}</p>
+                </div>
+                <span className="badge badge-success">Active</span>
               </div>
-              <span className="shrink-0 rounded-md bg-neutral-bg2 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-neutral-fg3">
-                v{plugin.version}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-    </GlassCard>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -764,22 +745,23 @@ function PluginsSection() {
 
 function SessionSection({ onLogout }: { onLogout: () => void }) {
   return (
-    <GlassCard className="p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-semibold">Session</h2>
-          <p className="text-xs text-neutral-fg3 mt-1">
-            Signed in as admin
-          </p>
-        </div>
-        <button
-          onClick={onLogout}
-          className="btn-secondary flex items-center gap-2 px-4 py-2 text-sm text-danger transition-colors duration-200 hover:bg-danger/10"
-        >
-          <LogOut className="h-4 w-4" />
-          Logout
-        </button>
+    <div className="bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
+      <div className="px-6 py-4 border-b border-stroke">
+        <h3 className="text-[15px] font-semibold text-neutral-fg1">Session</h3>
+        <p className="text-[13px] text-neutral-fg2 mt-0.5">Manage your current session</p>
       </div>
-    </GlassCard>
+      <div className="px-6 py-5">
+        <div className="flex items-center justify-between">
+          <p className="text-[13px] text-neutral-fg2">Signed in as admin</p>
+          <button
+            onClick={onLogout}
+            className="btn-secondary flex items-center gap-2 px-4 py-2 text-[14px] text-danger border-danger/30 hover:bg-danger-light"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
