@@ -46,7 +46,7 @@ export function AgentSidebarItem({ agent, selected, onSelect }: AgentSidebarItem
     setElapsed(formatElapsedTime(agent.startedAt));
     const timer = setInterval(() => {
       setElapsed(formatElapsedTime(agent.startedAt!));
-    }, 30_000);
+    }, 10_000);
     return () => clearInterval(timer);
   }, [agent.startedAt, isRunning]);
 
@@ -130,7 +130,7 @@ export function AgentSidebarItem({ agent, selected, onSelect }: AgentSidebarItem
         type="button"
         onClick={handleToggle}
         aria-label={isRunning ? "Stop agent" : "Start agent"}
-        className={`shrink-0 self-center rounded-lg p-1 opacity-0 transition-all duration-150 group-hover:opacity-100 ${
+        className={`shrink-0 self-center rounded-lg p-1 opacity-0 transition-all duration-150 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-brand/50 ${
           selected ? "opacity-100" : ""
         } ${
           isRunning

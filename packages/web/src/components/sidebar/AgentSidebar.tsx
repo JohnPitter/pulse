@@ -134,7 +134,7 @@ export function AgentSidebar({
     navigate("/login");
   };
 
-  const countFor = (key: StatusKey) => counts[key === "needInput" ? "needInput" : key];
+  const countFor = (key: StatusKey) => counts[key];
 
   return (
     <>
