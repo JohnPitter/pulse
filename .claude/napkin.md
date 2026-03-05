@@ -11,6 +11,9 @@
 - Prefers Portuguese communication
 
 ## Patterns That Work
+- Tailwind v4 + @layer components: NEVER use `@apply` with other component classes (e.g., `@apply badge-orange` fails). Always inline CSS properties directly.
+- Tailwind v4 CSS var tokens: Define vars in `:root`, then map to `@theme` with `--color-*` prefix for Tailwind utility generation.
+- Design system migration: Keep legacy class aliases (`.badge-primary`, `.input-fluent`) as direct CSS with same properties to avoid breaking existing components.
 - xterm.js: always fit terminal BEFORE subscribing to data. Double-rAF ensures container has final dimensions.
 - tmux: resize pane before capture-pane to get content at correct col width. Add 50ms delay for reflow.
 

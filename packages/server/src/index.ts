@@ -22,6 +22,8 @@ import { skillsRouter } from "./routes/skills.js";
 import { memoryRouter } from "./routes/memory.js";
 import { settingsRouter, getSetting, upsertSetting, deleteSetting } from "./routes/settings.js";
 import { filesystemRouter } from "./routes/filesystem.js";
+import { tasksRouter } from "./routes/tasks.js";
+import { projectsRouter } from "./routes/projects.js";
 import { setupSocket } from "./socket/index.js";
 import { initTokenRefresh, startAutoRefresh } from "./services/token-refresh.js";
 
@@ -156,6 +158,8 @@ app.use("/api/skills", skillsRouter);
 app.use("/api/memory", memoryRouter);
 app.use("/api/settings", settingsRouter);
 app.use("/api/filesystem", filesystemRouter);
+app.use("/api/tasks", tasksRouter);
+app.use("/api/projects", projectsRouter);
 
 // --- SPA fallback (must come after API routes, before error handler) ---
 // Express 5 uses path-to-regexp v8+ which requires named wildcards

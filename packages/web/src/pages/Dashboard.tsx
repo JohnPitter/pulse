@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Plus, Menu, BookOpen, Zap, Square } from "lucide-react";
+import { Plus, Menu, BookOpen, Zap, Square } from "lucide-react";
 import { useAgentsStore, type Agent } from "../stores/agents";
 import { useSessionStore } from "../stores/session";
 import { AgentSidebar } from "../components/sidebar/AgentSidebar";
@@ -40,14 +40,12 @@ export function Dashboard() {
     return () => disconnectSocket();
   }, [fetchAgents, connectSocket, disconnectSocket]);
 
-  // Auto-select first agent
   useEffect(() => {
     if (!selectedAgentId && agents.length > 0) {
       setSelectedAgentId(agents[0].id);
     }
   }, [agents, selectedAgentId]);
 
-  // Connect SSE + load messages when agent changes
   useEffect(() => {
     if (!selectedAgentId) return;
     connectSSE(selectedAgentId);
@@ -77,23 +75,30 @@ export function Dashboard() {
   const agentStreamingText = selectedAgentId ? (streamingText[selectedAgentId] ?? "") : "";
   const agentIsStreaming = selectedAgentId ? (isStreaming[selectedAgentId] ?? false) : false;
 
+  const statusColor: Record<string, string> = {
+    running: "bg-success",
+    waiting: "bg-warning",
+    idle: "bg-border-strong",
+    error: "bg-danger",
+  };
+
   return (
-    <div className="flex h-screen flex-col bg-app-bg md:flex-row md:p-3 md:gap-3">
+    <div className="flex h-screen flex-col bg-bg md:flex-row md:p-3 md:gap-3">
       {/* Mobile header */}
-      <div className="flex items-center h-12 px-4 bg-white border-b border-stroke shrink-0 md:hidden">
+      <div className="flex items-center h-12 px-4 bg-surface border-b border-border shrink-0 md:hidden">
         <button
           type="button"
           onClick={() => setSidebarOpen(true)}
-          className="rounded-lg p-1.5 text-neutral-fg2 hover:text-neutral-fg1"
+          className="rounded-lg p-1.5 text-text-secondary hover:text-text-primary hover:bg-surface-muted"
           aria-label="Open menu"
         >
           <Menu className="h-5 w-5" />
         </button>
-        <span className="text-sm font-semibold text-neutral-fg1 tracking-tight ml-3">Pulse</span>
+        <span className="text-sm font-semibold text-text-primary tracking-tight ml-3">Pulse</span>
         <button
           type="button"
           onClick={() => setDialogOpen(true)}
-          className="ml-auto rounded-lg p-1.5 text-neutral-fg2 hover:text-brand"
+          className="ml-auto rounded-lg p-1.5 text-text-secondary hover:text-orange"
           aria-label="Create agent"
         >
           <Plus className="h-4 w-4" />
@@ -113,27 +118,33 @@ export function Dashboard() {
       />
 
       {/* Main area */}
-      <div className="flex min-w-0 flex-1 flex-col bg-white md:border md:border-stroke md:rounded-2xl md:shadow-2 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col bg-surface md:border md:border-border md:rounded-2xl md:shadow-[var(--shadow-card)] overflow-hidden">
         {loading ? (
           <div className="flex flex-1 items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+            <div className="flex gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-orange animate-[pulse-dot_1.2s_ease-in-out_infinite]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-orange animate-[pulse-dot_1.2s_ease-in-out_infinite_0.2s]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-orange animate-[pulse-dot_1.2s_ease-in-out_infinite_0.4s]" />
+            </div>
           </div>
         ) : selectedAgent ? (
           <>
             {/* Topbar */}
-            <div className="flex items-center gap-3 px-5 h-[52px] border-b border-stroke shrink-0 bg-white">
+            <div className="flex items-center gap-3 px-4 h-[52px] border-b border-border shrink-0 bg-surface">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-[14px] font-semibold text-neutral-fg1 truncate">{selectedAgent.name}</span>
-                <span className="text-[11px] text-neutral-fg3 bg-neutral-bg3 px-2 py-0.5 rounded-full capitalize">
+                <span className={`h-2 w-2 rounded-full shrink-0 ${statusColor[selectedAgent.status ?? "idle"] ?? "bg-border-strong"}`} />
+                <span className="text-[14px] font-semibold text-text-primary truncate">{selectedAgent.name}</span>
+                <span className="hidden sm:block text-[11px] text-text-disabled bg-surface-muted border border-border px-2 py-0.5 rounded-md capitalize">
                   {selectedAgent.status ?? "idle"}
                 </span>
               </div>
+
               <div className="ml-auto flex items-center gap-1.5">
                 {agentIsStreaming && (
                   <button
                     type="button"
                     onClick={handleStop}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] text-red-600 hover:bg-red-50 transition-colors border border-red-200"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-danger hover:bg-danger-light transition-colors border border-danger/20"
                   >
                     <Square className="h-3 w-3" />
                     Stop
@@ -142,17 +153,17 @@ export function Dashboard() {
                 <button
                   type="button"
                   onClick={() => setSkillPickerOpen(true)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] text-neutral-fg2 hover:bg-neutral-bg3 transition-colors border border-stroke"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] text-text-secondary hover:bg-surface-muted transition-colors border border-border"
                 >
-                  <Zap className="h-3.5 w-3.5 text-amber-500" />
+                  <Zap className="h-3.5 w-3.5 text-orange" />
                   Skills
                 </button>
                 <button
                   type="button"
                   onClick={() => setMemoryOpen(true)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] text-neutral-fg2 hover:bg-neutral-bg3 transition-colors border border-stroke"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] text-text-secondary hover:bg-surface-muted transition-colors border border-border"
                 >
-                  <BookOpen className="h-3.5 w-3.5 text-amber-500" />
+                  <BookOpen className="h-3.5 w-3.5 text-blue" />
                   Memory
                 </button>
               </div>
@@ -161,12 +172,12 @@ export function Dashboard() {
             {/* Canvas + Chat layout */}
             <div className="flex flex-1 min-h-0">
               {/* Canvas */}
-              <div className="flex flex-col flex-1 min-w-0 min-h-0 bg-neutral-bg3/30">
+              <div className="flex flex-col flex-1 min-w-0 min-h-0 bg-surface-muted/40">
                 <AgentCanvas blocks={agentBlocks} isStreaming={agentIsStreaming} />
               </div>
 
               {/* Chat sidebar */}
-              <div className="flex flex-col w-[360px] shrink-0 border-l border-stroke min-h-0">
+              <div className="flex flex-col w-[340px] shrink-0 border-l border-border min-h-0">
                 <ChatSidebar messages={agentMessages} streamingContent={agentStreamingText} />
                 <ChatInput onSend={handleSend} disabled={agentIsStreaming} />
               </div>
@@ -179,7 +190,6 @@ export function Dashboard() {
         )}
       </div>
 
-      {/* Modals */}
       <SharedMemoryPanel open={memoryOpen} onClose={() => setMemoryOpen(false)} />
       {selectedAgentId && (
         <SkillPicker
@@ -200,20 +210,20 @@ export function Dashboard() {
 function NoAgentsState({ onCreateAgent }: { onCreateAgent: () => void }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6">
-      <div className="bg-white border border-stroke rounded-2xl p-10 flex flex-col items-center gap-6 max-w-md w-full shadow-4">
-        <div className="rounded-2xl bg-amber-50 p-5">
-          <Zap className="h-10 w-10 text-amber-500" />
+      <div className="panel p-10 flex flex-col items-center gap-5 max-w-sm w-full">
+        <div className="h-14 w-14 rounded-xl border border-border bg-surface-muted flex items-center justify-center">
+          <Zap className="h-6 w-6 text-orange" />
         </div>
-        <div className="text-center space-y-2">
-          <h2 className="text-[22px] font-bold text-neutral-fg1 tracking-tight">No agents yet</h2>
-          <p className="text-[14px] text-neutral-fg2 leading-relaxed max-w-xs">
+        <div className="text-center space-y-1.5">
+          <h2 className="text-[18px] font-bold text-text-primary tracking-tight">No agents yet</h2>
+          <p className="text-[13px] text-text-secondary leading-relaxed max-w-[220px]">
             Create your first agent to get started.
           </p>
         </div>
         <button
           type="button"
           onClick={onCreateAgent}
-          className="btn-primary flex items-center gap-2 px-6 py-2.5 text-[14px]"
+          className="btn btn-primary flex items-center gap-2 px-5 py-2.5"
         >
           <Plus className="h-4 w-4" />
           Create Agent
@@ -225,8 +235,8 @@ function NoAgentsState({ onCreateAgent }: { onCreateAgent: () => void }) {
 
 function SelectAgentState() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-6">
-      <p className="text-[13px] text-neutral-fg3">Select an agent from the sidebar</p>
+    <div className="flex flex-1 items-center justify-center">
+      <p className="text-[13px] text-text-disabled">Select an agent from the sidebar</p>
     </div>
   );
 }
