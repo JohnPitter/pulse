@@ -131,7 +131,7 @@ export function AgentsPage() {
               <p className="mb-1 text-[10px] uppercase tracking-wide text-neutral-fg3">{t("agentsPage.currentTask")}</p>
               <p className="text-[13px] font-semibold text-neutral-fg1">{selectedTask?.title ?? t("agentsPage.noTaskRunning")}</p>
               <p className="mt-1 text-[11px] text-neutral-fg2">
-                {t("agentsPage.status")}: <span className="capitalize">{t(STATE_KEYS[selectedAgent.state] ?? selectedAgent.state)}</span>
+                {t("agentsPage.status")}: <span className="capitalize">{t(STATE_KEYS[selectedAgent.status] ?? selectedAgent.status)}</span>
               </p>
             </div>
 

@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Download, Plug2, Sparkles, X } from "lucide-react";
+import { Download, Sparkles, X } from "lucide-react";
 import { useSkillsStore, type Skill } from "../../stores/skills";
 import { useShellQuery } from "./useShellQuery";
 import { useI18n } from "../../i18n";
