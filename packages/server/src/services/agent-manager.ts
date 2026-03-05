@@ -12,6 +12,7 @@ const CONTEXT = "agent-manager";
 export interface CreateAgentInput {
   name: string;
   projectPath: string;
+  role?: string;
   claudeMd?: string;
   initialPrompt?: string;
   model?: string;
@@ -22,6 +23,7 @@ export interface CreateAgentInput {
 export interface UpdateAgentInput {
   name?: string;
   projectPath?: string;
+  role?: string | null;
   claudeMd?: string;
   initialPrompt?: string;
   model?: string;

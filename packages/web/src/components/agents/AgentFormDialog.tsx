@@ -36,6 +36,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
 
   const [name, setName] = useState("");
   const [projectPath, setProjectPath] = useState("");
+  const [role, setRole] = useState("");
   const [model, setModel] = useState("sonnet");
   const [thinkingEnabled, setThinkingEnabled] = useState(false);
   const [permissionMode, setPermissionMode] = useState("bypassPermissions");
@@ -50,6 +51,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
     if (agent) {
       setName(agent.name);
       setProjectPath(agent.projectPath);
+      setRole(agent.role ?? "");
       setModel(agent.model);
       setThinkingEnabled(agent.thinkingEnabled === 1);
       setPermissionMode(agent.permissionMode);
@@ -62,6 +64,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
   const resetForm = () => {
     setName("");
     setProjectPath("");
+    setRole("");
     setModel("sonnet");
     setThinkingEnabled(false);
     setPermissionMode("bypassPermissions");
@@ -85,6 +88,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
     if (isEditMode && agent) {
       const payload: UpdateAgentPayload = {
         name: name.trim(),
+        role: role.trim() || null,
         model,
         thinkingEnabled,
         permissionMode,
@@ -102,6 +106,7 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
       const payload: CreateAgentPayload = {
         name: name.trim(),
         projectPath: projectPath.trim(),
+        role: role.trim() || undefined,
         model,
         thinkingEnabled,
         permissionMode,
@@ -214,6 +219,25 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                     initialPath={projectPath || undefined}
                   />
                 )}
+              </div>
+
+              {/* Role / System Prompt */}
+              <div>
+                <label
+                  htmlFor="agent-role"
+                  className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block"
+                >
+                  Role / System Prompt{" "}
+                  <span className="text-neutral-fg-disabled">(optional)</span>
+                </label>
+                <textarea
+                  id="agent-role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  placeholder="You are a helpful assistant focused on..."
+                  rows={3}
+                  className="input-fluent w-full resize-none"
+                />
               </div>
 
               <div className="border-b border-stroke/50" />

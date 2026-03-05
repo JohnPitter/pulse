@@ -66,7 +66,7 @@ export function createAgentRouter(agentManager: AgentManager): Router {
    */
   router.post("/", async (req: Request, res: Response) => {
     try {
-      const { name, projectPath, claudeMd, initialPrompt, model, thinkingEnabled, permissionMode } = req.body as Record<string, unknown>;
+      const { name, projectPath, claudeMd, initialPrompt, model, thinkingEnabled, permissionMode, role } = req.body as Record<string, unknown>;
 
       if (!name || !projectPath) {
         res.status(400).json({ error: "name and projectPath are required" });
@@ -78,6 +78,7 @@ export function createAgentRouter(agentManager: AgentManager): Router {
         projectPath: projectPath as string,
         claudeMd: claudeMd as string | undefined,
         initialPrompt: initialPrompt as string | undefined,
+        role: role as string | undefined,
         model: (model as string) ?? "sonnet",
         thinkingEnabled: thinkingEnabled ? 1 : 0,
         permissionMode: (permissionMode as string) ?? "bypassPermissions",
