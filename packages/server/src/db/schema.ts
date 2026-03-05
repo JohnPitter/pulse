@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, index, primaryKey } from "drizzle-orm/sqlite-core";
 
 export const agents = sqliteTable(
   "agents",
@@ -45,4 +45,27 @@ export const chatMessages = sqliteTable(
 export const settings = sqliteTable("settings", {
   key: text("key").primaryKey().notNull(),
   value: text("value").notNull(),
+});
+
+export const skills = sqliteTable("skills", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  type: text("type").notNull(), // "tool" | "prompt" | "mcp"
+  config: text("config").notNull().default("{}"), // JSON string
+  enabledByDefault: integer("enabled_by_default", { mode: "boolean" }).notNull().default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const agentSkills = sqliteTable("agent_skills", {
+  agentId: text("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
+  skillId: text("skill_id").notNull().references(() => skills.id, { onDelete: "cascade" }),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.agentId, t.skillId] }),
+}));
+
+export const sharedMemory = sqliteTable("shared_memory", {
+  id: integer("id").primaryKey().default(1),
+  content: text("content").notNull().default("# Shared Memory\n\nWrite notes here that all agents will read.\n"),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
