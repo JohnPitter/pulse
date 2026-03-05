@@ -16,6 +16,7 @@ export const agents = sqliteTable(
     pid: integer("pid"),
     lastMessage: text("last_message"),
     lastActiveAt: text("last_active_at"),
+    role: text("role"),
     startedAt: text("started_at"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),

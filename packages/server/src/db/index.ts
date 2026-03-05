@@ -96,6 +96,13 @@ try {
   // Column already exists — safe to ignore
 }
 
+// Migration guard: add role column if missing
+try {
+  sqlite.prepare(`ALTER TABLE agents ADD COLUMN role TEXT`).run();
+} catch {
+  // Column already exists — safe to ignore
+}
+
 // Ensure shared_memory singleton row exists
 const sharedMemoryDefault = "# Shared Memory\n\nWrite notes here that all agents will read.\n";
 sqlite
