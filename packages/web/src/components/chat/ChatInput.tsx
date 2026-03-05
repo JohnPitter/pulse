@@ -61,8 +61,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const result = ev.target?.result as string;
-      const base64 = result.split(",")[1];
-      setImageBase64(base64);
+      setImageBase64(result.split(",")[1]);
       setImagePreview(result);
     };
     reader.readAsDataURL(file);
@@ -103,52 +102,59 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
   };
 
   return (
-    <div className="border-t border-stroke bg-white px-4 py-3">
+    <div className="border-t border-border bg-surface px-3 py-3 shrink-0">
       {imagePreview && (
         <div className="relative inline-block mb-2">
-          <img src={imagePreview} alt="attachment" className="h-16 w-16 rounded-lg object-cover border border-stroke" />
+          <img src={imagePreview} alt="attachment" className="h-14 w-14 rounded-lg object-cover border border-border" />
           <button
             onClick={() => { setImageBase64(undefined); setImagePreview(undefined); }}
-            className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-neutral-fg1 flex items-center justify-center"
+            className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-text-primary flex items-center justify-center"
             type="button"
           >
             <X className="h-2.5 w-2.5 text-white" />
           </button>
         </div>
       )}
-      <div className="flex items-end gap-2">
+
+      <div className="flex items-end gap-1.5">
         <button
           onClick={toggleVoice}
-          className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${listening ? "bg-red-50 text-red-500" : "text-neutral-fg3 hover:text-neutral-fg1 hover:bg-neutral-bg3"}`}
-          title={listening ? "Stop recording" : "Voice input"}
           type="button"
+          title={listening ? "Stop recording" : "Voice input"}
+          className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${
+            listening ? "bg-danger-light text-danger" : "text-text-disabled hover:text-text-primary hover:bg-surface-muted"
+          }`}
         >
-          {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          {listening ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
         </button>
+
         <button
           onClick={() => fileRef.current?.click()}
-          className="shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-neutral-fg3 hover:text-neutral-fg1 hover:bg-neutral-bg3 transition-colors"
-          title="Attach image"
           type="button"
+          title="Attach image"
+          className="shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-text-disabled hover:text-text-primary hover:bg-surface-muted transition-colors"
         >
-          <Paperclip className="h-4 w-4" />
+          <Paperclip className="h-3.5 w-3.5" />
         </button>
+
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImage} />
+
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKey}
           rows={1}
-          placeholder="Message… (Ctrl+Enter to send)"
+          placeholder="Message… (Ctrl+Enter)"
           disabled={disabled}
-          className="flex-1 resize-none rounded-xl border border-stroke bg-neutral-bg3 px-3 py-2 text-[13px] text-neutral-fg1 placeholder-neutral-fg3 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors max-h-32 overflow-auto"
-          style={{ minHeight: "36px" }}
+          className="flex-1 resize-none rounded-lg border border-border bg-surface-muted px-3 py-2 text-[13px] text-text-primary placeholder-text-disabled focus:outline-none focus:ring-2 focus:ring-blue/20 focus:border-blue transition-all max-h-32 overflow-auto"
+          style={{ minHeight: "34px" }}
         />
+
         <button
           onClick={send}
           disabled={disabled || (!text.trim() && !imageBase64)}
-          className="shrink-0 h-8 w-8 rounded-lg bg-brand hover:bg-brand-dark disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
           type="button"
+          className="shrink-0 h-8 w-8 rounded-lg bg-orange hover:bg-orange-hover disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
         >
           <Send className="h-3.5 w-3.5 text-white" />
         </button>
