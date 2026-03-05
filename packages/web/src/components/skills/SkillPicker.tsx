@@ -21,7 +21,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  tool: "bg-amber-100 text-amber-700",
+  tool: "bg-brand-light text-brand",
   prompt: "bg-blue-100 text-blue-700",
   mcp: "bg-purple-100 text-purple-700",
 };
@@ -71,7 +71,7 @@ export function SkillPicker({ agentId, open, onClose }: SkillPickerProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col overflow-hidden" style={{ maxHeight: "75vh" }}>
         <div className="flex items-center gap-3 px-5 py-4 border-b border-stroke shrink-0">
-          <Zap className="h-4 w-4 text-amber-500" />
+          <Zap className="h-4 w-4 text-brand" />
           <span className="text-[15px] font-semibold text-neutral-fg1">Skills</span>
           <button onClick={onClose} className="ml-auto h-7 w-7 rounded-lg flex items-center justify-center text-neutral-fg3 hover:bg-neutral-bg3 transition-colors" type="button">
             <X className="h-4 w-4" />
@@ -87,7 +87,7 @@ export function SkillPicker({ agentId, open, onClose }: SkillPickerProps) {
               className="flex items-center gap-3 p-3 rounded-xl border border-stroke hover:bg-neutral-bg3 transition-colors cursor-pointer"
               onClick={() => toggle(skill.id)}
             >
-              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${activeIds.has(skill.id) ? "bg-amber-500 border-amber-500" : "border-stroke"}`}>
+              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${activeIds.has(skill.id) ? "bg-brand border-brand" : "border-stroke"}`}>
                 {activeIds.has(skill.id) && <span className="text-white text-[10px] font-bold">✓</span>}
               </div>
               <div className="flex-1 min-w-0">
@@ -108,7 +108,7 @@ export function SkillPicker({ agentId, open, onClose }: SkillPickerProps) {
           <button
             onClick={save}
             disabled={saving}
-            className="w-full py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-[13px] font-medium transition-colors disabled:opacity-40"
+            className="w-full py-2 rounded-xl bg-brand hover:bg-brand-dark text-white text-[13px] font-medium transition-colors disabled:opacity-40"
             type="button"
           >
             {saving ? "Saving…" : "Apply Skills"}

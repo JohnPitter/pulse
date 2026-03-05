@@ -27,7 +27,7 @@ export function CanvasBlock({ block }: { block: Block }) {
           type="button"
         >
           {open ? <ChevronDown className="h-3.5 w-3.5 text-neutral-fg3" /> : <ChevronRight className="h-3.5 w-3.5 text-neutral-fg3" />}
-          <Wrench className="h-3.5 w-3.5 text-amber-500" />
+          <Wrench className="h-3.5 w-3.5 text-brand" />
           <span className="text-[12px] font-medium text-neutral-fg2">{block.name}</span>
         </button>
         {open && (
@@ -50,7 +50,7 @@ export function CanvasBlock({ block }: { block: Block }) {
         type="button"
       >
         {open ? <ChevronDown className="h-3.5 w-3.5 text-neutral-fg3" /> : <ChevronRight className="h-3.5 w-3.5 text-neutral-fg3" />}
-        <Terminal className="h-3.5 w-3.5 text-neutral-fg3" />
+        <Terminal className="h-3.5 w-3.5 text-info" />
         <span className="text-[12px] font-medium text-neutral-fg2">Result: {block.name}</span>
       </button>
       {open && (
