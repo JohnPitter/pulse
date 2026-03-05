@@ -58,7 +58,7 @@ export function Settings() {
 
         {/* Sections */}
         <ChangePasswordSection />
-        <ClaudeAuthSection />
+        <RuntimeAuthSection />
         <PluginsSection />
         <SessionSection onLogout={handleLogout} />
       </div>
@@ -205,10 +205,10 @@ function ChangePasswordSection() {
 }
 
 // --------------------------------------------------------------------------
-// Claude Auth Section
+// Runtime Auth Section
 // --------------------------------------------------------------------------
 
-function ClaudeAuthSection() {
+function RuntimeAuthSection() {
   const [status, setStatus] = useState<AuthStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showReconfigure, setShowReconfigure] = useState(false);
@@ -249,7 +249,7 @@ function ClaudeAuthSection() {
         credentials: "include",
       });
       if (res.ok) {
-        setRefreshMsg({ type: "success", text: "Token refreshed successfully" });
+        setRefreshMsg({ type: "success", text: "Credentials refreshed successfully" });
         setTimeout(() => setRefreshMsg(null), 3000);
       } else {
         const data = (await res.json()) as { error?: string };
@@ -266,8 +266,8 @@ function ClaudeAuthSection() {
     return (
       <div className="bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
         <div className="px-6 py-4 border-b border-stroke">
-          <h3 className="text-[15px] font-semibold text-neutral-fg1">Claude Authentication</h3>
-          <p className="text-[13px] text-neutral-fg2 mt-0.5">Configure how Pulse connects to Claude</p>
+          <h3 className="text-[15px] font-semibold text-neutral-fg1">Runtime Authentication</h3>
+          <p className="text-[13px] text-neutral-fg2 mt-0.5">Configure how Pulse connects to your agent runtime</p>
         </div>
         <div className="px-6 py-8 flex items-center justify-center">
           <Loader2 className="h-5 w-5 animate-spin text-neutral-fg3" />
@@ -281,11 +281,11 @@ function ClaudeAuthSection() {
       <div className="px-6 py-4 border-b border-stroke">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-[15px] font-semibold text-neutral-fg1">Claude Authentication</h3>
+            <h3 className="text-[15px] font-semibold text-neutral-fg1">Runtime Authentication</h3>
             <p className="text-[13px] text-neutral-fg2 mt-0.5">
               {status?.configured
                 ? `Connected via ${status.type === "oauth" ? "OAuth" : "API Key"}`
-                : "Configure how Pulse connects to Claude"}
+                : "Configure how Pulse connects to your agent runtime"}
             </p>
           </div>
           {status?.configured ? (
@@ -373,7 +373,7 @@ function ReconfigureAuth({
           className="border border-stroke bg-neutral-bg3 rounded-xl p-4 cursor-pointer hover:border-neutral-fg3 transition-all flex flex-col items-center gap-2 text-center"
         >
           <Shield className="h-5 w-5 text-brand" />
-          <span className="text-xs font-medium text-neutral-fg1">CLI Token</span>
+          <span className="text-xs font-medium text-neutral-fg1">Runtime CLI Token</span>
         </button>
         <button
           onClick={() => setMethod("apikey")}
@@ -492,11 +492,11 @@ function OAuthTokenReconfigure({
 
       <div className="rounded-lg border border-stroke bg-neutral-bg3 p-3">
         <p className="text-xs text-neutral-fg2 leading-relaxed">
-          SSH into the server and run{" "}
+          SSH into the server and run your runtime login command{" "}
           <code className="rounded bg-neutral-bg-hover px-1.5 py-0.5 text-[11px] text-brand">
-            claude login
+            runtime-cli login
           </code>
-          , then click the button below to auto-import.
+          {" "}if applicable, then click the button below to auto-import.
         </p>
       </div>
 
@@ -508,7 +508,7 @@ function OAuthTokenReconfigure({
         {isImporting ? (
           <Loader2 className="mx-auto h-4 w-4 animate-spin" />
         ) : (
-          "Import from CLI"
+          "Import from Runtime CLI"
         )}
       </button>
 
@@ -524,7 +524,7 @@ function OAuthTokenReconfigure({
           onClick={() => { setShowManual(true); setError(null); }}
           className="w-full text-xs text-neutral-fg3 transition-colors duration-200 hover:text-neutral-fg2"
         >
-          Or paste tokens manually
+          Or paste runtime tokens manually
         </button>
       ) : (
         <form onSubmit={handleManualSubmit} className="space-y-3">
@@ -536,7 +536,7 @@ function OAuthTokenReconfigure({
 
           <div>
             <label htmlFor="oauth-token" className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block">
-              Access Token
+              Runtime Access Token
             </label>
             <input
               id="oauth-token"
@@ -550,7 +550,7 @@ function OAuthTokenReconfigure({
 
           <div>
             <label htmlFor="oauth-refresh" className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block">
-              Refresh Token <span className="text-neutral-fg-disabled">(optional)</span>
+              Runtime Refresh Token <span className="text-neutral-fg-disabled">(optional)</span>
             </label>
             <input
               id="oauth-refresh"
@@ -570,7 +570,7 @@ function OAuthTokenReconfigure({
             {isSubmitting ? (
               <Loader2 className="mx-auto h-4 w-4 animate-spin" />
             ) : (
-              "Save Token"
+              "Save Runtime Token"
             )}
           </button>
         </form>
@@ -647,7 +647,7 @@ function ApiKeyReconfigure({
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
           <label htmlFor="apikey-settings" className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block">
-            Anthropic API Key
+            Provider API Key
           </label>
           <input
             id="apikey-settings"
@@ -674,7 +674,7 @@ function ApiKeyReconfigure({
           {isSubmitting ? (
             <Loader2 className="mx-auto h-4 w-4 animate-spin" />
           ) : (
-            "Save API Key"
+            "Save Provider API Key"
           )}
         </button>
       </form>
@@ -709,7 +709,7 @@ function PluginsSection() {
     <div className="bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
       <div className="px-6 py-4 border-b border-stroke">
         <h3 className="text-[15px] font-semibold text-neutral-fg1">Plugins</h3>
-        <p className="text-[13px] text-neutral-fg2 mt-0.5">Installed Claude Code plugins</p>
+        <p className="text-[13px] text-neutral-fg2 mt-0.5">Installed runtime plugins</p>
       </div>
       <div className="px-6 py-5">
         {isLoading ? (
@@ -721,7 +721,7 @@ function PluginsSection() {
             <Puzzle className="h-8 w-8 text-neutral-fg-disabled" />
             <p className="text-sm text-neutral-fg3">No plugins detected</p>
             <p className="text-xs text-neutral-fg-disabled">
-              Install plugins via Claude Code CLI on the server
+              Install plugins via your runtime CLI on the server
             </p>
           </div>
         ) : (
