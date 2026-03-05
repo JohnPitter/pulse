@@ -4,10 +4,6 @@
       <stop stop-color="#F0EDE8"/>
       <stop offset="1" stop-color="#DEDAD3"/>
     </linearGradient>
-    <linearGradient id="module" x1="430" y1="220" x2="520" y2="310" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FF9A3C"/>
-      <stop offset="1" stop-color="#4F7DF3"/>
-    </linearGradient>
   </defs>
 
   <rect width="640" height="360" rx="24" fill="url(#bg)"/>
@@ -20,7 +16,7 @@
 
   <rect x="44" y="116" width="356" height="172" rx="16" fill="#ECE9E4" stroke="#D6D1CA"/>
   <text x="66" y="143" font-family="Inter, Arial, sans-serif" font-size="11" fill="#7B7770">Task</text>
-  <text x="66" y="161" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" fill="#171717">Resumo diario dos agentes</text>
+  <text x="66" y="161" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" fill="#171717">Daily agent summary</text>
 
   <text x="66" y="189" font-family="Inter, Arial, sans-serif" font-size="11" fill="#7B7770">Agent</text>
   <text x="66" y="207" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" fill="#171717">Nova</text>
@@ -31,9 +27,21 @@
   <rect x="258" y="226" width="124" height="40" rx="12" fill="#F8F8F9" stroke="#D6D1CA"/>
   <text x="280" y="250" font-family="Inter, Arial, sans-serif" font-size="12" fill="#3D3A35">Open logs</text>
 
+  <!-- Neural network mini visual -->
   <rect x="418" y="116" width="178" height="172" rx="16" fill="#ECE9E4" stroke="#D6D1CA"/>
-  <rect x="450" y="158" width="114" height="114" rx="22" fill="#D3CEC7"/>
-  <circle cx="507" cy="215" r="34" fill="url(#module)"/>
+  <line x1="460" y1="180" x2="497" y2="195" stroke="#C8C4BE" stroke-width="1.2"/>
+  <line x1="460" y1="210" x2="497" y2="195" stroke="#C8C4BE" stroke-width="1.2"/>
+  <line x1="497" y1="195" x2="540" y2="185" stroke="#EEA34B" stroke-width="1.5" opacity="0.7"/>
+  <line x1="497" y1="195" x2="540" y2="210" stroke="#EEA34B" stroke-width="1.5" opacity="0.7"/>
+  <line x1="540" y1="185" x2="575" y2="198" stroke="#4F7DF3" stroke-width="1.5" opacity="0.7"/>
+  <line x1="540" y1="210" x2="575" y2="198" stroke="#4F7DF3" stroke-width="1.5" opacity="0.7"/>
+  <circle cx="460" cy="180" r="7" fill="#D5D2CD" stroke="#B8B4AE" stroke-width="1"/>
+  <circle cx="460" cy="210" r="7" fill="#D5D2CD" stroke="#B8B4AE" stroke-width="1"/>
+  <circle cx="497" cy="195" r="9" fill="#F19532" stroke="#D97E1F" stroke-width="1.2"/>
+  <circle cx="540" cy="185" r="8" fill="#BFC5CC" stroke="#A0A6AD" stroke-width="1"/>
+  <circle cx="540" cy="210" r="8" fill="#BFC5CC" stroke="#A0A6AD" stroke-width="1"/>
+  <circle cx="575" cy="198" r="9" fill="#4F7DF3" stroke="#3D61B3" stroke-width="1.2"/>
+  <circle cx="575" cy="198" r="4" fill="white" opacity="0.3"/>
 
   <rect x="44" y="302" width="552" height="18" rx="8" fill="#E8E5E0"/>
   <rect x="60" y="306" width="138" height="10" rx="5" fill="#D0CBC4"/>

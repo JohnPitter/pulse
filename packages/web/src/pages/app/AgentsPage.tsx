@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronRight, Cpu, Radio, UserRound } from "lucide-react";
-import { AGENTS, TASKS } from "./mockData";
+import { useAgentsStore } from "../../stores/agents";
+import { useTasksStore } from "../../stores/tasks";
 import { useShellQuery } from "./useShellQuery";
 import { useI18n } from "../../i18n";
 
@@ -21,21 +22,38 @@ const STATE_KEYS: Record<string, string> = {
 
 export function AgentsPage() {
   const query = useShellQuery();
-  const [selectedId, setSelectedId] = useState(AGENTS[0]?.id ?? "");
   const { t } = useI18n();
+
+  const agents = useAgentsStore((s) => s.agents);
+  const fetchAgents = useAgentsStore((s) => s.fetchAgents);
+  const tasks = useTasksStore((s) => s.tasks);
+  const fetchTasks = useTasksStore((s) => s.fetchTasks);
+
+  const [selectedId, setSelectedId] = useState("");
+
+  useEffect(() => {
+    fetchAgents();
+    fetchTasks();
+  }, [fetchAgents, fetchTasks]);
+
+  useEffect(() => {
+    if (!selectedId && agents.length > 0) setSelectedId(agents[0].id);
+  }, [agents, selectedId]);
 
   const filteredAgents = useMemo(
     () =>
-      AGENTS.filter((agent) => {
-        const haystack = `${agent.name} ${agent.role}`.toLowerCase();
+      agents.filter((agent) => {
+        const haystack = `${agent.name} ${agent.role ?? ""}`.toLowerCase();
         return !query || haystack.includes(query);
       }),
-    [query],
+    [agents, query],
   );
 
   const selectedAgent =
     filteredAgents.find((agent) => agent.id === selectedId) ?? filteredAgents[0] ?? null;
-  const selectedTask = TASKS.find((task) => task.id === selectedAgent?.current_task_id) ?? null;
+  const selectedTask = selectedAgent
+    ? tasks.find((task) => task.agentId === selectedAgent.id && (task.status === "running" || task.status === "scheduled"))
+    : null;
 
   return (
     <div className="grid h-full min-h-[520px] grid-cols-1 gap-3 xl:grid-cols-[0.62fr_0.38fr] animate-fade-in">
@@ -52,7 +70,7 @@ export function AgentsPage() {
 
         <div className="space-y-1.5">
           {filteredAgents.map((agent) => {
-            const task = TASKS.find((candidate) => candidate.id === agent.current_task_id);
+            const task = tasks.find((candidate) => candidate.agentId === agent.id && (candidate.status === "running" || candidate.status === "scheduled"));
             return (
               <button
                 key={agent.id}
@@ -71,8 +89,8 @@ export function AgentsPage() {
                   <p className="truncate text-[13px] font-semibold text-neutral-fg1">{agent.name}</p>
                   <p className="truncate text-[11px] text-neutral-fg2">{task?.title ?? t("agentsPage.noActiveTask")}</p>
                 </div>
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${STATE_BADGES[agent.state]}`}>
-                  {t(STATE_KEYS[agent.state] ?? agent.state)}
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${STATE_BADGES[agent.status]}`}>
+                  {t(STATE_KEYS[agent.status] ?? agent.status)}
                 </span>
               </button>
             );
@@ -104,7 +122,7 @@ export function AgentsPage() {
               <div className="flex items-center gap-2 text-[11px] text-neutral-fg2">
                 <Radio className="h-3.5 w-3.5" />
                 {t("agentsPage.lastSeen", {
-                  time: new Date(selectedAgent.last_seen_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                  time: new Date(selectedAgent.lastActiveAt ?? selectedAgent.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
                 })}
               </div>
             </div>

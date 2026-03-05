@@ -1,48 +1,60 @@
-import { useMemo, useState } from "react";
-import { FileText, Filter, Headphones, Image, Layers3, Table2 } from "lucide-react";
-import { FILES, PROJECTS, type FileRecord } from "./mockData";
+import { useEffect, useMemo, useState } from "react";
+import { Filter, FolderOpen, Layers3 } from "lucide-react";
+import { useProjectsStore } from "../../stores/projects";
 import { useShellQuery } from "./useShellQuery";
 import { useI18n } from "../../i18n";
 
 const CARD_CLASS =
   "rounded-[20px] border border-black/6 bg-[#F1EFEC] shadow-[0_8px_18px_rgba(0,0,0,0.06)]";
 
-const KINDS: Array<FileRecord["kind"] | "all"> = ["all", "image", "document", "audio", "dataset"];
-
-const ICONS = {
-  image: Image,
-  document: FileText,
-  audio: Headphones,
-  dataset: Table2,
-} as const;
-
-const KIND_LABEL_KEY: Record<FileRecord["kind"] | "all", string> = {
-  all: "filesPage.all",
-  image: "filesPage.image",
-  document: "filesPage.document",
-  audio: "filesPage.audio",
-  dataset: "filesPage.dataset",
-};
+interface BrowseEntry {
+  name: string;
+  path: string;
+}
 
 export function FilesPage() {
   const query = useShellQuery();
-  const [kind, setKind] = useState<FileRecord["kind"] | "all">("all");
-  const [selectedFileId, setSelectedFileId] = useState(FILES[0]?.id ?? "");
   const { t } = useI18n();
 
-  const filteredFiles = useMemo(
-    () =>
-      FILES.filter((file) => {
-        const matchesKind = kind === "all" || file.kind === kind;
-        const content = `${file.name} ${file.kind}`.toLowerCase();
-        return matchesKind && (!query || content.includes(query));
-      }),
-    [kind, query],
-  );
+  const projects = useProjectsStore((s) => s.projects);
+  const fetchProjects = useProjectsStore((s) => s.fetchProjects);
 
-  const selectedFile =
-    filteredFiles.find((file) => file.id === selectedFileId) ?? filteredFiles[0] ?? null;
-  const selectedProject = PROJECTS.find((project) => project.id === selectedFile?.project_id) ?? null;
+  const [currentPath, setCurrentPath] = useState("");
+  const [parentPath, setParentPath] = useState<string | null>(null);
+  const [directories, setDirectories] = useState<BrowseEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
+
+  const browsePath = async (path?: string) => {
+    setLoading(true);
+    try {
+      const url = path ? `/api/filesystem/browse?path=${encodeURIComponent(path)}` : "/api/filesystem/browse";
+      const res = await fetch(url, { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json() as { currentPath: string; parentPath: string | null; directories: BrowseEntry[] };
+        setCurrentPath(data.currentPath);
+        setParentPath(data.parentPath);
+        setDirectories(data.directories);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    browsePath();
+  }, []);
+
+  const filteredDirs = useMemo(
+    () =>
+      directories.filter((dir) => {
+        return !query || dir.name.toLowerCase().includes(query);
+      }),
+    [directories, query],
+  );
 
   return (
     <div className="grid h-full min-h-[520px] grid-cols-1 gap-3 xl:grid-cols-[0.66fr_0.34fr] animate-fade-in">
@@ -55,48 +67,45 @@ export function FilesPage() {
           <Filter className="h-4 w-4 text-neutral-fg3" />
         </div>
 
-        <div className="mb-3 flex flex-wrap gap-1.5">
-          {KINDS.map((candidate) => (
+        <div className="mb-3 flex items-center gap-2 rounded-xl border border-stroke bg-neutral-bg2 px-3 py-1.5">
+          <FolderOpen className="h-4 w-4 text-neutral-fg3" />
+          <p className="truncate text-[12px] text-neutral-fg1">{currentPath || "..."}</p>
+          {parentPath && (
             <button
-              key={candidate}
               type="button"
-              onClick={() => setKind(candidate)}
-              className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                kind === candidate
-                  ? "bg-neutral-fg1 text-white"
-                  : "border border-stroke bg-neutral-bg2 text-neutral-fg2 hover:bg-neutral-bg3"
-              }`}
+              onClick={() => browsePath(parentPath)}
+              className="ml-auto shrink-0 rounded-lg border border-stroke bg-neutral-bg3 px-2 py-0.5 text-[10px] text-neutral-fg2 hover:bg-neutral-bg2"
             >
-              {t(KIND_LABEL_KEY[candidate])}
+              {t("filesPage.goUp")}
             </button>
-          ))}
+          )}
         </div>
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredFiles.map((file) => {
-            const Icon = ICONS[file.kind];
-            return (
+        {loading ? (
+          <div className="flex h-[200px] items-center justify-center">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+          </div>
+        ) : filteredDirs.length > 0 ? (
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {filteredDirs.map((dir) => (
               <button
-                key={file.id}
+                key={dir.path}
                 type="button"
-                onClick={() => setSelectedFileId(file.id)}
-                className={`rounded-2xl border p-3 text-left transition-colors ${
-                  file.id === selectedFile?.id
-                    ? "border-brand/40 bg-neutral-bg2"
-                    : "border-black/5 bg-[#ECE9E4] hover:border-stroke"
-                }`}
+                onClick={() => browsePath(dir.path)}
+                className="rounded-2xl border border-black/5 bg-[#ECE9E4] p-3 text-left hover:border-stroke transition-colors"
               >
                 <div className="mb-3 flex h-[72px] items-center justify-center rounded-xl border border-black/5 bg-[linear-gradient(180deg,#EEEAE5,#E2DFD9)]">
-                  <Icon className="h-7 w-7 text-neutral-fg3" />
+                  <FolderOpen className="h-7 w-7 text-neutral-fg3" />
                 </div>
-                <p className="truncate text-[12px] font-semibold text-neutral-fg1">{file.name}</p>
-                <p className="mt-1 text-[10px] text-neutral-fg3">
-                  {file.size} - {t(KIND_LABEL_KEY[file.kind])}
-                </p>
+                <p className="truncate text-[12px] font-semibold text-neutral-fg1">{dir.name}</p>
               </button>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex h-[200px] items-center justify-center rounded-2xl border border-dashed border-stroke bg-neutral-bg2/70">
+            <p className="text-[12px] text-neutral-fg3">{t("filesPage.noFileMatch")}</p>
+          </div>
+        )}
       </section>
 
       <section className={`${CARD_CLASS} flex min-h-0 flex-col p-4 animate-fade-up stagger-2`}>
@@ -108,43 +117,24 @@ export function FilesPage() {
           </div>
         </div>
 
-        {selectedFile ? (
-          <div className="flex h-full flex-col">
-            <div className="mb-3 flex h-[190px] items-center justify-center rounded-2xl border border-black/5 bg-[linear-gradient(180deg,#EEEAE5,#E2DFD9)]">
-              <div className="relative h-[98px] w-[98px] rounded-[24px] border border-black/10 bg-[#CFCCC7]">
-                <div className="absolute left-1/2 top-1/2 h-[56px] w-[56px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-black/10 bg-brand/75" />
-              </div>
+        <div className="space-y-3">
+          <div className="rounded-2xl border border-black/5 bg-[#ECE9E4] p-3">
+            <p className="text-[10px] uppercase tracking-wide text-neutral-fg3">{t("projectsPage.project")}</p>
+            <div className="mt-1 space-y-1">
+              {projects.length > 0 ? (
+                projects.map((p) => (
+                  <div key={p.id} className="flex items-center gap-2">
+                    <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: p.color }} />
+                    <p className="text-[12px] text-neutral-fg1">{p.name}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-[11px] text-neutral-fg3">{t("projectsPage.noMatch")}</p>
+              )}
             </div>
-
-            <div className="space-y-2 rounded-2xl border border-black/5 bg-[#ECE9E4] p-3">
-              <InfoRow label={t("filesPage.file")} value={selectedFile.name} />
-              <InfoRow label={t("filesPage.type")} value={t(KIND_LABEL_KEY[selectedFile.kind])} />
-              <InfoRow label={t("filesPage.size")} value={selectedFile.size} />
-              <InfoRow label={t("filesPage.project")} value={selectedProject?.name ?? t("filesPage.unlinked")} />
-            </div>
-
-            <button
-              type="button"
-              className="mt-auto rounded-xl border border-stroke bg-neutral-bg2 py-2 text-[12px] font-medium text-neutral-fg1 hover:bg-neutral-bg3"
-            >
-              {t("filesPage.openFile")}
-            </button>
           </div>
-        ) : (
-          <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-stroke bg-neutral-bg2/70">
-            <p className="text-[12px] text-neutral-fg3">{t("filesPage.noFileMatch")}</p>
-          </div>
-        )}
+        </div>
       </section>
-    </div>
-  );
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-[10px] uppercase tracking-wide text-neutral-fg3">{label}</p>
-      <p className="truncate text-[12px] font-semibold text-neutral-fg1">{value}</p>
     </div>
   );
 }

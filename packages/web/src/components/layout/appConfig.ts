@@ -6,6 +6,7 @@ import {
   Puzzle,
   MessageSquare,
   Folder,
+  Settings,
 } from "lucide-react";
 
 export interface AppNavItem {
@@ -21,6 +22,7 @@ export const APP_NAV_ITEMS: AppNavItem[] = [
   { to: "/app/skills", labelKey: "nav.skillsPlugins", icon: Puzzle },
   { to: "/app/chat", labelKey: "nav.chat", icon: MessageSquare },
   { to: "/app/files", labelKey: "nav.files", icon: Folder },
+  { to: "/app/settings", labelKey: "nav.settings", icon: Settings },
 ];
 
 export const ROUTE_TITLE_KEYS: Record<string, string> = {
@@ -30,4 +32,5 @@ export const ROUTE_TITLE_KEYS: Record<string, string> = {
   "/app/skills": "routes.skillsPlugins",
   "/app/chat": "routes.chat",
   "/app/files": "routes.files",
+  "/app/settings": "routes.settings",
 };

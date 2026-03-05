@@ -1,69 +1,72 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Download, Plug2, Sparkles, X } from "lucide-react";
-import { PLUGINS, SKILLS_CATALOG } from "./mockData";
+import { useSkillsStore, type Skill } from "../../stores/skills";
 import { useShellQuery } from "./useShellQuery";
 import { useI18n } from "../../i18n";
 
 const CARD_CLASS =
   "rounded-[20px] border border-black/6 bg-[#F1EFEC] shadow-[0_8px_18px_rgba(0,0,0,0.06)]";
 
-const CATEGORY_STYLE: Record<string, string> = {
-  automation: "bg-warning-light text-warning",
-  analysis: "bg-info-light text-info",
-  connector: "bg-success-light text-success",
+const TYPE_STYLE: Record<string, string> = {
+  tool: "bg-warning-light text-warning",
+  prompt: "bg-info-light text-info",
+  mcp: "bg-success-light text-success",
 };
 
-const CATEGORY_KEY: Record<string, string> = {
-  automation: "skillsPage.categoryAutomation",
-  analysis: "skillsPage.categoryAnalysis",
-  connector: "skillsPage.categoryConnector",
-};
-
-const PLUGIN_STATUS_KEY: Record<string, string> = {
-  installed: "statuses.installed",
-  available: "statuses.available",
+const TYPE_KEY: Record<string, string> = {
+  tool: "skillsPage.typeTool",
+  prompt: "skillsPage.typePrompt",
+  mcp: "skillsPage.typeMcp",
 };
 
 export function SkillsPage() {
   const query = useShellQuery();
   const [modalOpen, setModalOpen] = useState(false);
-  const [pluginName, setPluginName] = useState("");
-  const [source, setSource] = useState("marketplace");
+  const [skillName, setSkillName] = useState("");
+  const [skillType, setSkillType] = useState("tool");
   const [installing, setInstalling] = useState(false);
   const { t } = useI18n();
 
+  const skills = useSkillsStore((s) => s.skills);
+  const fetchSkills = useSkillsStore((s) => s.fetchSkills);
+
+  useEffect(() => {
+    fetchSkills();
+  }, [fetchSkills]);
+
   const filteredSkills = useMemo(
     () =>
-      SKILLS_CATALOG.filter((skill) => {
+      skills.filter((skill) => {
         const haystack = `${skill.name} ${skill.description}`.toLowerCase();
         return !query || haystack.includes(query);
       }),
-    [query],
+    [skills, query],
   );
 
-  const filteredPlugins = useMemo(
-    () =>
-      PLUGINS.filter((plugin) => {
-        const haystack = `${plugin.name} ${plugin.version}`.toLowerCase();
-        return !query || haystack.includes(query);
-      }),
-    [query],
-  );
-
-  const handleInstall = (event: FormEvent) => {
+  const handleInstall = async (event: FormEvent) => {
     event.preventDefault();
-    if (!pluginName.trim()) return;
+    if (!skillName.trim()) return;
     setInstalling(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/skills", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ name: skillName.trim(), type: skillType, description: "" }),
+      });
+      if (res.ok) {
+        await fetchSkills();
+        setSkillName("");
+        setModalOpen(false);
+      }
+    } finally {
       setInstalling(false);
-      setPluginName("");
-      setModalOpen(false);
-    }, 900);
+    }
   };
 
   return (
     <>
-      <div className="grid h-full min-h-[520px] grid-cols-1 gap-3 xl:grid-cols-[0.62fr_0.38fr] animate-fade-in">
+      <div className="grid h-full min-h-[520px] grid-cols-1 gap-3 animate-fade-in">
         <section className={`${CARD_CLASS} min-h-0 p-4 animate-fade-up stagger-1`}>
           <div className="mb-3 flex items-center justify-between">
             <div>
@@ -80,49 +83,17 @@ export function SkillsPage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            {filteredSkills.map((skill) => (
-              <div key={skill.id} className="rounded-2xl border border-black/5 bg-[#ECE9E4] p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-[13px] font-semibold text-neutral-fg1">{skill.name}</p>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${CATEGORY_STYLE[skill.category]}`}>
-                    {t(CATEGORY_KEY[skill.category] ?? skill.category)}
-                  </span>
-                </div>
-                <p className="text-[11px] text-neutral-fg2">{skill.description}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className={`${CARD_CLASS} min-h-0 p-4 animate-fade-up stagger-2`}>
-          <div className="mb-3 flex items-center justify-between">
-            <div>
-              <h3 className="text-[22px] font-semibold tracking-[-0.02em] text-neutral-fg1">{t("skillsPage.pluginCards")}</h3>
-              <p className="text-[12px] text-neutral-fg2">{t("skillsPage.pluginCardsSubtitle")}</p>
+          {filteredSkills.length > 0 ? (
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {filteredSkills.map((skill) => (
+                <SkillCard key={skill.id} skill={skill} t={t} />
+              ))}
             </div>
-            <Plug2 className="h-4 w-4 text-neutral-fg3" />
-          </div>
-
-          <div className="space-y-2">
-            {filteredPlugins.map((plugin) => (
-              <div key={plugin.id} className="rounded-2xl border border-black/5 bg-[#ECE9E4] p-3">
-                <div className="mb-1 flex items-center justify-between">
-                  <p className="text-[13px] font-semibold text-neutral-fg1">{plugin.name}</p>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                      plugin.status === "installed"
-                        ? "bg-success-light text-success"
-                        : "bg-neutral-bg3 text-neutral-fg2"
-                    }`}
-                  >
-                    {t(PLUGIN_STATUS_KEY[plugin.status] ?? plugin.status)}
-                  </span>
-                </div>
-                <p className="text-[11px] text-neutral-fg2">{t("skillsPage.version")} {plugin.version}</p>
-              </div>
-            ))}
-          </div>
+          ) : (
+            <div className="flex h-[200px] items-center justify-center rounded-2xl border border-dashed border-stroke bg-neutral-bg2/70">
+              <p className="text-[12px] text-neutral-fg3">{t("skillsPage.noSkills")}</p>
+            </div>
+          )}
         </section>
       </div>
 
@@ -151,8 +122,8 @@ export function SkillsPage() {
               {t("skillsPage.pluginName")}
               <input
                 type="text"
-                value={pluginName}
-                onChange={(event) => setPluginName(event.target.value)}
+                value={skillName}
+                onChange={(event) => setSkillName(event.target.value)}
                 placeholder="ex: S3 Exporter"
                 className="mt-1 w-full rounded-xl border border-stroke bg-neutral-bg3 px-3 py-2 text-[13px] text-neutral-fg1 focus:outline-none focus:ring-2 focus:ring-brand-light"
               />
@@ -161,13 +132,13 @@ export function SkillsPage() {
             <label className="mb-3 block text-[12px] font-medium text-neutral-fg2">
               {t("skillsPage.source")}
               <select
-                value={source}
-                onChange={(event) => setSource(event.target.value)}
+                value={skillType}
+                onChange={(event) => setSkillType(event.target.value)}
                 className="mt-1 w-full rounded-xl border border-stroke bg-neutral-bg3 px-3 py-2 text-[13px] text-neutral-fg1 focus:outline-none focus:ring-2 focus:ring-brand-light"
               >
-                <option value="marketplace">{t("skillsPage.marketplace")}</option>
-                <option value="github">{t("skillsPage.github")}</option>
-                <option value="local">{t("skillsPage.localPackage")}</option>
+                <option value="tool">{t("skillsPage.typeTool")}</option>
+                <option value="prompt">{t("skillsPage.typePrompt")}</option>
+                <option value="mcp">{t("skillsPage.typeMcp")}</option>
               </select>
             </label>
 
@@ -191,5 +162,24 @@ export function SkillsPage() {
         </div>
       )}
     </>
+  );
+}
+
+function SkillCard({ skill, t }: { skill: Skill; t: (key: string) => string }) {
+  return (
+    <div className="rounded-2xl border border-black/5 bg-[#ECE9E4] p-3">
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-[13px] font-semibold text-neutral-fg1">{skill.name}</p>
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${TYPE_STYLE[skill.type] ?? "bg-neutral-bg3 text-neutral-fg2"}`}>
+          {t(TYPE_KEY[skill.type] ?? skill.type)}
+        </span>
+      </div>
+      <p className="text-[11px] text-neutral-fg2">{skill.description || "—"}</p>
+      {skill.enabledByDefault && (
+        <span className="mt-1 inline-block rounded-full bg-success-light px-2 py-0.5 text-[9px] font-semibold text-success">
+          {t("skillsPage.enabledByDefault")}
+        </span>
+      )}
+    </div>
   );
 }

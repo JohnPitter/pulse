@@ -110,7 +110,7 @@ export const DASHBOARD_COMPLETION_TODAY = 82;
 export const TASKS: Task[] = [
   {
     id: "task-01",
-    title: "Triagem de materiais do turno A",
+    title: "Material triage — shift A",
     status: "running",
     priority: "high",
     due_at: "2026-03-05T16:00:00Z",
@@ -121,7 +121,7 @@ export const TASKS: Task[] = [
   },
   {
     id: "task-02",
-    title: "Validação de lote R21",
+    title: "Batch R21 validation",
     status: "scheduled",
     priority: "medium",
     due_at: "2026-03-05T19:00:00Z",
@@ -132,7 +132,7 @@ export const TASKS: Task[] = [
   },
   {
     id: "task-03",
-    title: "Conferir artefatos do projeto Onyx",
+    title: "Review Onyx project artifacts",
     status: "backlog",
     priority: "high",
     due_at: null,
@@ -143,7 +143,7 @@ export const TASKS: Task[] = [
   },
   {
     id: "task-04",
-    title: "Resumo diário dos agentes",
+    title: "Daily agent summary",
     status: "completed",
     priority: "low",
     due_at: null,
@@ -154,7 +154,7 @@ export const TASKS: Task[] = [
   },
   {
     id: "task-05",
-    title: "Reprocessar anexo de cliente",
+    title: "Reprocess client attachment",
     status: "failed",
     priority: "high",
     due_at: "2026-03-05T15:00:00Z",
@@ -165,7 +165,7 @@ export const TASKS: Task[] = [
   },
   {
     id: "task-06",
-    title: "Extração de dados fiscais",
+    title: "Tax data extraction",
     status: "backlog",
     priority: "medium",
     due_at: null,
@@ -176,7 +176,7 @@ export const TASKS: Task[] = [
   },
   {
     id: "task-07",
-    title: "Consolidação semanal de KPIs",
+    title: "Weekly KPI consolidation",
     status: "scheduled",
     priority: "low",
     due_at: "2026-03-06T19:30:00Z",
@@ -187,7 +187,7 @@ export const TASKS: Task[] = [
   },
   {
     id: "task-08",
-    title: "Atualizar índice de arquivos OCR",
+    title: "Update OCR file index",
     status: "running",
     priority: "medium",
     due_at: "2026-03-05T18:00:00Z",
@@ -250,11 +250,11 @@ export const AGENTS: Agent[] = [
 ];
 
 export const AGENTS_ACTIVITY = [
-  { id: "a1", agent_name: "Atlas", current_task_title: "Triagem de materiais do turno A", status: "Running", relative_time: "15s ago" },
-  { id: "a2", agent_name: "Vega", current_task_title: "Atualizar índice de arquivos OCR", status: "Running", relative_time: "34s ago" },
-  { id: "a3", agent_name: "Lyra", current_task_title: "Consolidação semanal de KPIs", status: "Queued", relative_time: "2m ago" },
-  { id: "a4", agent_name: "Nova", current_task_title: "Resumo diário dos agentes", status: "Completed", relative_time: "7m ago" },
-  { id: "a5", agent_name: "Orion", current_task_title: "Reprocessar anexo de cliente", status: "Failed", relative_time: "18m ago" },
+  { id: "a1", agent_name: "Atlas", current_task_title: "Material triage — shift A", status: "Running", relative_time: "15s ago" },
+  { id: "a2", agent_name: "Vega", current_task_title: "Update OCR file index", status: "Running", relative_time: "34s ago" },
+  { id: "a3", agent_name: "Lyra", current_task_title: "Weekly KPI consolidation", status: "Queued", relative_time: "2m ago" },
+  { id: "a4", agent_name: "Nova", current_task_title: "Daily agent summary", status: "Completed", relative_time: "7m ago" },
+  { id: "a5", agent_name: "Orion", current_task_title: "Reprocess client attachment", status: "Failed", relative_time: "18m ago" },
 ] as const;
 
 export const EXECUTIONS: Execution[] = [
@@ -263,7 +263,7 @@ export const EXECUTIONS: Execution[] = [
     task_id: "task-04",
     agent_id: "agent-03",
     result: "success",
-    summary: "Resumo consolidado e entregue para revisão.",
+    summary: "Summary consolidated and delivered for review.",
     logs_count: 14,
     started_at: "2026-03-05T11:01:00Z",
     ended_at: "2026-03-05T11:20:00Z",
@@ -292,7 +292,7 @@ export const PROJECTS: Project[] = [
   {
     id: "project-01",
     name: "Onyx Quality",
-    summary: "Fluxo principal de tasks de validação e consolidação.",
+    summary: "Main validation and consolidation task flow.",
     owner: "Nikita Topson",
     status: "active",
     tasks: ["task-01", "task-03", "task-04"],
@@ -300,7 +300,7 @@ export const PROJECTS: Project[] = [
   {
     id: "project-02",
     name: "Helios Intake",
-    summary: "Pipeline de ingestão, OCR e indexação de arquivos.",
+    summary: "Ingestion, OCR and file indexing pipeline.",
     owner: "Mila Araujo",
     status: "active",
     tasks: ["task-02", "task-08"],
@@ -308,7 +308,7 @@ export const PROJECTS: Project[] = [
   {
     id: "project-03",
     name: "Boreal Reports",
-    summary: "Relatórios semanais e anual de performance operacional.",
+    summary: "Weekly and annual operational performance reports.",
     owner: "Atlas Team",
     status: "planning",
     tasks: ["task-07"],
@@ -320,25 +320,25 @@ export const SKILLS_CATALOG: SkillCatalogItem[] = [
     id: "skill-1",
     name: "Batch Scheduler",
     category: "automation",
-    description: "Planeja janelas de execução e distribui tasks por prioridade.",
+    description: "Plans execution windows and distributes tasks by priority.",
   },
   {
     id: "skill-2",
     name: "Issue Sentinel",
     category: "analysis",
-    description: "Detecta anomalias em logs e sinaliza tarefas com risco.",
+    description: "Detects log anomalies and flags at-risk tasks.",
   },
   {
     id: "skill-3",
     name: "Drive Connector",
     category: "connector",
-    description: "Conecta projetos ao storage para leitura e escrita de arquivos.",
+    description: "Connects projects to storage for file read/write operations.",
   },
   {
     id: "skill-4",
     name: "Report Composer",
     category: "analysis",
-    description: "Gera sumários executivos a partir de execuções recentes.",
+    description: "Generates executive summaries from recent executions.",
   },
 ];
 
@@ -355,8 +355,8 @@ export const CHAT_THREADS: ChatThread[] = [
     updated_at: "2026-03-05T15:18:00Z",
     agent_id: "agent-01",
     messages: [
-      { id: "m1", role: "user", content: "Status do backlog hoje?", created_at: "2026-03-05T15:12:00Z" },
-      { id: "m2", role: "assistant", content: "24 tasks em backlog, 8 prontas para agenda.", created_at: "2026-03-05T15:12:11Z" },
+      { id: "m1", role: "user", content: "Backlog status today?", created_at: "2026-03-05T15:12:00Z" },
+      { id: "m2", role: "assistant", content: "24 tasks in backlog, 8 ready to schedule.", created_at: "2026-03-05T15:12:11Z" },
     ],
   },
   {
@@ -365,8 +365,8 @@ export const CHAT_THREADS: ChatThread[] = [
     updated_at: "2026-03-05T14:56:00Z",
     agent_id: "agent-02",
     messages: [
-      { id: "m3", role: "user", content: "Falhas de OCR no lote R21?", created_at: "2026-03-05T14:51:00Z" },
-      { id: "m4", role: "assistant", content: "1 arquivo com checksum inconsistente, reprocessando.", created_at: "2026-03-05T14:51:19Z" },
+      { id: "m3", role: "user", content: "OCR failures on batch R21?", created_at: "2026-03-05T14:51:00Z" },
+      { id: "m4", role: "assistant", content: "1 file with inconsistent checksum, reprocessing.", created_at: "2026-03-05T14:51:19Z" },
     ],
   },
   {
@@ -375,8 +375,8 @@ export const CHAT_THREADS: ChatThread[] = [
     updated_at: "2026-03-05T13:42:00Z",
     agent_id: "agent-03",
     messages: [
-      { id: "m5", role: "user", content: "Pode mandar a minuta do relatório semanal?", created_at: "2026-03-05T13:38:00Z" },
-      { id: "m6", role: "assistant", content: "Minuta pronta com destaque de throughput e erros.", created_at: "2026-03-05T13:39:02Z" },
+      { id: "m5", role: "user", content: "Can you send the weekly report draft?", created_at: "2026-03-05T13:38:00Z" },
+      { id: "m6", role: "assistant", content: "Draft ready with throughput and error highlights.", created_at: "2026-03-05T13:39:02Z" },
     ],
   },
 ];

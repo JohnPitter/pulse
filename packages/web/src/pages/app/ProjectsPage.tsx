@@ -1,36 +1,40 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, FolderKanban } from "lucide-react";
-import { PROJECTS, TASKS } from "./mockData";
+import { useProjectsStore } from "../../stores/projects";
+import { useTasksStore, type Task } from "../../stores/tasks";
 import { useShellQuery } from "./useShellQuery";
 import { useI18n } from "../../i18n";
 
 const CARD_CLASS =
   "rounded-[20px] border border-black/6 bg-[#F1EFEC] shadow-[0_8px_18px_rgba(0,0,0,0.06)]";
 
-const PROJECT_STATUS: Record<string, string> = {
-  active: "bg-success-light text-success",
-  paused: "bg-warning-light text-warning",
-  planning: "bg-info-light text-info",
-};
-
-const PROJECT_STATUS_KEYS: Record<string, string> = {
-  active: "statuses.active",
-  paused: "statuses.paused",
-  planning: "statuses.planning",
-};
-
 export function ProjectsPage() {
   const query = useShellQuery();
-  const [selectedProjectId, setSelectedProjectId] = useState(PROJECTS[0]?.id ?? "");
   const { t } = useI18n();
+
+  const projects = useProjectsStore((s) => s.projects);
+  const fetchProjects = useProjectsStore((s) => s.fetchProjects);
+  const tasks = useTasksStore((s) => s.tasks);
+  const fetchTasks = useTasksStore((s) => s.fetchTasks);
+
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+
+  useEffect(() => {
+    fetchProjects();
+    fetchTasks();
+  }, [fetchProjects, fetchTasks]);
+
+  useEffect(() => {
+    if (!selectedProjectId && projects.length > 0) setSelectedProjectId(projects[0].id);
+  }, [projects, selectedProjectId]);
 
   const filteredProjects = useMemo(
     () =>
-      PROJECTS.filter((project) => {
-        const content = `${project.name} ${project.summary}`.toLowerCase();
+      projects.filter((project) => {
+        const content = `${project.name} ${project.description ?? ""}`.toLowerCase();
         return !query || content.includes(query);
       }),
-    [query],
+    [projects, query],
   );
 
   const selectedProject =
@@ -38,8 +42,8 @@ export function ProjectsPage() {
 
   const projectTasks = useMemo(() => {
     if (!selectedProject) return [];
-    return TASKS.filter((task) => selectedProject.tasks.includes(task.id));
-  }, [selectedProject]);
+    return tasks.filter((task) => task.projectId === selectedProject.id);
+  }, [selectedProject, tasks]);
 
   const grouped = useMemo(
     () => ({
@@ -75,11 +79,12 @@ export function ProjectsPage() {
             >
               <div className="flex items-center justify-between">
                 <p className="text-[13px] font-semibold text-neutral-fg1">{project.name}</p>
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${PROJECT_STATUS[project.status]}`}>
-                  {t(PROJECT_STATUS_KEYS[project.status] ?? project.status)}
-                </span>
+                <span
+                  className="inline-block h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: project.color }}
+                />
               </div>
-              <p className="mt-1 line-clamp-2 text-[11px] text-neutral-fg2">{project.summary}</p>
+              <p className="mt-1 line-clamp-2 text-[11px] text-neutral-fg2">{project.description}</p>
             </button>
           ))}
         </div>
@@ -96,12 +101,7 @@ export function ProjectsPage() {
             <div className="rounded-2xl border border-black/5 bg-[#ECE9E4] p-3">
               <p className="text-[10px] uppercase tracking-wide text-neutral-fg3">{t("projectsPage.project")}</p>
               <p className="text-[14px] font-semibold text-neutral-fg1">{selectedProject.name}</p>
-              <p className="mt-1 text-[11px] text-neutral-fg2">{selectedProject.summary}</p>
-            </div>
-
-            <div className="rounded-2xl border border-black/5 bg-[#ECE9E4] p-3">
-              <p className="text-[10px] uppercase tracking-wide text-neutral-fg3">{t("projectsPage.owner")}</p>
-              <p className="text-[13px] font-semibold text-neutral-fg1">{selectedProject.owner}</p>
+              <p className="mt-1 text-[11px] text-neutral-fg2">{selectedProject.description}</p>
             </div>
 
             <div className="rounded-2xl border border-black/5 bg-[#ECE9E4] p-3">
@@ -139,7 +139,7 @@ export function ProjectsPage() {
   );
 }
 
-function StatusColumn({ title, items }: { title: string; items: typeof TASKS }) {
+function StatusColumn({ title, items }: { title: string; items: Task[] }) {
   return (
     <div className="min-h-0 rounded-2xl border border-black/5 bg-[#ECE9E4] p-2">
       <div className="mb-2 flex items-center justify-between">

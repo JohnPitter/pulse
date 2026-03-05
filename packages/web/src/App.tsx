@@ -13,6 +13,7 @@ import { ProjectsPage } from "./pages/app/ProjectsPage";
 import { SkillsPage } from "./pages/app/SkillsPage";
 import { ChatPage } from "./pages/app/ChatPage";
 import { FilesPage } from "./pages/app/FilesPage";
+import { SettingsPage } from "./pages/app/SettingsPage";
 import { PulseLogo } from "./components/brand/PulseLogo";
 import { useI18n } from "./i18n";
 
@@ -91,6 +92,7 @@ export function App() {
           <Route path="skills" element={<SkillsPage />} />
           <Route path="chat" element={<ChatPage />} />
           <Route path="files" element={<FilesPage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

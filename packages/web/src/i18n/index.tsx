@@ -30,6 +30,7 @@ const EN_TRANSLATIONS = {
     skillsPlugins: "Skills & Plugins",
     chat: "Chat",
     files: "Files",
+    settings: "Settings",
   },
   routes: {
     generalOverview: "General overview",
@@ -38,6 +39,7 @@ const EN_TRANSLATIONS = {
     skillsPlugins: "Skills & plugins",
     chat: "Chat",
     files: "Files",
+    settings: "Settings",
   },
   splash: {
     subtitle: "Remote Agent Manager",
@@ -162,6 +164,8 @@ const EN_TRANSLATIONS = {
     logs: "logs",
     openLogs: "Open logs",
     success: "Success",
+    noAgents: "No agents registered yet",
+    noExecutions: "No executions recorded yet",
   },
   statuses: {
     running: "Running",
@@ -226,6 +230,11 @@ const EN_TRANSLATIONS = {
     installPluginButton: "Install plugin",
     closeInstallModal: "Close install modal",
     version: "Version",
+    typeTool: "Tool",
+    typePrompt: "Prompt",
+    typeMcp: "MCP",
+    noSkills: "No skills registered yet.",
+    enabledByDefault: "Enabled by default",
   },
   chatPage: {
     threads: "Threads",
@@ -236,6 +245,7 @@ const EN_TRANSLATIONS = {
     typeMessage: "Type message...",
     agentSelector: "Agent selector",
     agentSelectorSubtitle: "agent_selector",
+    noMessages: "No messages yet. Start a conversation.",
   },
   filesPage: {
     files: "Files",
@@ -254,6 +264,7 @@ const EN_TRANSLATIONS = {
     document: "Document",
     audio: "Audio",
     dataset: "Dataset",
+    goUp: "Go up",
   },
   time: {
     secondsAgo: "{value}s ago",
@@ -279,6 +290,7 @@ const PT_BR_TRANSLATIONS: typeof EN_TRANSLATIONS = {
     skillsPlugins: "Skills e Plugins",
     chat: "Chat",
     files: "Arquivos",
+    settings: "Configurações",
   },
   routes: {
     generalOverview: "Visão geral",
@@ -287,6 +299,7 @@ const PT_BR_TRANSLATIONS: typeof EN_TRANSLATIONS = {
     skillsPlugins: "Skills e plugins",
     chat: "Chat",
     files: "Arquivos",
+    settings: "Configurações",
   },
   splash: {
     subtitle: "Gerenciador de Agentes Remotos",
@@ -411,6 +424,8 @@ const PT_BR_TRANSLATIONS: typeof EN_TRANSLATIONS = {
     logs: "logs",
     openLogs: "Abrir logs",
     success: "Sucesso",
+    noAgents: "Nenhum agente registrado",
+    noExecutions: "Nenhuma execução registrada",
   },
   statuses: {
     running: "Rodando",
@@ -475,6 +490,11 @@ const PT_BR_TRANSLATIONS: typeof EN_TRANSLATIONS = {
     installPluginButton: "Instalar plugin",
     closeInstallModal: "Fechar modal de instalação",
     version: "Versão",
+    typeTool: "Ferramenta",
+    typePrompt: "Prompt",
+    typeMcp: "MCP",
+    noSkills: "Nenhuma skill registrada.",
+    enabledByDefault: "Ativa por padrão",
   },
   chatPage: {
     threads: "Threads",
@@ -485,6 +505,7 @@ const PT_BR_TRANSLATIONS: typeof EN_TRANSLATIONS = {
     typeMessage: "Digite uma mensagem...",
     agentSelector: "Seletor de agente",
     agentSelectorSubtitle: "seletor_de_agente",
+    noMessages: "Sem mensagens. Inicie uma conversa.",
   },
   filesPage: {
     files: "Arquivos",
@@ -503,6 +524,7 @@ const PT_BR_TRANSLATIONS: typeof EN_TRANSLATIONS = {
     document: "Documento",
     audio: "Áudio",
     dataset: "Dataset",
+    goUp: "Voltar",
   },
   time: {
     secondsAgo: "há {value}s",
