@@ -1,239 +1,138 @@
-import { useCallback, useEffect, useState } from "react";
-import { Plus, Menu, BookOpen, Zap, Square } from "lucide-react";
-import { useAgentsStore, type Agent } from "../../stores/agents";
-import { useSessionStore } from "../../stores/session";
-import { AgentSidebar } from "../../components/sidebar/AgentSidebar";
-import { AgentCanvas } from "../../components/canvas/AgentCanvas";
-import { ChatSidebar } from "../../components/chat/ChatSidebar";
-import { ChatInput } from "../../components/chat/ChatInput";
-import { SharedMemoryPanel } from "../../components/memory/SharedMemoryPanel";
-import { SkillPicker } from "../../components/skills/SkillPicker";
-import { AgentFormDialog } from "../../components/agents/AgentFormDialog";
+import { useMemo, useState } from "react";
+import { MessageSquare, SendHorizontal, Users } from "lucide-react";
+import { AGENTS, CHAT_THREADS, formatRelativeTime } from "./mockData";
+import { useShellQuery } from "./useShellQuery";
+import { useI18n } from "../../i18n";
+
+const CARD_CLASS =
+  "rounded-[20px] border border-black/6 bg-[#F1EFEC] shadow-[0_8px_18px_rgba(0,0,0,0.06)]";
+
+const AGENT_STATE_KEY: Record<string, string> = {
+  running: "statuses.running",
+  offline: "statuses.offline",
+  idle: "statuses.idle",
+};
 
 export function ChatPage() {
-  const agents = useAgentsStore((s) => s.agents);
-  const loading = useAgentsStore((s) => s.loading);
-  const fetchAgents = useAgentsStore((s) => s.fetchAgents);
-  const connectSocket = useAgentsStore((s) => s.connectSocket);
-  const disconnectSocket = useAgentsStore((s) => s.disconnectSocket);
+  const query = useShellQuery();
+  const [selectedThreadId, setSelectedThreadId] = useState(CHAT_THREADS[0]?.id ?? "");
+  const { t } = useI18n();
 
-  const connectSSE = useSessionStore((s) => s.connectSSE);
-  const disconnectSSE = useSessionStore((s) => s.disconnectSSE);
-  const sendMessage = useSessionStore((s) => s.sendMessage);
-  const stopAgent = useSessionStore((s) => s.stopAgent);
-  const loadMessages = useSessionStore((s) => s.loadMessages);
-  const blocks = useSessionStore((s) => s.blocks);
-  const streamingText = useSessionStore((s) => s.streamingText);
-  const messages = useSessionStore((s) => s.messages);
-  const isStreaming = useSessionStore((s) => s.isStreaming);
+  const filteredThreads = useMemo(
+    () =>
+      CHAT_THREADS.filter((thread) => {
+        const content = `${thread.title} ${thread.messages.map((msg) => msg.content).join(" ")}`.toLowerCase();
+        return !query || content.includes(query);
+      }),
+    [query],
+  );
 
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editAgent, setEditAgent] = useState<Agent | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [memoryOpen, setMemoryOpen] = useState(false);
-  const [skillPickerOpen, setSkillPickerOpen] = useState(false);
-
-  useEffect(() => {
-    fetchAgents();
-    connectSocket();
-    return () => disconnectSocket();
-  }, [fetchAgents, connectSocket, disconnectSocket]);
-
-  useEffect(() => {
-    if (!selectedAgentId && agents.length > 0) {
-      setSelectedAgentId(agents[0].id);
-    }
-  }, [agents, selectedAgentId]);
-
-  useEffect(() => {
-    if (!selectedAgentId) return;
-    connectSSE(selectedAgentId);
-    loadMessages(selectedAgentId);
-    return () => disconnectSSE(selectedAgentId);
-  }, [selectedAgentId, connectSSE, disconnectSSE, loadMessages]);
-
-  const selectedAgent = agents.find((a) => a.id === selectedAgentId) ?? null;
-
-  const handleSend = useCallback(async (content: string, imageBase64?: string) => {
-    if (!selectedAgentId) return;
-    await sendMessage(selectedAgentId, content, imageBase64);
-  }, [selectedAgentId, sendMessage]);
-
-  const handleStop = useCallback(async () => {
-    if (!selectedAgentId) return;
-    await stopAgent(selectedAgentId);
-  }, [selectedAgentId, stopAgent]);
-
-  const handleSelectAgent = useCallback((id: string) => {
-    setSelectedAgentId(id);
-    setSidebarOpen(false);
-  }, []);
-
-  const agentBlocks = selectedAgentId ? (blocks[selectedAgentId] ?? []) : [];
-  const agentMessages = selectedAgentId ? (messages[selectedAgentId] ?? []) : [];
-  const agentStreamingText = selectedAgentId ? (streamingText[selectedAgentId] ?? "") : "";
-  const agentIsStreaming = selectedAgentId ? (isStreaming[selectedAgentId] ?? false) : false;
-
-  const statusColor: Record<string, string> = {
-    running: "bg-success",
-    waiting: "bg-warning",
-    idle: "bg-border-strong",
-    error: "bg-danger",
-  };
+  const selectedThread =
+    filteredThreads.find((thread) => thread.id === selectedThreadId) ?? filteredThreads[0] ?? null;
 
   return (
-    <div className="flex h-full gap-3">
-      {/* Mobile sidebar toggle */}
-      <div className="flex items-center h-12 px-4 bg-surface border-b border-border shrink-0 md:hidden absolute top-0 left-0 right-0">
-        <button
-          type="button"
-          onClick={() => setSidebarOpen(true)}
-          className="rounded-lg p-1.5 text-text-secondary hover:text-text-primary hover:bg-surface-muted"
-          aria-label="Open menu"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-        <span className="text-sm font-semibold text-text-primary tracking-tight ml-3">Chat</span>
-        <button
-          type="button"
-          onClick={() => setDialogOpen(true)}
-          className="ml-auto rounded-lg p-1.5 text-text-secondary hover:text-orange"
-          aria-label="Create agent"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
-      </div>
+    <div className="grid h-full min-h-[520px] grid-cols-1 gap-3 xl:grid-cols-[0.24fr_0.51fr_0.25fr] animate-fade-in">
+      <section className={`${CARD_CLASS} min-h-0 p-4 animate-fade-up stagger-1`}>
+        <div className="mb-3">
+          <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-neutral-fg1">{t("chatPage.threads")}</h2>
+          <p className="text-[12px] text-neutral-fg2">{t("chatPage.threadList")}</p>
+        </div>
 
-      <AgentSidebar
-        agents={agents}
-        selectedAgentId={selectedAgentId}
-        secondAgentId={null}
-        splitMode={false}
-        onSelectAgent={handleSelectAgent}
-        onCreateAgent={() => { setDialogOpen(true); setSidebarOpen(false); }}
-        onToggleSplit={() => {}}
-        mobileOpen={sidebarOpen}
-        onCloseMobile={() => setSidebarOpen(false)}
-      />
+        <div className="space-y-1.5">
+          {filteredThreads.map((thread) => (
+            <button
+              key={thread.id}
+              type="button"
+              onClick={() => setSelectedThreadId(thread.id)}
+              className={`w-full rounded-xl border px-3 py-2 text-left ${
+                thread.id === selectedThread?.id
+                  ? "border-brand/35 bg-neutral-bg2"
+                  : "border-transparent hover:border-stroke hover:bg-neutral-bg2/75"
+              }`}
+            >
+              <p className="text-[13px] font-semibold text-neutral-fg1">{thread.title}</p>
+              <p className="mt-1 text-[10px] text-neutral-fg3">{formatRelativeTime(thread.updated_at)}</p>
+            </button>
+          ))}
+        </div>
+      </section>
 
-      {/* Main area */}
-      <div className="flex min-w-0 flex-1 flex-col bg-surface border border-border rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
-        {loading ? (
-          <div className="flex flex-1 items-center justify-center">
-            <div className="flex gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-orange animate-[pulse-dot_1.2s_ease-in-out_infinite]" />
-              <span className="h-1.5 w-1.5 rounded-full bg-orange animate-[pulse-dot_1.2s_ease-in-out_infinite_0.2s]" />
-              <span className="h-1.5 w-1.5 rounded-full bg-orange animate-[pulse-dot_1.2s_ease-in-out_infinite_0.4s]" />
+      <section className={`${CARD_CLASS} flex min-h-0 flex-col p-4 animate-fade-up stagger-2`}>
+        <div className="mb-3">
+          <h3 className="text-[22px] font-semibold tracking-[-0.02em] text-neutral-fg1">{t("chatPage.chatPanel")}</h3>
+          <p className="text-[12px] text-neutral-fg2">{t("chatPage.chatPanelSubtitle")}</p>
+        </div>
+
+        <div className="flex-1 space-y-2 overflow-auto rounded-2xl border border-black/5 bg-[#ECE9E4] p-3">
+          {selectedThread ? (
+            selectedThread.messages.map((message) => (
+              <div
+                key={message.id}
+                className={`max-w-[82%] rounded-2xl px-3 py-2 text-[12px] ${
+                  message.role === "user"
+                    ? "ml-auto bg-neutral-bg2 text-neutral-fg1"
+                    : "bg-[#E2DFDA] text-neutral-fg1"
+                }`}
+              >
+                <p>{message.content}</p>
+                <p className="mt-1 text-[10px] text-neutral-fg3">{formatRelativeTime(message.created_at)}</p>
+              </div>
+            ))
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <p className="text-[12px] text-neutral-fg3">{t("chatPage.noThreadMatch")}</p>
             </div>
+          )}
+        </div>
+
+        <div className="mt-3 flex items-center gap-2 rounded-xl border border-stroke bg-neutral-bg2 px-3 py-2">
+          <MessageSquare className="h-4 w-4 text-neutral-fg3" />
+          <input
+            type="text"
+            placeholder={t("chatPage.typeMessage")}
+            className="w-full bg-transparent text-[12px] text-neutral-fg1 placeholder:text-neutral-fg3 focus:outline-none"
+          />
+          <button type="button" className="rounded-lg bg-brand p-1.5 text-white hover:bg-brand-hover">
+            <SendHorizontal className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </section>
+
+      <section className={`${CARD_CLASS} min-h-0 p-4 animate-fade-up stagger-3`}>
+        <div className="mb-3 flex items-center gap-2">
+          <Users className="h-4 w-4 text-neutral-fg3" />
+          <div>
+            <h3 className="text-[18px] font-semibold tracking-[-0.02em] text-neutral-fg1">{t("chatPage.agentSelector")}</h3>
+            <p className="text-[12px] text-neutral-fg2">{t("chatPage.agentSelectorSubtitle")}</p>
           </div>
-        ) : selectedAgent ? (
-          <>
-            {/* Topbar */}
-            <div className="flex items-center gap-3 px-4 h-[52px] border-b border-border shrink-0 bg-surface">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className={`h-2 w-2 rounded-full shrink-0 ${statusColor[selectedAgent.status ?? "idle"] ?? "bg-border-strong"}`} />
-                <span className="text-[14px] font-semibold text-text-primary truncate">{selectedAgent.name}</span>
-                <span className="hidden sm:block text-[11px] text-text-disabled bg-surface-muted border border-border px-2 py-0.5 rounded-md capitalize">
-                  {selectedAgent.status ?? "idle"}
-                </span>
-              </div>
-
-              <div className="ml-auto flex items-center gap-1.5">
-                {agentIsStreaming && (
-                  <button
-                    type="button"
-                    onClick={handleStop}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-danger hover:bg-danger-light transition-colors border border-danger/20"
-                  >
-                    <Square className="h-3 w-3" />
-                    Stop
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setSkillPickerOpen(true)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] text-text-secondary hover:bg-surface-muted transition-colors border border-border"
-                >
-                  <Zap className="h-3.5 w-3.5 text-orange" />
-                  Skills
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMemoryOpen(true)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] text-text-secondary hover:bg-surface-muted transition-colors border border-border"
-                >
-                  <BookOpen className="h-3.5 w-3.5 text-blue" />
-                  Memory
-                </button>
-              </div>
-            </div>
-
-            {/* Canvas + Chat layout */}
-            <div className="flex flex-1 min-h-0">
-              <div className="flex flex-col flex-1 min-w-0 min-h-0 bg-surface-muted/40">
-                <AgentCanvas blocks={agentBlocks} isStreaming={agentIsStreaming} />
-              </div>
-              <div className="flex flex-col w-[340px] shrink-0 border-l border-border min-h-0">
-                <ChatSidebar messages={agentMessages} streamingContent={agentStreamingText} />
-                <ChatInput onSend={handleSend} disabled={agentIsStreaming} />
-              </div>
-            </div>
-          </>
-        ) : agents.length === 0 ? (
-          <NoAgentsState onCreateAgent={() => setDialogOpen(true)} />
-        ) : (
-          <SelectAgentState />
-        )}
-      </div>
-
-      <SharedMemoryPanel open={memoryOpen} onClose={() => setMemoryOpen(false)} />
-      {selectedAgentId && (
-        <SkillPicker
-          agentId={selectedAgentId}
-          open={skillPickerOpen}
-          onClose={() => setSkillPickerOpen(false)}
-        />
-      )}
-      <AgentFormDialog
-        open={dialogOpen || !!editAgent}
-        onClose={() => { setDialogOpen(false); setEditAgent(null); }}
-        agent={editAgent}
-      />
-    </div>
-  );
-}
-
-function NoAgentsState({ onCreateAgent }: { onCreateAgent: () => void }) {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center px-6">
-      <div className="panel p-10 flex flex-col items-center gap-5 max-w-sm w-full">
-        <div className="h-14 w-14 rounded-xl border border-border bg-surface-muted flex items-center justify-center">
-          <Zap className="h-6 w-6 text-orange" />
         </div>
-        <div className="text-center space-y-1.5">
-          <h2 className="text-[18px] font-bold text-text-primary tracking-tight">No agents yet</h2>
-          <p className="text-[13px] text-text-secondary leading-relaxed max-w-[220px]">
-            Create your first agent to get started.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onCreateAgent}
-          className="btn btn-primary flex items-center gap-2 px-5 py-2.5"
-        >
-          <Plus className="h-4 w-4" />
-          Create Agent
-        </button>
-      </div>
-    </div>
-  );
-}
 
-function SelectAgentState() {
-  return (
-    <div className="flex flex-1 items-center justify-center">
-      <p className="text-[13px] text-text-disabled">Select an agent from the sidebar</p>
+        <div className="space-y-1.5">
+          {AGENTS.map((agent) => (
+            <button
+              key={agent.id}
+              type="button"
+              className="flex w-full items-center justify-between rounded-xl border border-transparent px-3 py-2 text-left hover:border-stroke hover:bg-neutral-bg2/75"
+            >
+              <div>
+                <p className="text-[12px] font-semibold text-neutral-fg1">{agent.name}</p>
+                <p className="text-[10px] text-neutral-fg3">{agent.role}</p>
+              </div>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[9px] font-semibold capitalize ${
+                  agent.state === "running"
+                    ? "bg-warning-light text-warning"
+                    : agent.state === "offline"
+                      ? "bg-danger-light text-danger"
+                      : "bg-neutral-bg3 text-neutral-fg2"
+                }`}
+              >
+                {t(AGENT_STATE_KEY[agent.state] ?? agent.state)}
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

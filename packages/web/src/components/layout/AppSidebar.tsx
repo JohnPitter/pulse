@@ -1,41 +1,32 @@
 import { NavLink } from "react-router-dom";
-import {
-  LayoutDashboard, Bot, FolderKanban, Puzzle, MessageSquare, Archive,
-} from "lucide-react";
-
-const NAV_ITEMS = [
-  { to: "/app/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/app/agents",    icon: Bot,             label: "Agents" },
-  { to: "/app/projects",  icon: FolderKanban,    label: "Projects" },
-  { to: "/app/skills",    icon: Puzzle,          label: "Skills & Plugins" },
-  { to: "/app/chat",      icon: MessageSquare,   label: "Chat" },
-  { to: "/app/files",     icon: Archive,         label: "Files" },
-] as const;
+import { PulseLogo } from "../brand/PulseLogo";
+import { useI18n } from "../../i18n";
+import { APP_NAV_ITEMS } from "./appConfig";
 
 export function AppSidebar() {
+  const { t } = useI18n();
+
   return (
-    <aside className="flex flex-col items-center py-4 gap-1 w-[60px] shrink-0">
-      {/* Logo mark */}
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange mb-3 shrink-0">
-        <span className="text-[14px] font-bold text-white">P</span>
+    <aside className="flex w-[66px] shrink-0 flex-col items-center border-r border-stroke/80 bg-[#ECEAE7] px-2 py-4 animate-slide-in-left">
+      <div className="mb-5 flex h-9 w-9 items-center justify-center rounded-xl border border-stroke bg-neutral-bg2 shadow-xs">
+        <PulseLogo className="h-5 w-5" monochrome />
       </div>
 
-      {/* Nav items */}
-      <nav className="flex flex-col items-center gap-1 flex-1">
-        {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
+      <nav className="flex w-full flex-1 flex-col items-center gap-2">
+        {APP_NAV_ITEMS.map(({ to, labelKey, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
-            title={label}
+            title={t(labelKey)}
             className={({ isActive }) =>
-              `flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-150 ${
+              `flex h-9 w-9 items-center justify-center rounded-[11px] border transition-all ${
                 isActive
-                  ? "bg-text-primary text-white"
-                  : "text-text-disabled hover:bg-surface-hover hover:text-text-primary"
+                  ? "border-stroke bg-neutral-bg2 text-neutral-fg1 shadow-xs"
+                  : "border-transparent text-neutral-fg2 hover:border-stroke hover:bg-neutral-bg2/70 hover:text-neutral-fg1"
               }`
             }
           >
-            <Icon className="h-[18px] w-[18px]" />
+            <Icon className="h-[16px] w-[16px]" />
           </NavLink>
         ))}
       </nav>

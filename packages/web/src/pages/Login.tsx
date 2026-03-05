@@ -1,10 +1,14 @@
 import { useState, type FormEvent } from "react";
+import { PulseLogo } from "../components/brand/PulseLogo";
+import { LanguageSwitcher } from "../components/common/LanguageSwitcher";
+import { useI18n } from "../i18n";
 import { useAuthStore } from "../stores/auth";
 
 export function Login() {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { error, login } = useAuthStore();
+  const { t } = useI18n();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -16,26 +20,29 @@ export function Login() {
 
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center p-6">
-      <div className="w-full max-w-[340px]">
-        {/* Logo */}
-        <div className="flex items-center gap-3 mb-10">
-          <div className="h-9 w-9 rounded-xl bg-orange flex items-center justify-center">
-            <span className="text-[15px] font-bold text-white">P</span>
+      <div className="w-full max-w-[340px] animate-fade-up">
+        <div className="mb-4 flex justify-end">
+          <LanguageSwitcher compact />
+        </div>
+
+        <div className="mb-10 flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-neutral-bg2 border border-stroke">
+            <PulseLogo className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-[16px] font-bold text-text-primary tracking-tight">Pulse</p>
-            <p className="text-[11px] text-text-disabled">Multi-agent Claude orchestrator</p>
+            <p className="text-[16px] font-bold text-text-primary tracking-tight">{t("common.productName")}</p>
+            <p className="text-[11px] text-text-disabled">{t("login.subtitle")}</p>
           </div>
         </div>
 
         <div className="panel p-8">
-          <h1 className="text-[20px] font-bold text-text-primary tracking-tight mb-1">Sign in</h1>
-          <p className="text-[13px] text-text-secondary mb-6">Enter your admin password to continue.</p>
+          <h1 className="text-[20px] font-bold text-text-primary tracking-tight mb-1">{t("login.signInTitle")}</h1>
+          <p className="text-[13px] text-text-secondary mb-6">{t("login.signInDescription")}</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="password" className="block text-[12px] font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">
-                Password
+                {t("login.password")}
               </label>
               <input
                 id="password"
@@ -58,7 +65,7 @@ export function Login() {
               disabled={isSubmitting || !password.trim()}
               className="btn btn-primary w-full py-2.5 text-[13px] font-semibold"
             >
-              {isSubmitting ? "Signing in…" : "Sign in"}
+              {isSubmitting ? t("login.signingIn") : t("login.signInButton")}
             </button>
           </form>
         </div>
@@ -72,6 +79,7 @@ export function SetupPassword() {
   const [confirm, setConfirm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { error, setup } = useAuthStore();
+  const { t } = useI18n();
 
   const passwordsMatch = password === confirm;
   const isValid = password.length >= 6 && passwordsMatch;
@@ -86,32 +94,36 @@ export function SetupPassword() {
 
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center p-6">
-      <div className="w-full max-w-[340px]">
-        <div className="flex items-center gap-3 mb-10">
-          <div className="h-9 w-9 rounded-xl bg-orange flex items-center justify-center">
-            <span className="text-[15px] font-bold text-white">P</span>
+      <div className="w-full max-w-[340px] animate-fade-up">
+        <div className="mb-4 flex justify-end">
+          <LanguageSwitcher compact />
+        </div>
+
+        <div className="mb-10 flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-neutral-bg2 border border-stroke">
+            <PulseLogo className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-[16px] font-bold text-text-primary tracking-tight">Pulse</p>
-            <p className="text-[11px] text-text-disabled">Setup</p>
+            <p className="text-[16px] font-bold text-text-primary tracking-tight">{t("common.productName")}</p>
+            <p className="text-[11px] text-text-disabled">{t("login.setupSubtitle")}</p>
           </div>
         </div>
 
         <div className="panel p-8">
-          <h1 className="text-[20px] font-bold text-text-primary tracking-tight mb-1">Create password</h1>
-          <p className="text-[13px] text-text-secondary mb-6">Set an admin password for this instance.</p>
+          <h1 className="text-[20px] font-bold text-text-primary tracking-tight mb-1">{t("login.createPasswordTitle")}</h1>
+          <p className="text-[13px] text-text-secondary mb-6">{t("login.createPasswordDescription")}</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="password" className="block text-[12px] font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">
-                Password
+                {t("login.password")}
               </label>
               <input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 6 characters"
+                placeholder={t("login.atLeast6")}
                 className="input"
                 autoFocus
                 required
@@ -120,21 +132,21 @@ export function SetupPassword() {
 
             <div>
               <label htmlFor="confirm" className="block text-[12px] font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">
-                Confirm
+                {t("login.confirm")}
               </label>
               <input
                 id="confirm"
                 type="password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                placeholder="Repeat password"
+                placeholder={t("login.repeatPassword")}
                 className="input"
                 required
               />
             </div>
 
             {confirm && !passwordsMatch && (
-              <p className="text-[12px] text-danger">Passwords do not match</p>
+              <p className="text-[12px] text-danger">{t("login.passwordsDoNotMatch")}</p>
             )}
             {error && (
               <p className="text-[12px] text-danger">{error}</p>
@@ -145,7 +157,7 @@ export function SetupPassword() {
               disabled={isSubmitting || !isValid}
               className="btn btn-primary w-full py-2.5 text-[13px] font-semibold"
             >
-              {isSubmitting ? "Setting up…" : "Set Password"}
+              {isSubmitting ? t("login.settingUp") : t("login.setPassword")}
             </button>
           </form>
         </div>

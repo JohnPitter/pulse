@@ -305,17 +305,17 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
 
               <div className="h-px bg-border" />
 
-              {/* CLAUDE.md */}
+              {/* Instructions File */}
               <div>
                 <FieldLabel htmlFor="agent-claudemd">
-                  CLAUDE.md{" "}
+                  AGENTS.md / Instructions{" "}
                   <span className="text-text-disabled normal-case font-normal tracking-normal">(optional)</span>
                 </FieldLabel>
                 <textarea
                   id="agent-claudemd"
                   value={claudeMd}
                   onChange={(e) => setClaudeMd(e.target.value)}
-                  placeholder="Custom instructions for this agent…"
+                  placeholder="Custom runtime instructions for this agent..."
                   rows={3}
                   className="input resize-none"
                 />

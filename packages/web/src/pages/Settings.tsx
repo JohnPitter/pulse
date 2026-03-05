@@ -12,15 +12,26 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuthStore } from "../stores/auth";
+import { LanguageSwitcher } from "../components/common/LanguageSwitcher";
+import { useI18n } from "../i18n";
+
+// --------------------------------------------------------------------------
+// Types
+// --------------------------------------------------------------------------
 
 interface AuthStatus {
   configured: boolean;
   type: "oauth" | "apikey" | null;
 }
 
+// --------------------------------------------------------------------------
+// Settings (main page)
+// --------------------------------------------------------------------------
+
 export function Settings() {
   const navigate = useNavigate();
   const logout = useAuthStore((s) => s.logout);
+  const { t } = useI18n();
 
   const handleLogout = async () => {
     await logout();
@@ -28,22 +39,26 @@ export function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-bg">
-      <div className="max-w-xl mx-auto py-8 px-5 space-y-4">
+    <div className="min-h-screen bg-app-bg">
+      <div className="max-w-2xl mx-auto py-8 px-6 space-y-4">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-2">
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
           <Link
-            to="/dashboard"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-surface-muted text-text-disabled hover:text-text-primary transition-all"
-            aria-label="Back"
+            to="/app/dashboard"
+            className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-neutral-bg3 text-neutral-fg3 hover:text-neutral-fg1 border border-stroke transition-all duration-150"
+            aria-label="Back to dashboard"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <h1 className="text-[20px] font-bold text-text-primary tracking-tight">Settings</h1>
+            <h1 className="text-[24px] font-bold text-neutral-fg1 tracking-tight">{t("topbar.settings")}</h1>
+          </div>
+          <LanguageSwitcher compact />
         </div>
 
+        {/* Sections */}
         <ChangePasswordSection />
-        <ClaudeAuthSection />
+        <RuntimeAuthSection />
         <PluginsSection />
         <SessionSection onLogout={handleLogout} />
       </div>
@@ -51,29 +66,9 @@ export function Settings() {
   );
 }
 
-/* ── Section wrapper ── */
-
-function Section({ title, description, children, badge }: {
-  title: string;
-  description: string;
-  children: React.ReactNode;
-  badge?: React.ReactNode;
-}) {
-  return (
-    <div className="panel overflow-hidden">
-      <div className="px-5 py-4 border-b border-border flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-[14px] font-semibold text-text-primary">{title}</h3>
-          <p className="text-[12px] text-text-secondary mt-0.5">{description}</p>
-        </div>
-        {badge}
-      </div>
-      <div className="px-5 py-5">{children}</div>
-    </div>
-  );
-}
-
-/* ── Change Password ── */
+// --------------------------------------------------------------------------
+// Change Password Section
+// --------------------------------------------------------------------------
 
 function ChangePasswordSection() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -86,13 +81,22 @@ function ChangePasswordSection() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+
     setError(null);
     setSuccess(false);
 
-    if (newPassword.length < 6) { setError("New password must be at least 6 characters"); return; }
-    if (newPassword !== confirmPassword) { setError("Passwords do not match"); return; }
+    if (newPassword.length < 6) {
+      setError("New password must be at least 6 characters");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
 
     setIsSubmitting(true);
+
     try {
       const res = await fetch("/api/settings/password", {
         method: "POST",
@@ -109,7 +113,9 @@ function ChangePasswordSection() {
       }
 
       setSuccess(true);
-      setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
     } catch {
       setError("Connection failed");
     } finally {
@@ -118,56 +124,91 @@ function ChangePasswordSection() {
   };
 
   return (
-    <Section title="Security" description="Update your admin password">
-      <form onSubmit={handleSubmit} className="space-y-3">
-        {[
-          { id: "cur", label: "Current password", val: currentPassword, set: setCurrentPassword, ph: "Enter current password" },
-          { id: "new", label: "New password", val: newPassword, set: setNewPassword, ph: "At least 6 characters" },
-          { id: "cnf", label: "Confirm new password", val: confirmPassword, set: setConfirmPassword, ph: "Repeat new password" },
-        ].map(({ id, label, val, set, ph }) => (
-          <div key={id}>
-            <label htmlFor={id} className="block text-[11px] font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">
-              {label}
+    <div className="bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
+      <div className="px-6 py-4 border-b border-stroke">
+        <h3 className="text-[15px] font-semibold text-neutral-fg1">Security</h3>
+        <p className="text-[13px] text-neutral-fg2 mt-0.5">Update your admin password</p>
+      </div>
+      <div className="px-6 py-5">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label htmlFor="current-password" className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block">
+              Current password
             </label>
             <input
-              id={id}
+              id="current-password"
               type="password"
-              value={val}
-              onChange={(e) => set(e.target.value)}
-              placeholder={ph}
-              className="input"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password"
+              className="input-fluent w-full"
             />
           </div>
-        ))}
 
-        {error && (
-          <div className="flex items-center gap-2 text-[12px] text-danger">
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-            <span>{error}</span>
+          <div>
+            <label htmlFor="new-password" className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block">
+              New password
+            </label>
+            <input
+              id="new-password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="At least 6 characters"
+              className="input-fluent w-full"
+            />
           </div>
-        )}
-        {success && (
-          <div className="flex items-center gap-2 text-[12px] text-success">
-            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-            <span>Password changed successfully</span>
-          </div>
-        )}
 
-        <button
-          type="submit"
-          disabled={isSubmitting || !currentPassword || !newPassword || !confirmPassword}
-          className="btn btn-primary w-full py-2.5 text-[13px]"
-        >
-          {isSubmitting ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : "Update Password"}
-        </button>
-      </form>
-    </Section>
+          <div>
+            <label htmlFor="confirm-password" className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block">
+              Confirm new password
+            </label>
+            <input
+              id="confirm-password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Repeat new password"
+              className="input-fluent w-full"
+            />
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-2 text-[13px] text-danger">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {success && (
+            <div className="flex items-center gap-2 text-[13px] text-success">
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+              <span>Password changed successfully</span>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isSubmitting || !currentPassword || !newPassword || !confirmPassword}
+            className="btn-primary w-full py-2.5 text-sm"
+          >
+            {isSubmitting ? (
+              <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+            ) : (
+              "Update Password"
+            )}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }
 
-/* ── Claude Auth ── */
+// --------------------------------------------------------------------------
+// Runtime Auth Section
+// --------------------------------------------------------------------------
 
-function ClaudeAuthSection() {
+function RuntimeAuthSection() {
   const [status, setStatus] = useState<AuthStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showReconfigure, setShowReconfigure] = useState(false);
@@ -176,22 +217,39 @@ function ClaudeAuthSection() {
 
   const fetchStatus = async () => {
     try {
-      const res = await fetch("/api/settings/claude-auth/status", { credentials: "include" });
-      if (res.ok) setStatus((await res.json()) as AuthStatus);
-    } catch { /* silent */ } finally { setIsLoading(false); }
+      const res = await fetch("/api/settings/claude-auth/status", {
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = (await res.json()) as AuthStatus;
+        setStatus(data);
+      }
+    } catch {
+      // Silent fail — status remains null
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  useEffect(() => { fetchStatus(); }, []);
+  useEffect(() => {
+    fetchStatus();
+  }, []);
 
-  const handleReconfigured = () => { setShowReconfigure(false); fetchStatus(); };
+  const handleReconfigured = () => {
+    setShowReconfigure(false);
+    fetchStatus();
+  };
 
   const handleRefreshToken = async () => {
     setIsRefreshing(true);
     setRefreshMsg(null);
     try {
-      const res = await fetch("/api/settings/claude-auth/refresh", { method: "POST", credentials: "include" });
+      const res = await fetch("/api/settings/claude-auth/refresh", {
+        method: "POST",
+        credentials: "include",
+      });
       if (res.ok) {
-        setRefreshMsg({ type: "success", text: "Token refreshed" });
+        setRefreshMsg({ type: "success", text: "Credentials refreshed successfully" });
         setTimeout(() => setRefreshMsg(null), 3000);
       } else {
         const data = (await res.json()) as { error?: string };
@@ -204,95 +262,148 @@ function ClaudeAuthSection() {
     }
   };
 
-  const badge = status?.configured ? (
-    <span className="badge badge-success shrink-0">Active</span>
-  ) : (
-    <span className="badge badge-warning shrink-0">Not set</span>
-  );
+  if (isLoading) {
+    return (
+      <div className="bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
+        <div className="px-6 py-4 border-b border-stroke">
+          <h3 className="text-[15px] font-semibold text-neutral-fg1">Runtime Authentication</h3>
+          <p className="text-[13px] text-neutral-fg2 mt-0.5">Configure how Pulse connects to your agent runtime</p>
+        </div>
+        <div className="px-6 py-8 flex items-center justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-neutral-fg3" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Section
-      title="Claude Authentication"
-      description={status?.configured
-        ? `Connected via ${status.type === "oauth" ? "OAuth" : "API Key"}`
-        : "Configure how Pulse connects to Claude"}
-      badge={isLoading ? undefined : badge}
-    >
-      {isLoading ? (
-        <div className="flex items-center justify-center py-4">
-          <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {refreshMsg && (
-            <div className={`flex items-center gap-2 text-[12px] ${refreshMsg.type === "success" ? "text-success" : "text-danger"}`}>
-              {refreshMsg.type === "success"
-                ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                : <AlertCircle className="h-3.5 w-3.5 shrink-0" />}
-              <span>{refreshMsg.text}</span>
-            </div>
-          )}
-          {showReconfigure ? (
-            <ReconfigureAuth onCancel={() => setShowReconfigure(false)} onComplete={handleReconfigured} />
+    <div className="bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
+      <div className="px-6 py-4 border-b border-stroke">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-[15px] font-semibold text-neutral-fg1">Runtime Authentication</h3>
+            <p className="text-[13px] text-neutral-fg2 mt-0.5">
+              {status?.configured
+                ? `Connected via ${status.type === "oauth" ? "OAuth" : "API Key"}`
+                : "Configure how Pulse connects to your agent runtime"}
+            </p>
+          </div>
+          {status?.configured ? (
+            <span className="badge badge-success">
+              <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden="true" />
+              Active
+            </span>
           ) : (
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowReconfigure(true)}
-                className="btn btn-secondary flex-1 py-2.5"
-              >
-                <Key className="h-3.5 w-3.5" />
-                {status?.configured ? "Reconfigure" : "Configure"}
-              </button>
-              {status?.configured && status.type === "oauth" && (
-                <button
-                  onClick={handleRefreshToken}
-                  disabled={isRefreshing}
-                  className="btn btn-secondary px-4 py-2.5"
-                  title="Refresh token"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
-                </button>
-              )}
-            </div>
+            <span className="badge badge-warning">
+              <span className="h-1.5 w-1.5 rounded-full bg-warning" aria-hidden="true" />
+              Not set
+            </span>
           )}
         </div>
-      )}
-    </Section>
+      </div>
+      <div className="px-6 py-5 space-y-3">
+        {refreshMsg && (
+          <div className={`flex items-center gap-2 text-[13px] ${refreshMsg.type === "success" ? "text-success" : "text-danger"}`}>
+            {refreshMsg.type === "success" ? (
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            )}
+            <span>{refreshMsg.text}</span>
+          </div>
+        )}
+
+        {showReconfigure ? (
+          <ReconfigureAuth
+            onCancel={() => setShowReconfigure(false)}
+            onComplete={handleReconfigured}
+          />
+        ) : (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowReconfigure(true)}
+              className="btn-secondary flex flex-1 items-center justify-center gap-2 py-2.5 text-sm"
+            >
+              <Key className="h-3.5 w-3.5" />
+              {status?.configured ? "Reconfigure" : "Configure"}
+            </button>
+            {status?.configured && status.type === "oauth" && (
+              <button
+                onClick={handleRefreshToken}
+                disabled={isRefreshing}
+                className="btn-secondary flex items-center justify-center gap-2 px-4 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Refresh OAuth token"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
-function ReconfigureAuth({ onCancel, onComplete }: { onCancel: () => void; onComplete: () => void }) {
+// --------------------------------------------------------------------------
+// Reconfigure Auth (inline form)
+// --------------------------------------------------------------------------
+
+function ReconfigureAuth({
+  onCancel,
+  onComplete,
+}: {
+  onCancel: () => void;
+  onComplete: () => void;
+}) {
   const [method, setMethod] = useState<"oauthtoken" | "apikey" | null>(null);
 
-  if (method === "oauthtoken") return <OAuthTokenReconfigure onBack={() => setMethod(null)} onComplete={onComplete} />;
-  if (method === "apikey") return <ApiKeyReconfigure onBack={() => setMethod(null)} onComplete={onComplete} />;
+  if (method === "oauthtoken") {
+    return <OAuthTokenReconfigure onBack={() => setMethod(null)} onComplete={onComplete} />;
+  }
+
+  if (method === "apikey") {
+    return <ApiKeyReconfigure onBack={() => setMethod(null)} onComplete={onComplete} />;
+  }
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => setMethod("oauthtoken")}
-          className="panel-muted p-4 flex flex-col items-center gap-2 hover:border-border-strong transition-colors"
+          className="border border-stroke bg-neutral-bg3 rounded-xl p-4 cursor-pointer hover:border-neutral-fg3 transition-all flex flex-col items-center gap-2 text-center"
         >
-          <Shield className="h-5 w-5 text-orange" />
-          <span className="text-[12px] font-semibold text-text-primary">CLI Token</span>
+          <Shield className="h-5 w-5 text-brand" />
+          <span className="text-xs font-medium text-neutral-fg1">Runtime CLI Token</span>
         </button>
         <button
           onClick={() => setMethod("apikey")}
-          className="panel-muted p-4 flex flex-col items-center gap-2 hover:border-border-strong transition-colors"
+          className="border border-stroke bg-neutral-bg3 rounded-xl p-4 cursor-pointer hover:border-neutral-fg3 transition-all flex flex-col items-center gap-2 text-center"
         >
-          <Key className="h-5 w-5 text-text-secondary" />
-          <span className="text-[12px] font-semibold text-text-primary">API Key</span>
+          <Key className="h-5 w-5 text-neutral-fg2" />
+          <span className="text-xs font-medium text-neutral-fg1">API Key</span>
         </button>
       </div>
-      <button onClick={onCancel} className="w-full text-[12px] text-text-disabled hover:text-text-secondary transition-colors">
+      <button
+        onClick={onCancel}
+        className="w-full text-xs text-neutral-fg3 transition-colors duration-200 hover:text-neutral-fg2"
+      >
         Cancel
       </button>
     </div>
   );
 }
 
-function OAuthTokenReconfigure({ onBack, onComplete }: { onBack: () => void; onComplete: () => void }) {
+// --------------------------------------------------------------------------
+// CLI Token Import
+// --------------------------------------------------------------------------
+
+function OAuthTokenReconfigure({
+  onBack,
+  onComplete,
+}: {
+  onBack: () => void;
+  onComplete: () => void;
+}) {
   const [isImporting, setIsImporting] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [token, setToken] = useState("");
@@ -302,91 +413,165 @@ function OAuthTokenReconfigure({ onBack, onComplete }: { onBack: () => void; onC
   const [success, setSuccess] = useState(false);
 
   const handleAutoImport = async () => {
-    setIsImporting(true); setError(null);
+    setIsImporting(true);
+    setError(null);
+
     try {
-      const res = await fetch("/api/settings/import-cli-token", { method: "POST", credentials: "include" });
+      const res = await fetch("/api/settings/import-cli-token", {
+        method: "POST",
+        credentials: "include",
+      });
+
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        setError(data.error ?? "Failed to import"); setIsImporting(false); return;
+        setError(data.error ?? "Failed to import");
+        setIsImporting(false);
+        return;
       }
-      setSuccess(true); setTimeout(onComplete, 1000);
-    } catch { setError("Connection failed"); setIsImporting(false); }
+
+      setSuccess(true);
+      setTimeout(onComplete, 1000);
+    } catch {
+      setError("Connection failed");
+      setIsImporting(false);
+    }
   };
 
   const handleManualSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!token.trim() || isSubmitting) return;
-    setIsSubmitting(true); setError(null);
+
+    setIsSubmitting(true);
+    setError(null);
+
     try {
       const res = await fetch("/api/settings/claude-auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ type: "oauth", token: token.trim(), refreshToken: refreshToken.trim() || undefined }),
+        body: JSON.stringify({
+          type: "oauth",
+          token: token.trim(),
+          refreshToken: refreshToken.trim() || undefined,
+        }),
       });
+
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        setError(data.error ?? "Failed to save"); setIsSubmitting(false); return;
+        setError(data.error ?? "Failed to save token");
+        setIsSubmitting(false);
+        return;
       }
-      setSuccess(true); setTimeout(onComplete, 1000);
-    } catch { setError("Connection failed"); setIsSubmitting(false); }
+
+      setSuccess(true);
+      setTimeout(onComplete, 1000);
+    } catch {
+      setError("Connection failed");
+      setIsSubmitting(false);
+    }
   };
 
   if (success) {
     return (
-      <div className="flex flex-col items-center gap-2 py-6">
-        <CheckCircle2 className="h-9 w-9 text-success" />
-        <p className="text-[13px] font-medium text-success">Token imported</p>
+      <div className="flex flex-col items-center gap-3 py-6">
+        <CheckCircle2 className="h-10 w-10 text-success" />
+        <p className="text-[13px] font-medium text-success">Token imported successfully</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <button onClick={onBack} className="flex items-center gap-1.5 text-[12px] text-text-secondary hover:text-text-primary transition-colors">
-        <ArrowLeft className="h-3.5 w-3.5" /> Back
+    <div className="space-y-4">
+      <button
+        onClick={onBack}
+        className="flex items-center gap-1.5 text-xs text-neutral-fg2 transition-colors duration-200 hover:text-neutral-fg1"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back
       </button>
 
-      <div className="rounded-lg border border-border bg-surface-muted px-3 py-2.5">
-        <p className="text-[12px] text-text-secondary leading-relaxed">
-          SSH into the server and run{" "}
-          <code className="rounded bg-surface px-1.5 py-0.5 text-[11px] text-orange border border-border font-mono">claude login</code>,
-          then click below.
+      <div className="rounded-lg border border-stroke bg-neutral-bg3 p-3">
+        <p className="text-xs text-neutral-fg2 leading-relaxed">
+          SSH into the server and run your runtime login command{" "}
+          <code className="rounded bg-neutral-bg-hover px-1.5 py-0.5 text-[11px] text-brand">
+            runtime-cli login
+          </code>
+          {" "}if applicable, then click the button below to auto-import.
         </p>
       </div>
 
-      <button onClick={handleAutoImport} disabled={isImporting} className="btn btn-primary w-full py-2.5 text-[13px]">
-        {isImporting ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : "Import from CLI"}
+      <button
+        onClick={handleAutoImport}
+        disabled={isImporting}
+        className="btn-primary w-full py-2.5 text-sm"
+      >
+        {isImporting ? (
+          <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+        ) : (
+          "Import from Runtime CLI"
+        )}
       </button>
 
       {error && (
-        <div className="flex items-center gap-2 text-[12px] text-danger">
-          <AlertCircle className="h-3.5 w-3.5 shrink-0" /><span>{error}</span>
+        <div className="flex items-center gap-2 text-[13px] text-danger">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
       {!showManual ? (
-        <button onClick={() => { setShowManual(true); setError(null); }} className="w-full text-[12px] text-text-disabled hover:text-text-secondary transition-colors">
-          Or paste tokens manually
+        <button
+          onClick={() => { setShowManual(true); setError(null); }}
+          className="w-full text-xs text-neutral-fg3 transition-colors duration-200 hover:text-neutral-fg2"
+        >
+          Or paste runtime tokens manually
         </button>
       ) : (
         <form onSubmit={handleManualSubmit} className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-[11px] text-text-disabled">manual</span>
-            <div className="h-px flex-1 bg-border" />
+            <div className="h-px flex-1 bg-stroke" />
+            <span className="text-xs text-neutral-fg3">manual paste</span>
+            <div className="h-px flex-1 bg-stroke" />
           </div>
-          {[
-            { id: "tok", label: "Access Token", val: token, set: setToken, ph: "sk-ant-oat01-…" },
-            { id: "ref", label: "Refresh Token (optional)", val: refreshToken, set: setRefreshToken, ph: "sk-ant-ort01-…" },
-          ].map(({ id, label, val, set, ph }) => (
-            <div key={id}>
-              <label htmlFor={id} className="block text-[11px] font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">{label}</label>
-              <input id={id} type="password" value={val} onChange={(e) => set(e.target.value)} placeholder={ph} className="input" />
-            </div>
-          ))}
-          <button type="submit" disabled={isSubmitting || !token.trim()} className="btn btn-secondary w-full py-2.5 text-[13px]">
-            {isSubmitting ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : "Save Token"}
+
+          <div>
+            <label htmlFor="oauth-token" className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block">
+              Runtime Access Token
+            </label>
+            <input
+              id="oauth-token"
+              type="password"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="sk-ant-oat01-..."
+              className="input-fluent w-full"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="oauth-refresh" className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block">
+              Runtime Refresh Token <span className="text-neutral-fg-disabled">(optional)</span>
+            </label>
+            <input
+              id="oauth-refresh"
+              type="password"
+              value={refreshToken}
+              onChange={(e) => setRefreshToken(e.target.value)}
+              placeholder="sk-ant-ort01-..."
+              className="input-fluent w-full"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting || !token.trim()}
+            className="btn-secondary w-full py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? (
+              <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+            ) : (
+              "Save Runtime Token"
+            )}
           </button>
         </form>
       )}
@@ -394,7 +579,17 @@ function OAuthTokenReconfigure({ onBack, onComplete }: { onBack: () => void; onC
   );
 }
 
-function ApiKeyReconfigure({ onBack, onComplete }: { onBack: () => void; onComplete: () => void }) {
+// --------------------------------------------------------------------------
+// API Key Reconfigure
+// --------------------------------------------------------------------------
+
+function ApiKeyReconfigure({
+  onBack,
+  onComplete,
+}: {
+  onBack: () => void;
+  onComplete: () => void;
+}) {
   const [apiKey, setApiKey] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -403,7 +598,10 @@ function ApiKeyReconfigure({ onBack, onComplete }: { onBack: () => void; onCompl
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!apiKey.trim() || isSubmitting) return;
-    setIsSubmitting(true); setError(null);
+
+    setIsSubmitting(true);
+    setError(null);
+
     try {
       const res = await fetch("/api/settings/claude-auth", {
         method: "POST",
@@ -411,49 +609,82 @@ function ApiKeyReconfigure({ onBack, onComplete }: { onBack: () => void; onCompl
         credentials: "include",
         body: JSON.stringify({ type: "apikey", token: apiKey.trim() }),
       });
+
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        setError(data.error ?? "Failed"); setIsSubmitting(false); return;
+        setError(data.error ?? "Failed to save API key");
+        setIsSubmitting(false);
+        return;
       }
-      setSuccess(true); setTimeout(onComplete, 1000);
-    } catch { setError("Connection failed"); setIsSubmitting(false); }
+
+      setSuccess(true);
+      setTimeout(onComplete, 1000);
+    } catch {
+      setError("Connection failed");
+      setIsSubmitting(false);
+    }
   };
 
   if (success) {
     return (
-      <div className="flex flex-col items-center gap-2 py-6">
-        <CheckCircle2 className="h-9 w-9 text-success" />
-        <p className="text-[13px] font-medium text-success">API key saved</p>
+      <div className="flex flex-col items-center gap-3 py-6">
+        <CheckCircle2 className="h-10 w-10 text-success" />
+        <p className="text-[13px] font-medium text-success">API key saved successfully</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <button onClick={onBack} className="flex items-center gap-1.5 text-[12px] text-text-secondary hover:text-text-primary transition-colors">
-        <ArrowLeft className="h-3.5 w-3.5" /> Back
+    <div className="space-y-4">
+      <button
+        onClick={onBack}
+        className="flex items-center gap-1.5 text-xs text-neutral-fg2 transition-colors duration-200 hover:text-neutral-fg1"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back
       </button>
+
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label htmlFor="apikey" className="block text-[11px] font-semibold text-text-secondary mb-1.5 uppercase tracking-wider">
-            Anthropic API Key
+          <label htmlFor="apikey-settings" className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block">
+            Provider API Key
           </label>
-          <input id="apikey" type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="sk-ant-…" className="input" />
+          <input
+            id="apikey-settings"
+            type="password"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="sk-ant-..."
+            className="input-fluent w-full"
+          />
         </div>
+
         {error && (
-          <div className="flex items-center gap-2 text-[12px] text-danger">
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" /><span>{error}</span>
+          <div className="flex items-center gap-2 text-[13px] text-danger">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
-        <button type="submit" disabled={isSubmitting || !apiKey.trim()} className="btn btn-primary w-full py-2.5 text-[13px]">
-          {isSubmitting ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : "Save API Key"}
+
+        <button
+          type="submit"
+          disabled={isSubmitting || !apiKey.trim()}
+          className="btn-primary w-full py-2.5 text-sm"
+        >
+          {isSubmitting ? (
+            <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+          ) : (
+            "Save Provider API Key"
+          )}
         </button>
       </form>
     </div>
   );
 }
 
-/* ── Plugins ── */
+// --------------------------------------------------------------------------
+// Plugins Section
+// --------------------------------------------------------------------------
 
 interface PluginInfo {
   name: string;
@@ -475,52 +706,68 @@ function PluginsSection() {
   }, []);
 
   return (
-    <Section title="Plugins" description="Installed Claude Code plugins">
-      {isLoading ? (
-        <div className="flex items-center justify-center py-4">
-          <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
-        </div>
-      ) : plugins.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-6 text-center">
-          <Puzzle className="h-8 w-8 text-text-disabled" />
-          <p className="text-[13px] text-text-secondary">No plugins detected</p>
-          <p className="text-[12px] text-text-disabled">Install via Claude Code CLI on the server</p>
-        </div>
-      ) : (
-        <div>
-          {plugins.map((plugin) => (
-            <div
-              key={`${plugin.name}@${plugin.marketplace}`}
-              className="data-row"
-            >
-              <div>
-                <p className="text-[13px] font-semibold text-text-primary">{plugin.name}</p>
-                <p className="text-[11px] text-text-secondary">{plugin.marketplace}</p>
+    <div className="bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
+      <div className="px-6 py-4 border-b border-stroke">
+        <h3 className="text-[15px] font-semibold text-neutral-fg1">Plugins</h3>
+        <p className="text-[13px] text-neutral-fg2 mt-0.5">Installed runtime plugins</p>
+      </div>
+      <div className="px-6 py-5">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="h-5 w-5 animate-spin text-neutral-fg3" />
+          </div>
+        ) : plugins.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <Puzzle className="h-8 w-8 text-neutral-fg-disabled" />
+            <p className="text-sm text-neutral-fg3">No plugins detected</p>
+            <p className="text-xs text-neutral-fg-disabled">
+              Install plugins via your runtime CLI on the server
+            </p>
+          </div>
+        ) : (
+          <div>
+            {plugins.map((plugin) => (
+              <div
+                key={`${plugin.name}@${plugin.marketplace}`}
+                className="flex items-center justify-between py-3 border-b border-stroke last:border-0"
+              >
+                <div>
+                  <p className="text-[14px] font-medium text-neutral-fg1">{plugin.name}</p>
+                  <p className="text-[12px] text-neutral-fg2">{plugin.marketplace}</p>
+                </div>
+                <span className="badge badge-success">Active</span>
               </div>
-              <span className="badge badge-success">Active</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </Section>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
-/* ── Session ── */
+// --------------------------------------------------------------------------
+// Session Section
+// --------------------------------------------------------------------------
 
 function SessionSection({ onLogout }: { onLogout: () => void }) {
   return (
-    <Section title="Session" description="Manage your current session">
-      <div className="flex items-center justify-between">
-        <p className="text-[13px] text-text-secondary">Signed in as admin</p>
-        <button
-          onClick={onLogout}
-          className="btn btn-danger px-4 py-2"
-        >
-          <LogOut className="h-3.5 w-3.5" />
-          Sign out
-        </button>
+    <div className="bg-neutral-bg2 border border-stroke rounded-2xl shadow-2 overflow-hidden">
+      <div className="px-6 py-4 border-b border-stroke">
+        <h3 className="text-[15px] font-semibold text-neutral-fg1">Session</h3>
+        <p className="text-[13px] text-neutral-fg2 mt-0.5">Manage your current session</p>
       </div>
-    </Section>
+      <div className="px-6 py-5">
+        <div className="flex items-center justify-between">
+          <p className="text-[13px] text-neutral-fg2">Signed in as admin</p>
+          <button
+            onClick={onLogout}
+            className="btn-secondary flex items-center gap-2 px-4 py-2 text-[14px] text-danger border-danger/30 hover:bg-danger-light"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,271 +1,210 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Copy, Check, Monitor, Users, Activity, Zap } from "lucide-react";
-import { useState } from "react";
+import {
+  Bot,
+  BriefcaseBusiness,
+  FileStack,
+  MessageSquare,
+  Puzzle,
+  SquareCheckBig,
+  ArrowRight,
+} from "lucide-react";
+import { LanguageSwitcher } from "../components/common/LanguageSwitcher";
+import { PulseLogo } from "../components/brand/PulseLogo";
+import { useI18n } from "../i18n";
+import { useAuthStore } from "../stores/auth";
+
+const FEATURE_CARDS = [
+  { titleKey: "nav.agents", icon: Bot, descriptionKey: "landing.featureAgents" },
+  { titleKey: "dashboard.task", icon: SquareCheckBig, descriptionKey: "landing.featureTasks" },
+  { titleKey: "nav.projects", icon: BriefcaseBusiness, descriptionKey: "landing.featureProjects" },
+  { titleKey: "nav.skillsPlugins", icon: Puzzle, descriptionKey: "landing.featureSkills" },
+  { titleKey: "nav.chat", icon: MessageSquare, descriptionKey: "landing.featureChat" },
+  { titleKey: "nav.files", icon: FileStack, descriptionKey: "landing.featureFiles" },
+] as const;
+
+const HOW_IT_WORKS_KEYS = ["landing.step1", "landing.step2", "landing.step3", "landing.step4", "landing.step5"] as const;
+
+const IMAGE_SECTIONS = [
+  {
+    titleKey: "landing.imageCard1Title",
+    textKey: "landing.imageCard1Text",
+    src: "/images/home-live-orchestration.svg",
+    alt: "Agents activity feed with running tasks",
+  },
+  {
+    titleKey: "landing.imageCard2Title",
+    textKey: "landing.imageCard2Text",
+    src: "/images/home-execution-evidence.svg",
+    alt: "Last task execution details and logs",
+  },
+  {
+    titleKey: "landing.imageCard3Title",
+    textKey: "landing.imageCard3Text",
+    src: "/images/home-decision-dashboard.svg",
+    alt: "Tasks by status analytics and completion metrics",
+  },
+] as const;
 
 export function Landing() {
-  return (
-    <div className="min-h-screen bg-bg">
-      <Topbar />
-      <Hero />
-      <Features />
-      <HowItWorks />
-      <CtaBanner />
-      <Footer />
-    </div>
-  );
-}
+  const { t } = useI18n();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-function Topbar() {
   return (
-    <header className="sticky top-0 z-50 bg-surface/90 backdrop-blur-md border-b border-border">
-      <div className="max-w-5xl mx-auto px-6 h-14 flex items-center gap-6">
-        <div className="flex items-center gap-2.5">
-          <div className="h-7 w-7 rounded-lg bg-orange flex items-center justify-center">
-            <span className="text-[12px] font-bold text-white">P</span>
+    <div className="min-h-screen w-full bg-[#2E2E31]">
+      <div className="min-h-screen w-full border border-black/10 bg-[#E7E5E2] p-4 sm:p-6 animate-fade-in">
+        <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-stroke bg-neutral-bg2 text-[14px] font-semibold text-neutral-fg1">
+              <PulseLogo className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[15px] font-semibold text-neutral-fg1">{t("common.productName")}</p>
+              <p className="text-[11px] text-neutral-fg3">{t("landing.productSubtitle")}</p>
+            </div>
           </div>
-          <span className="text-[15px] font-bold text-text-primary tracking-tight">Pulse</span>
-        </div>
 
-        <nav className="hidden md:flex items-center gap-0.5 ml-2">
-          <a href="#features" className="text-[13px] text-text-secondary hover:text-text-primary px-3 py-1.5 rounded-lg hover:bg-surface-muted transition-all">Features</a>
-          <a href="#how-it-works" className="text-[13px] text-text-secondary hover:text-text-primary px-3 py-1.5 rounded-lg hover:bg-surface-muted transition-all">How it works</a>
-        </nav>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher compact />
+            <Link
+              to={isAuthenticated ? "/settings" : "/login"}
+              className="rounded-xl border border-stroke bg-neutral-bg2 px-3 py-1.5 text-[12px] text-neutral-fg2 hover:bg-neutral-bg3"
+            >
+              {isAuthenticated ? t("topbar.settings") : t("landing.signIn")}
+            </Link>
+            <Link
+              to="/demo"
+              className="rounded-xl bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-hover"
+            >
+              {t("landing.viewDemo")}
+            </Link>
+          </div>
+        </header>
 
-        <div className="ml-auto flex items-center gap-2">
-          <a
-            href="https://github.com/bigbig6/pulse"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden md:flex items-center gap-1.5 text-[13px] text-text-secondary hover:text-text-primary px-3 py-1.5 rounded-lg border border-border hover:bg-surface-muted transition-all"
-          >
-            GitHub
-          </a>
-          <Link to="/dashboard" className="btn btn-primary px-4 py-1.5 text-[13px]">
-            Open App
-          </Link>
-        </div>
-      </div>
-    </header>
-  );
-}
+        <section className="mb-4 grid gap-3 xl:grid-cols-[0.56fr_0.44fr]">
+          <div className="rounded-[20px] border border-black/6 bg-[#F1EFEC] p-6 shadow-[0_8px_18px_rgba(0,0,0,0.06)] animate-fade-up stagger-1">
+            <p className="mb-2 inline-flex items-center rounded-full border border-stroke bg-neutral-bg2 px-2.5 py-1 text-[10px] text-neutral-fg2">
+              {t("landing.heroBadge")}
+            </p>
+            <h1 className="text-[42px] font-semibold tracking-[-0.03em] text-neutral-fg1">
+              {t("landing.heroTitle")}
+            </h1>
+            <p className="mt-3 max-w-[48ch] text-[14px] text-neutral-fg2">
+              {t("landing.heroDescription")}
+            </p>
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              <Link
+                to="/app/dashboard"
+                className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-[13px] font-semibold text-white hover:bg-brand-hover"
+              >
+                {t("landing.getStarted")}
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+              <Link
+                to="/demo"
+                className="rounded-xl border border-stroke bg-neutral-bg2 px-4 py-2 text-[13px] text-neutral-fg2 hover:bg-neutral-bg3"
+              >
+                {t("landing.viewDemo")}
+              </Link>
+            </div>
+          </div>
 
-function Hero() {
-  return (
-    <section className="max-w-5xl mx-auto px-6 pt-20 pb-16 text-center">
-      {/* Tag */}
-      <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-1.5 mb-10">
-        <span className="h-1.5 w-1.5 rounded-full bg-orange" />
-        <span className="text-[12px] font-medium text-text-secondary">Multi-agent Claude Code orchestrator</span>
-      </div>
+          <div className="rounded-[20px] border border-black/6 bg-[#F1EFEC] p-4 shadow-[0_8px_18px_rgba(0,0,0,0.06)] animate-fade-up stagger-2">
+            <div className="mb-3 rounded-2xl border border-black/5 bg-[#ECE9E4] p-3">
+              <p className="text-[12px] font-semibold text-neutral-fg1">{t("landing.dashboardPreview")}</p>
+              <p className="text-[10px] text-neutral-fg3">{t("landing.dashboardPreviewSubtitle")}</p>
+            </div>
 
-      {/* Headline */}
-      <h1 className="text-[52px] font-bold text-text-primary tracking-tight leading-[1.08] mb-5">
-        Orchestrate Claude agents<br />
-        <span className="text-orange">at scale</span>
-      </h1>
-
-      <p className="text-[17px] text-text-secondary leading-relaxed max-w-xl mx-auto mb-10">
-        Run multiple Claude Code instances in parallel. Monitor, control, and manage AI agents through a clean dashboard.
-      </p>
-
-      {/* CTAs */}
-      <div className="flex items-center justify-center gap-3 mb-16 flex-wrap">
-        <Link to="/dashboard" className="btn btn-primary flex items-center gap-2 px-6 py-3 text-[14px] font-semibold">
-          Get Started <ArrowRight className="h-4 w-4" />
-        </Link>
-        <a
-          href="https://github.com/bigbig6/pulse"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-secondary flex items-center gap-2 px-6 py-3 text-[14px]"
-        >
-          View on GitHub
-        </a>
-      </div>
-
-      {/* Dashboard preview */}
-      <div className="panel overflow-hidden shadow-[var(--shadow-modal)] max-w-3xl mx-auto text-left">
-        {/* Window chrome */}
-        <div className="flex items-center gap-1.5 px-4 py-3 bg-[#111827] border-b border-white/10">
-          <span className="h-2.5 w-2.5 rounded-full bg-danger/60" />
-          <span className="h-2.5 w-2.5 rounded-full bg-warning/60" />
-          <span className="h-2.5 w-2.5 rounded-full bg-success/60" />
-          <span className="ml-3 text-[11px] text-white/30 font-mono tracking-wider">pulse — dashboard</span>
-        </div>
-
-        {/* Agent rows */}
-        <div className="bg-[#0D1117] px-5 py-4 font-mono text-[12px] space-y-3">
-          {[
-            { name: "Frontend Dev", status: "Running", statusColor: "bg-success", elapsed: "4m 12s", lines: ["✓ Created Button component", "✓ Updated routing config"] },
-            { name: "Backend API", status: "Waiting", statusColor: "bg-warning", elapsed: "1m 33s", lines: ["? Should I use PostgreSQL or SQLite?"] },
-            { name: "Test Runner", status: "Idle", statusColor: "bg-border-strong", elapsed: "", lines: [] },
-          ].map((agent) => (
-            <div key={agent.name}>
-              <div className="flex items-center gap-2.5">
-                <span className={`h-2 w-2 rounded-full ${agent.statusColor}`} />
-                <span className="text-white/90 font-semibold">{agent.name}</span>
-                <span className="badge badge-neutral ml-1">{agent.status}</span>
-                {agent.elapsed && (
-                  <span className="text-white/30 text-[10px] ml-auto">{agent.elapsed}</span>
-                )}
+            <div className="grid gap-2 md:grid-cols-[0.68fr_0.32fr]">
+              <img
+                src="/images/home-hero-dashboard.svg"
+                alt="Pulse dashboard with Backlog, Tasks by status, Agents activity and Last task cards"
+                className="h-[232px] w-full rounded-2xl border border-black/5 bg-[#ECE9E4] object-contain p-1.5 animate-float-soft"
+                loading="eager"
+              />
+              <div className="grid gap-2">
+                <img
+                  src="/images/home-preview-status.svg"
+                  alt="Tasks by status preview"
+                  className="h-[112px] w-full rounded-2xl border border-black/5 bg-[#ECE9E4] object-contain p-1"
+                />
+                <img
+                  src="/images/home-preview-last-task.svg"
+                  alt="Last task preview"
+                  className="h-[112px] w-full rounded-2xl border border-black/5 bg-[#ECE9E4] object-contain p-1"
+                />
               </div>
-              {agent.lines.map((line, i) => (
-                <p key={i} className="text-white/40 pl-5 mt-0.5 text-[11px]">{line}</p>
-              ))}
             </div>
-          ))}
-          <div className="flex items-center gap-2 pt-1">
-            <span className="text-orange/70 animate-[blink_1s_step-end_infinite]">█</span>
-            <span className="text-white/20 text-[11px]">_</span>
           </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+        </section>
 
-const FEATURES = [
-  {
-    icon: Users,
-    title: "Multi-Agent Management",
-    description: "Run multiple Claude Code instances simultaneously. Each agent gets its own session and context.",
-    color: "text-orange",
-  },
-  {
-    icon: Monitor,
-    title: "Split View",
-    description: "Monitor two agents side by side. Compare outputs and coordinate work in real time.",
-    color: "text-blue",
-  },
-  {
-    icon: Activity,
-    title: "Real-time Monitoring",
-    description: "Live output, context window usage, and status tracking. Never miss what your agents are doing.",
-    color: "text-success",
-  },
-  {
-    icon: Zap,
-    title: "Instant Deploy",
-    description: "Get started in minutes. Install the CLI, configure a project path, and agents are running.",
-    color: "text-orange",
-  },
-];
-
-function Features() {
-  return (
-    <section id="features" className="max-w-5xl mx-auto px-6 py-16">
-      <div className="text-center mb-12">
-        <h2 className="text-[30px] font-bold text-text-primary tracking-tight mb-2">Everything you need</h2>
-        <p className="text-[15px] text-text-secondary">Purpose-built for AI-powered development workflows</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {FEATURES.map((f) => (
-          <div key={f.title} className="panel p-6 hover:shadow-[var(--shadow-panel)] transition-all">
-            <div className="h-9 w-9 rounded-lg border border-border bg-surface-muted flex items-center justify-center mb-4">
-              <f.icon className={`h-4.5 w-4.5 ${f.color}`} />
-            </div>
-            <h3 className="text-[14px] font-semibold text-text-primary mb-2">{f.title}</h3>
-            <p className="text-[13px] text-text-secondary leading-relaxed">{f.description}</p>
+        <section className="mb-4 rounded-[20px] border border-black/6 bg-[#F1EFEC] p-4 shadow-[0_8px_18px_rgba(0,0,0,0.06)] animate-fade-up stagger-3">
+          <p className="mb-3 inline-flex items-center rounded-full border border-stroke bg-neutral-bg2 px-2.5 py-1 text-[10px] text-neutral-fg2">
+            {t("landing.trustBadge")}
+          </p>
+          <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
+            {IMAGE_SECTIONS.map((section) => (
+              <article key={section.titleKey} className="overflow-hidden rounded-2xl border border-black/5 bg-[#ECE9E4]">
+                <img src={section.src} alt={section.alt} className="h-[148px] w-full bg-[#E8E5E0] object-contain p-1.5" loading="lazy" />
+                <div className="p-3">
+                  <p className="text-[13px] font-semibold text-neutral-fg1">{t(section.titleKey)}</p>
+                  <p className="mt-1 text-[11px] text-neutral-fg2">{t(section.textKey)}</p>
+                </div>
+              </article>
+            ))}
           </div>
-        ))}
-      </div>
-    </section>
-  );
-}
+        </section>
 
-const STEPS = [
-  { n: "01", title: "Install", description: "Run npm install -g @pulse/cli to install the CLI globally." },
-  { n: "02", title: "Configure", description: "Set up Claude auth (OAuth or API key) via the setup wizard." },
-  { n: "03", title: "Create Agents", description: "Point agents at project directories. Configure model and permissions." },
-  { n: "04", title: "Monitor", description: "Watch agents work in real time. Send input, stop, or restart anytime." },
-];
-
-function HowItWorks() {
-  return (
-    <section id="how-it-works" className="max-w-5xl mx-auto px-6 py-16 border-t border-border">
-      <div className="text-center mb-12">
-        <h2 className="text-[30px] font-bold text-text-primary tracking-tight mb-2">How it works</h2>
-        <p className="text-[15px] text-text-secondary">Up and running in four steps</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {STEPS.map((step) => (
-          <div key={step.n} className="flex flex-col gap-3">
-            <span className="text-[32px] font-bold text-orange/30 leading-none font-mono">{step.n}</span>
-            <h3 className="text-[14px] font-semibold text-text-primary">{step.title}</h3>
-            <p className="text-[13px] text-text-secondary leading-relaxed">{step.description}</p>
+        <section id="features" className="mb-4 rounded-[20px] border border-black/6 bg-[#F1EFEC] p-4 shadow-[0_8px_18px_rgba(0,0,0,0.06)] animate-fade-up stagger-4">
+          <div className="mb-3">
+            <h2 className="text-[28px] font-semibold tracking-[-0.02em] text-neutral-fg1">{t("landing.featuresTitle")}</h2>
+            <p className="text-[12px] text-neutral-fg2">{t("landing.featuresSubtitle")}</p>
           </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function CtaBanner() {
-  const [copied, setCopied] = useState(false);
-  const copy = () => {
-    navigator.clipboard.writeText("npm install -g @pulse/cli");
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <section className="max-w-5xl mx-auto px-6 py-16">
-      <div className="bg-[#111827] rounded-2xl p-10 md:p-14 text-center">
-        <h2 className="text-[28px] md:text-[34px] font-bold text-white tracking-tight mb-3">
-          Ready to start?
-        </h2>
-        <p className="text-[14px] text-white/50 mb-8 max-w-sm mx-auto">
-          Install Pulse and orchestrate your Claude agents in minutes.
-        </p>
-
-        <button
-          onClick={copy}
-          className="inline-flex items-center gap-3 bg-white/8 hover:bg-white/12 rounded-xl px-5 py-3 font-mono text-[13px] text-white mb-8 transition-all border border-white/10"
-        >
-          <span className="text-white/30">$</span>
-          <span>npm install -g @pulse/cli</span>
-          {copied ? (
-            <Check className="h-3.5 w-3.5 text-success ml-2" />
-          ) : (
-            <Copy className="h-3.5 w-3.5 text-white/30 ml-2" />
-          )}
-        </button>
-
-        <div>
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-2 bg-orange hover:bg-orange-hover text-white font-semibold px-6 py-2.5 rounded-xl text-[14px] transition-colors"
-          >
-            Open Dashboard <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="border-t border-border">
-      <div className="max-w-5xl mx-auto px-6 py-8 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded-md bg-orange flex items-center justify-center">
-            <span className="text-[10px] font-bold text-white">P</span>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+            {FEATURE_CARDS.map((feature) => (
+              <article key={feature.titleKey} className="rounded-2xl border border-black/5 bg-[#ECE9E4] p-3 transition-transform duration-200 hover:-translate-y-0.5">
+                <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-xl border border-stroke bg-neutral-bg2">
+                  <feature.icon className="h-4 w-4 text-neutral-fg2" />
+                </div>
+                <p className="text-[13px] font-semibold text-neutral-fg1">{t(feature.titleKey)}</p>
+                <p className="mt-1 text-[11px] text-neutral-fg2">{t(feature.descriptionKey)}</p>
+              </article>
+            ))}
           </div>
-          <span className="text-[13px] font-semibold text-text-primary">Pulse</span>
-        </div>
-        <p className="text-[12px] text-text-disabled">Built with Claude Code</p>
-        <a
-          href="https://github.com/bigbig6/pulse"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[12px] text-text-disabled hover:text-text-secondary transition-colors"
-        >
-          GitHub
-        </a>
+        </section>
+
+        <section id="how-it-works" className="mb-4 rounded-[20px] border border-black/6 bg-[#F1EFEC] p-4 shadow-[0_8px_18px_rgba(0,0,0,0.06)] animate-fade-up stagger-5">
+          <div className="mb-3">
+            <h2 className="text-[28px] font-semibold tracking-[-0.02em] text-neutral-fg1">{t("landing.howItWorksTitle")}</h2>
+            <p className="text-[12px] text-neutral-fg2">{t("landing.howItWorksSubtitle")}</p>
+          </div>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
+            {HOW_IT_WORKS_KEYS.map((stepKey, index) => (
+              <div key={stepKey} className="rounded-2xl border border-black/5 bg-[#ECE9E4] p-3">
+                <p className="text-[10px] text-neutral-fg3">{t("landing.stepLabel", { step: index + 1 })}</p>
+                <p className="text-[13px] font-semibold text-neutral-fg1">{t(stepKey)}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-[20px] border border-black/6 bg-[linear-gradient(140deg,#E4E1DC,#D8D4CE)] p-6 shadow-[0_8px_18px_rgba(0,0,0,0.06)] animate-fade-up">
+          <p className="text-[28px] font-semibold tracking-[-0.02em] text-neutral-fg1">
+            {t("landing.ctaTitle")}
+          </p>
+          <p className="mt-1 text-[13px] text-neutral-fg2">
+            {t("landing.ctaText")}
+          </p>
+          <div className="mt-4">
+            <Link
+              to="/app/dashboard"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-[13px] font-semibold text-white hover:bg-brand-hover"
+            >
+              {t("landing.getStarted")}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </section>
       </div>
-    </footer>
+    </div>
   );
 }

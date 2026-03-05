@@ -110,7 +110,7 @@ function MethodSelection({
     <div className="space-y-4">
       <div className="text-center mb-6">
         <h2 className="text-[20px] font-bold text-neutral-fg1 tracking-tight">
-          Connect to Claude
+          Connect Agent Runtime
         </h2>
         <p className="text-[14px] text-neutral-fg2 mt-1">
           Choose how you want to authenticate
@@ -131,10 +131,10 @@ function MethodSelection({
           </div>
           <div>
             <p className="text-[14px] font-semibold text-neutral-fg1">
-              Claude OAuth
+              Runtime OAuth
             </p>
             <p className="text-[12px] text-neutral-fg2 mt-0.5">
-              Use your Claude account (recommended)
+              Use your runtime account (recommended)
             </p>
           </div>
         </div>
@@ -157,7 +157,7 @@ function MethodSelection({
               API Key
             </p>
             <p className="text-[12px] text-neutral-fg2 mt-0.5">
-              Use an Anthropic API key directly
+              Use a provider API key directly
             </p>
           </div>
         </div>
@@ -235,7 +235,7 @@ function OAuthSetup({
           Scan QR Code
         </h2>
         <p className="text-[13px] text-neutral-fg2 mt-1">
-          Open Claude app and scan to authenticate
+          Open your runtime auth app and scan to authenticate
         </p>
       </div>
 
@@ -345,10 +345,10 @@ function ApiKeySetup({
     <div className="space-y-4">
       <div className="text-center mb-4">
         <h2 className="text-[20px] font-bold text-neutral-fg1 tracking-tight">
-          Enter API Key
+          Enter Provider API Key
         </h2>
         <p className="text-[13px] text-neutral-fg2 mt-1">
-          Get your key from console.anthropic.com
+          Use an API key from your configured provider
         </p>
       </div>
 
@@ -358,7 +358,7 @@ function ApiKeySetup({
             htmlFor="apikey-input"
             className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block"
           >
-            API Key
+            Provider API Key
           </label>
           <input
             id="apikey-input"

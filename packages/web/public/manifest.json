@@ -1,7 +1,7 @@
 {
-  "name": "Pulse — Remote Claude Agent Manager",
+  "name": "Pulse — Remote AI Agent Manager",
   "short_name": "Pulse",
-  "description": "Deploy, monitor, and control multiple Claude Code agents on your remote server through a real-time web dashboard.",
+  "description": "Deploy, monitor, and control multiple AI agents on your remote server through a real-time web dashboard.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

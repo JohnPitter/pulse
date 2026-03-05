@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="34" y1="30" x2="606" y2="334" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EFECE6"/>
+      <stop offset="1" stop-color="#DDD9D2"/>
+    </linearGradient>
+    <linearGradient id="module" x1="446" y1="170" x2="532" y2="264" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF9A3C"/>
+      <stop offset="1" stop-color="#4F7DF3"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="360" rx="28" fill="url(#bg)"/>
+  <rect x="24" y="24" width="592" height="312" rx="20" fill="#F4F2EE" stroke="#D3CEC7"/>
+
+  <rect x="48" y="48" width="544" height="50" rx="14" fill="#ECE9E4" stroke="#D7D2CB"/>
+  <text x="70" y="80" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="700" fill="#171717">Last task</text>
+  <rect x="510" y="62" width="66" height="22" rx="9" fill="#F8F8F9" stroke="#D7D2CB"/>
+  <text x="522" y="77" font-family="Inter, Arial, sans-serif" font-size="11" fill="#66625D">14 logs</text>
+
+  <rect x="48" y="112" width="350" height="184" rx="16" fill="#ECE9E4" stroke="#D6D1CA"/>
+  <text x="70" y="140" font-family="Inter, Arial, sans-serif" font-size="11" fill="#7A7670">Task</text>
+  <text x="70" y="160" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" fill="#171717">Resumo diario dos agentes</text>
+
+  <text x="70" y="191" font-family="Inter, Arial, sans-serif" font-size="11" fill="#7A7670">Agent</text>
+  <text x="70" y="211" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" fill="#171717">Nova</text>
+
+  <text x="70" y="242" font-family="Inter, Arial, sans-serif" font-size="11" fill="#7A7670">Result</text>
+  <text x="70" y="262" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" fill="#3D61B3">Success</text>
+
+  <rect x="248" y="246" width="132" height="34" rx="10" fill="#F8F8F9" stroke="#D6D1CA"/>
+  <text x="287" y="268" font-family="Inter, Arial, sans-serif" font-size="12" fill="#3D3A35">Open logs</text>
+
+  <rect x="416" y="112" width="176" height="184" rx="16" fill="#ECE9E4" stroke="#D6D1CA"/>
+  <rect x="450" y="154" width="108" height="108" rx="20" fill="#D2CDC6"/>
+  <circle cx="504" cy="208" r="34" fill="url(#module)"/>
+
+  <rect x="48" y="308" width="544" height="10" rx="5" fill="#D3CEC7"/>
+</svg>
