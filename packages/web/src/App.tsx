@@ -4,8 +4,14 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./stores/auth";
 import { Login, SetupPassword } from "./pages/Login";
 import { Landing } from "./pages/Landing";
-import { Dashboard } from "./pages/Dashboard";
 import { Settings } from "./pages/Settings";
+import { AppLayout } from "./components/layout/AppLayout";
+import { DashboardPage } from "./pages/app/DashboardPage";
+import { AgentsPage } from "./pages/app/AgentsPage";
+import { ProjectsPage } from "./pages/app/ProjectsPage";
+import { SkillsPage } from "./pages/app/SkillsPage";
+import { ChatPage } from "./pages/app/ChatPage";
+import { FilesPage } from "./pages/app/FilesPage";
 
 function LoadingSpinner() {
   return (
@@ -28,6 +34,13 @@ function LoadingSpinner() {
       </div>
     </div>
   );
+}
+
+function ProtectedAppRoute({ isAuthenticated }: { isAuthenticated: boolean }) {
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  return <AppLayout />;
 }
 
 export function App() {
@@ -53,26 +66,28 @@ export function App() {
       <Routes>
         <Route
           path="/login"
-          element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />}
+          element={isAuthenticated ? <Navigate to="/app/dashboard" replace /> : <Login />}
         />
-        <Route
-          path="/"
-          element={
-            isAuthenticated ? <Navigate to="/dashboard" /> : <Landing />
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            isAuthenticated ? <Dashboard /> : <Navigate to="/login" />
-          }
-        />
+        <Route path="/" element={<Landing />} />
+        <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
         <Route
           path="/settings"
           element={
             isAuthenticated ? <Settings /> : <Navigate to="/login" />
           }
         />
+
+        <Route path="/app" element={<ProtectedAppRoute isAuthenticated={isAuthenticated} />}>
+          <Route index element={<Navigate to="/app/dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="agents" element={<AgentsPage />} />
+          <Route path="projects" element={<ProjectsPage />} />
+          <Route path="skills" element={<SkillsPage />} />
+          <Route path="chat" element={<ChatPage />} />
+          <Route path="files" element={<FilesPage />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

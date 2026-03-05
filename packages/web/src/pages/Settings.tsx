@@ -41,7 +41,7 @@ export function Settings() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <Link
-            to="/dashboard"
+            to="/app/dashboard"
             className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-neutral-bg3 text-neutral-fg3 hover:text-neutral-fg1 border border-stroke transition-all duration-150"
             aria-label="Back to dashboard"
           >
