@@ -1,10 +1,11 @@
 import { create } from "zustand";
-import { getSocket, emitEvent } from "./socket";
+import { getSocket } from "./socket";
 
 export interface Agent {
   id: string;
   name: string;
   projectPath: string;
+  role: string | null;
   claudeMd: string | null;
   initialPrompt: string | null;
   model: string;
@@ -23,6 +24,7 @@ export interface Agent {
 export interface CreateAgentPayload {
   name: string;
   projectPath: string;
+  role?: string;
   model?: string;
   thinkingEnabled?: boolean;
   permissionMode?: string;
@@ -32,7 +34,7 @@ export interface CreateAgentPayload {
 
 export interface UpdateAgentPayload {
   name?: string;
-  projectPath?: string;
+  role?: string | null;
   model?: string;
   thinkingEnabled?: boolean;
   permissionMode?: string;
@@ -56,8 +58,6 @@ interface AgentsState {
   createAgent: (payload: CreateAgentPayload) => Promise<Agent | null>;
   updateAgent: (id: string, payload: UpdateAgentPayload) => Promise<Agent | null>;
   deleteAgent: (id: string) => Promise<boolean>;
-  startAgent: (id: string) => void;
-  stopAgent: (id: string) => void;
   connectSocket: () => void;
   disconnectSocket: () => void;
 }
@@ -147,14 +147,6 @@ export const useAgentsStore = create<AgentsState>((set, get) => ({
     }
   },
 
-  startAgent: (id: string) => {
-    emitEvent("agent:start", { agentId: id });
-  },
-
-  stopAgent: (id: string) => {
-    emitEvent("agent:stop", { agentId: id });
-  },
-
   connectSocket: () => {
     if (get().connected) return;
     const socket = getSocket();
@@ -186,8 +178,6 @@ export const useAgentsStore = create<AgentsState>((set, get) => ({
   },
 
   disconnectSocket: () => {
-    // Don't disconnect the singleton — other components may need it.
-    // Just mark this store as not listening.
     set({ connected: false });
   },
 }));
