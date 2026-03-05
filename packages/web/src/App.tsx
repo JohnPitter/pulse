@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./stores/auth";
 import { Login, SetupPassword } from "./pages/Login";
 import { Landing } from "./pages/Landing";
+import { DemoPage } from "./pages/Demo";
 import { Settings } from "./pages/Settings";
 import { AppLayout } from "./components/layout/AppLayout";
 import { DashboardPage } from "./pages/app/DashboardPage";
@@ -73,6 +74,7 @@ export function App() {
           element={isAuthenticated ? <Navigate to="/app/dashboard" replace /> : <Login />}
         />
         <Route path="/" element={<Landing />} />
+        <Route path="/demo" element={<DemoPage />} />
         <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
         <Route
           path="/settings"

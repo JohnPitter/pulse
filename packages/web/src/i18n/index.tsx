@@ -102,6 +102,20 @@ const EN_TRANSLATIONS = {
     ctaTitle: "Build your next workflow in Pulse.",
     ctaText: "Start with the dashboard, then expand into projects, files and agent activity.",
   },
+  demo: {
+    subtitle: "Interactive product demo",
+    title: "See Pulse in action before entering the workspace.",
+    description:
+      "This demo highlights the same dashboard modules used in the application, with realistic backlog, status and execution views.",
+    openDashboard: "Open dashboard",
+    backToHome: "Back to home",
+    pointBacklogTitle: "Backlog planning",
+    pointBacklogText: "Track next due, backlog size and ready-to-run tasks in one card.",
+    pointStatusTitle: "Status analytics",
+    pointStatusText: "Compare workload across backlog, scheduled, running, completed and failed.",
+    pointExecutionTitle: "Execution traceability",
+    pointExecutionText: "Open the latest run details and logs directly from the Last task module.",
+  },
   login: {
     subtitle: "Multi-agent orchestrator",
     setupSubtitle: "Setup",
@@ -336,6 +350,20 @@ const PT_BR_TRANSLATIONS: typeof EN_TRANSLATIONS = {
     stepLabel: "Etapa {step}",
     ctaTitle: "Construa seu próximo fluxo no Pulse.",
     ctaText: "Comece pelo dashboard e expanda para projetos, arquivos e atividade dos agentes.",
+  },
+  demo: {
+    subtitle: "Demo interativa do produto",
+    title: "Veja o Pulse em ação antes de entrar no workspace.",
+    description:
+      "Esta demo destaca os mesmos módulos do dashboard usados na aplicação, com visual realista de backlog, status e execuções.",
+    openDashboard: "Abrir dashboard",
+    backToHome: "Voltar para home",
+    pointBacklogTitle: "Planejamento de backlog",
+    pointBacklogText: "Acompanhe próxima entrega, tamanho do backlog e tasks prontas para execução em um card.",
+    pointStatusTitle: "Análise por status",
+    pointStatusText: "Compare a carga entre backlog, agendadas, em execução, concluídas e falhas.",
+    pointExecutionTitle: "Rastreabilidade de execução",
+    pointExecutionText: "Abra detalhes e logs da execução mais recente direto no módulo Last task.",
   },
   login: {
     subtitle: "Orquestrador multiagente",

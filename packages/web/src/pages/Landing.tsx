@@ -11,6 +11,7 @@ import {
 import { LanguageSwitcher } from "../components/common/LanguageSwitcher";
 import { PulseLogo } from "../components/brand/PulseLogo";
 import { useI18n } from "../i18n";
+import { useAuthStore } from "../stores/auth";
 
 const FEATURE_CARDS = [
   { titleKey: "nav.agents", icon: Bot, descriptionKey: "landing.featureAgents" },
@@ -46,6 +47,7 @@ const IMAGE_SECTIONS = [
 
 export function Landing() {
   const { t } = useI18n();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return (
     <div className="min-h-screen w-full bg-[#2E2E31]">
@@ -64,16 +66,16 @@ export function Landing() {
           <div className="flex items-center gap-2">
             <LanguageSwitcher compact />
             <Link
-              to="/login"
+              to={isAuthenticated ? "/settings" : "/login"}
               className="rounded-xl border border-stroke bg-neutral-bg2 px-3 py-1.5 text-[12px] text-neutral-fg2 hover:bg-neutral-bg3"
             >
-              {t("landing.signIn")}
+              {isAuthenticated ? t("topbar.settings") : t("landing.signIn")}
             </Link>
             <Link
-              to="/app/dashboard"
+              to="/demo"
               className="rounded-xl bg-brand px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-brand-hover"
             >
-              {t("landing.openApp")}
+              {t("landing.viewDemo")}
             </Link>
           </div>
         </header>
@@ -97,12 +99,12 @@ export function Landing() {
                 {t("landing.getStarted")}
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
-              <a
-                href="#features"
+              <Link
+                to="/demo"
                 className="rounded-xl border border-stroke bg-neutral-bg2 px-4 py-2 text-[13px] text-neutral-fg2 hover:bg-neutral-bg3"
               >
                 {t("landing.viewDemo")}
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -116,19 +118,19 @@ export function Landing() {
               <img
                 src="/images/home-hero-dashboard.svg"
                 alt="Pulse dashboard with Backlog, Tasks by status, Agents activity and Last task cards"
-                className="h-[232px] w-full rounded-2xl border border-black/5 bg-[#ECE9E4] object-cover animate-float-soft"
+                className="h-[232px] w-full rounded-2xl border border-black/5 bg-[#ECE9E4] object-contain p-1.5 animate-float-soft"
                 loading="eager"
               />
               <div className="grid gap-2">
                 <img
-                  src="/images/home-execution-evidence.svg"
-                  alt="Task execution logs preview"
-                  className="h-[112px] w-full rounded-2xl border border-black/5 bg-[#ECE9E4] object-cover"
+                  src="/images/home-preview-status.svg"
+                  alt="Tasks by status preview"
+                  className="h-[112px] w-full rounded-2xl border border-black/5 bg-[#ECE9E4] object-contain p-1"
                 />
                 <img
-                  src="/images/home-live-orchestration.svg"
-                  alt="Live task orchestration preview"
-                  className="h-[112px] w-full rounded-2xl border border-black/5 bg-[#ECE9E4] object-cover"
+                  src="/images/home-preview-last-task.svg"
+                  alt="Last task preview"
+                  className="h-[112px] w-full rounded-2xl border border-black/5 bg-[#ECE9E4] object-contain p-1"
                 />
               </div>
             </div>
@@ -142,7 +144,7 @@ export function Landing() {
           <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
             {IMAGE_SECTIONS.map((section) => (
               <article key={section.titleKey} className="overflow-hidden rounded-2xl border border-black/5 bg-[#ECE9E4]">
-                <img src={section.src} alt={section.alt} className="h-[148px] w-full object-cover" loading="lazy" />
+                <img src={section.src} alt={section.alt} className="h-[148px] w-full bg-[#E8E5E0] object-contain p-1.5" loading="lazy" />
                 <div className="p-3">
                   <p className="text-[13px] font-semibold text-neutral-fg1">{t(section.titleKey)}</p>
                   <p className="mt-1 text-[11px] text-neutral-fg2">{t(section.textKey)}</p>
