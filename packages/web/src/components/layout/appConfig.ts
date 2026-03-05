@@ -10,24 +10,24 @@ import {
 
 export interface AppNavItem {
   to: string;
-  label: string;
+  labelKey: string;
   icon: LucideIcon;
 }
 
 export const APP_NAV_ITEMS: AppNavItem[] = [
-  { to: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/app/agents", label: "Agents", icon: Bot },
-  { to: "/app/projects", label: "Projects", icon: FolderKanban },
-  { to: "/app/skills", label: "Skills & Plugins", icon: Puzzle },
-  { to: "/app/chat", label: "Chat", icon: MessageSquare },
-  { to: "/app/files", label: "Files", icon: Folder },
+  { to: "/app/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
+  { to: "/app/agents", labelKey: "nav.agents", icon: Bot },
+  { to: "/app/projects", labelKey: "nav.projects", icon: FolderKanban },
+  { to: "/app/skills", labelKey: "nav.skillsPlugins", icon: Puzzle },
+  { to: "/app/chat", labelKey: "nav.chat", icon: MessageSquare },
+  { to: "/app/files", labelKey: "nav.files", icon: Folder },
 ];
 
-export const ROUTE_TITLES: Record<string, string> = {
-  "/app/dashboard": "General overview",
-  "/app/agents": "Agents",
-  "/app/projects": "Projects",
-  "/app/skills": "Skills & plugins",
-  "/app/chat": "Chat",
-  "/app/files": "Files",
+export const ROUTE_TITLE_KEYS: Record<string, string> = {
+  "/app/dashboard": "routes.generalOverview",
+  "/app/agents": "routes.agents",
+  "/app/projects": "routes.projects",
+  "/app/skills": "routes.skillsPlugins",
+  "/app/chat": "routes.chat",
+  "/app/files": "routes.files",
 };

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { ChevronRight, Cpu, Radio, UserRound } from "lucide-react";
 import { AGENTS, TASKS } from "./mockData";
 import { useShellQuery } from "./useShellQuery";
+import { useI18n } from "../../i18n";
 
 const CARD_CLASS =
   "rounded-[20px] border border-black/6 bg-[#F1EFEC] shadow-[0_8px_18px_rgba(0,0,0,0.06)]";
@@ -12,9 +13,16 @@ const STATE_BADGES: Record<string, string> = {
   offline: "bg-danger-light text-danger",
 };
 
+const STATE_KEYS: Record<string, string> = {
+  running: "statuses.running",
+  idle: "statuses.idle",
+  offline: "statuses.offline",
+};
+
 export function AgentsPage() {
   const query = useShellQuery();
   const [selectedId, setSelectedId] = useState(AGENTS[0]?.id ?? "");
+  const { t } = useI18n();
 
   const filteredAgents = useMemo(
     () =>
@@ -30,15 +38,15 @@ export function AgentsPage() {
   const selectedTask = TASKS.find((task) => task.id === selectedAgent?.current_task_id) ?? null;
 
   return (
-    <div className="grid h-full min-h-[520px] grid-cols-1 gap-3 xl:grid-cols-[0.62fr_0.38fr]">
-      <section className={`${CARD_CLASS} min-h-0 p-4`}>
+    <div className="grid h-full min-h-[520px] grid-cols-1 gap-3 xl:grid-cols-[0.62fr_0.38fr] animate-fade-in">
+      <section className={`${CARD_CLASS} min-h-0 p-4 animate-fade-up stagger-1`}>
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-[26px] font-semibold tracking-[-0.02em] text-neutral-fg1">Agents</h2>
-            <p className="text-[12px] text-neutral-fg2">agents_table_or_cards</p>
+            <h2 className="text-[26px] font-semibold tracking-[-0.02em] text-neutral-fg1">{t("routes.agents")}</h2>
+            <p className="text-[12px] text-neutral-fg2">{t("agentsPage.tableOrCards")}</p>
           </div>
           <span className="rounded-full border border-stroke bg-neutral-bg2 px-2.5 py-1 text-[10px] text-neutral-fg2">
-            {filteredAgents.length} active records
+            {t("agentsPage.recordsActive", { count: filteredAgents.length })}
           </span>
         </div>
 
@@ -61,10 +69,10 @@ export function AgentsPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13px] font-semibold text-neutral-fg1">{agent.name}</p>
-                  <p className="truncate text-[11px] text-neutral-fg2">{task?.title ?? "No active task"}</p>
+                  <p className="truncate text-[11px] text-neutral-fg2">{task?.title ?? t("agentsPage.noActiveTask")}</p>
                 </div>
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${STATE_BADGES[agent.state]}`}>
-                  {agent.state}
+                  {t(STATE_KEYS[agent.state] ?? agent.state)}
                 </span>
               </button>
             );
@@ -72,11 +80,11 @@ export function AgentsPage() {
         </div>
       </section>
 
-      <section className={`${CARD_CLASS} flex min-h-0 flex-col p-4`}>
+      <section className={`${CARD_CLASS} flex min-h-0 flex-col p-4 animate-fade-up stagger-2`}>
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <h3 className="text-[22px] font-semibold tracking-[-0.02em] text-neutral-fg1">Agent detail</h3>
-            <p className="text-[12px] text-neutral-fg2">agent_detail_drawer</p>
+            <h3 className="text-[22px] font-semibold tracking-[-0.02em] text-neutral-fg1">{t("agentsPage.detail")}</h3>
+            <p className="text-[12px] text-neutral-fg2">{t("agentsPage.detailDrawer")}</p>
           </div>
           <Cpu className="h-4 w-4 text-neutral-fg3" />
         </div>
@@ -95,33 +103,35 @@ export function AgentsPage() {
               </div>
               <div className="flex items-center gap-2 text-[11px] text-neutral-fg2">
                 <Radio className="h-3.5 w-3.5" />
-                Last seen {new Date(selectedAgent.last_seen_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                {t("agentsPage.lastSeen", {
+                  time: new Date(selectedAgent.last_seen_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                })}
               </div>
             </div>
 
             <div className="rounded-2xl border border-black/5 bg-[#ECE9E4] p-3">
-              <p className="mb-1 text-[10px] uppercase tracking-wide text-neutral-fg3">Current task</p>
-              <p className="text-[13px] font-semibold text-neutral-fg1">{selectedTask?.title ?? "No task running"}</p>
+              <p className="mb-1 text-[10px] uppercase tracking-wide text-neutral-fg3">{t("agentsPage.currentTask")}</p>
+              <p className="text-[13px] font-semibold text-neutral-fg1">{selectedTask?.title ?? t("agentsPage.noTaskRunning")}</p>
               <p className="mt-1 text-[11px] text-neutral-fg2">
-                Status: <span className="capitalize">{selectedAgent.state}</span>
+                {t("agentsPage.status")}: <span className="capitalize">{t(STATE_KEYS[selectedAgent.state] ?? selectedAgent.state)}</span>
               </p>
             </div>
 
             <div className="rounded-2xl border border-black/5 bg-[#ECE9E4] p-3">
-              <p className="mb-2 text-[10px] uppercase tracking-wide text-neutral-fg3">Quick actions</p>
+              <p className="mb-2 text-[10px] uppercase tracking-wide text-neutral-fg3">{t("agentsPage.quickActions")}</p>
               <div className="space-y-1.5">
                 <button
                   type="button"
                   className="flex w-full items-center justify-between rounded-xl border border-stroke bg-neutral-bg2 px-3 py-2 text-[12px] text-neutral-fg1 hover:bg-neutral-bg3"
                 >
-                  Open timeline
+                  {t("agentsPage.openTimeline")}
                   <ChevronRight className="h-3.5 w-3.5 text-neutral-fg3" />
                 </button>
                 <button
                   type="button"
                   className="flex w-full items-center justify-between rounded-xl border border-stroke bg-neutral-bg2 px-3 py-2 text-[12px] text-neutral-fg1 hover:bg-neutral-bg3"
                 >
-                  Assign tasks
+                  {t("agentsPage.assignTasks")}
                   <UserRound className="h-3.5 w-3.5 text-neutral-fg3" />
                 </button>
               </div>
@@ -129,7 +139,7 @@ export function AgentsPage() {
           </div>
         ) : (
           <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-stroke bg-neutral-bg2/70">
-            <p className="text-[12px] text-neutral-fg3">No agent matches current search.</p>
+            <p className="text-[12px] text-neutral-fg3">{t("agentsPage.noMatch")}</p>
           </div>
         )}
       </section>

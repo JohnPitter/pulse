@@ -15,13 +15,14 @@ import {
   EXECUTIONS,
   PLANNING_YEAR,
 } from "./mockData";
+import { useI18n } from "../../i18n";
 
 const STATUS_BARS = [
-  { key: "backlog", label: "Backlog", color: "#D5D2CD" },
-  { key: "scheduled", label: "Scheduled", color: "#DFDCD7" },
-  { key: "running", label: "Running", color: "#EEA34B" },
-  { key: "completed", label: "Completed", color: "#D9DDE4" },
-  { key: "failed", label: "Failed", color: "#5E7BE8" },
+  { key: "backlog", labelKey: "dashboard.backlog", color: "#D5D2CD" },
+  { key: "scheduled", labelKey: "dashboard.schedule", color: "#DFDCD7" },
+  { key: "running", labelKey: "statuses.running", color: "#EEA34B" },
+  { key: "completed", labelKey: "statuses.completed", color: "#D9DDE4" },
+  { key: "failed", labelKey: "statuses.failed", color: "#5E7BE8" },
 ] as const;
 
 const CARD_CLASS =
@@ -35,18 +36,28 @@ const ACTIVITY_COLORS: Record<string, string> = {
   Failed: "text-danger bg-danger-light",
 };
 
+const STATUS_TRANSLATION_KEY: Record<string, string> = {
+  Running: "statuses.running",
+  Queued: "statuses.queued",
+  Waiting: "statuses.waiting",
+  Completed: "statuses.completed",
+  Failed: "statuses.failed",
+};
+
 export function DashboardPage() {
+  const { t } = useI18n();
+
   const failedTasks = DASHBOARD_STATUS_COUNTS.failed;
   const backlogOverThreshold = DASHBOARD_STATUS_COUNTS.backlog > 30;
   const agentPoolHealthy = AGENTS.every((agent) => agent.state !== "offline");
 
-  let systemLabel = "System nominal";
+  let systemLabel = t("dashboard.systemNominal");
   let systemStyle = "text-info bg-info-light";
   if (!agentPoolHealthy && failedTasks > 0) {
-    systemLabel = "Degraded";
+    systemLabel = t("dashboard.degraded");
     systemStyle = "text-danger bg-danger-light";
   } else if (failedTasks > 0 || backlogOverThreshold) {
-    systemLabel = "Attention needed";
+    systemLabel = t("dashboard.attentionNeeded");
     systemStyle = "text-warning bg-warning-light";
   }
 
@@ -59,17 +70,17 @@ export function DashboardPage() {
   const lastExecution = EXECUTIONS[0];
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-1 gap-3 xl:min-h-[620px] xl:grid-cols-[0.42fr_0.58fr]">
-      <section className={`${CARD_CLASS} flex min-h-0 flex-col overflow-hidden`}>
+    <div className="grid h-full min-h-0 grid-cols-1 gap-3 xl:min-h-[620px] xl:grid-cols-[0.42fr_0.58fr] animate-fade-in">
+      <section className={`${CARD_CLASS} flex min-h-0 flex-col overflow-hidden animate-fade-up stagger-1`}>
         <div className="px-4 pb-3 pt-4">
           <div className="mb-3 flex items-center justify-between">
             <div>
-              <p className="text-[13px] font-semibold text-neutral-fg1">Backlog</p>
-              <p className="text-[11px] text-neutral-fg2">Tasks to schedule</p>
+              <p className="text-[13px] font-semibold text-neutral-fg1">{t("dashboard.backlog")}</p>
+              <p className="text-[11px] text-neutral-fg2">{t("dashboard.tasksToSchedule")}</p>
             </div>
             <span className="inline-flex items-center gap-1 rounded-full border border-stroke bg-neutral-bg2 px-2 py-1 text-[10px] text-neutral-fg2">
               <Clock3 className="h-3 w-3" />
-              Live
+              {t("dashboard.liveActivityFeed")}
             </span>
           </div>
 
@@ -92,15 +103,17 @@ export function DashboardPage() {
             </div>
 
             <div className="absolute left-4 top-5 rounded-2xl border border-stroke bg-neutral-bg2 px-3 py-2 shadow-xs">
-              <p className="text-[10px] text-neutral-fg3">Next due</p>
+              <p className="text-[10px] text-neutral-fg3">{t("dashboard.nextDue")}</p>
               <p className="text-[13px] font-semibold text-neutral-fg1">{DASHBOARD_BACKLOG.next_due}</p>
             </div>
             <div className="absolute left-4 bottom-6 rounded-2xl border border-stroke bg-neutral-bg2 px-3 py-2 shadow-xs">
-              <p className="text-[10px] text-neutral-fg3">Backlog size</p>
-              <p className="text-[13px] font-semibold text-neutral-fg1">{DASHBOARD_BACKLOG.backlog_size} tasks</p>
+              <p className="text-[10px] text-neutral-fg3">{t("dashboard.backlogSize")}</p>
+              <p className="text-[13px] font-semibold text-neutral-fg1">
+                {DASHBOARD_BACKLOG.backlog_size} {t("dashboard.tasksSuffix")}
+              </p>
             </div>
             <div className="absolute right-4 top-7 rounded-2xl border border-stroke bg-neutral-bg2 px-3 py-2 shadow-xs">
-              <p className="text-[10px] text-neutral-fg3">Ready to run</p>
+              <p className="text-[10px] text-neutral-fg3">{t("dashboard.readyToRun")}</p>
               <p className="text-[13px] font-semibold text-brand">{DASHBOARD_BACKLOG.ready_to_run}</p>
             </div>
           </div>
@@ -111,14 +124,14 @@ export function DashboardPage() {
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-stroke bg-neutral-bg2 py-2 text-[12px] font-medium text-neutral-fg1 hover:bg-neutral-bg3"
             >
               <Plus className="h-3.5 w-3.5 text-brand" />
-              Add task
+              {t("dashboard.addTask")}
             </button>
             <button
               type="button"
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-stroke bg-neutral-bg2 py-2 text-[12px] font-medium text-neutral-fg1 hover:bg-neutral-bg3"
             >
               <Clock3 className="h-3.5 w-3.5 text-info" />
-              Schedule
+              {t("dashboard.schedule")}
             </button>
           </div>
         </div>
@@ -126,8 +139,8 @@ export function DashboardPage() {
         <div className="mt-auto border-t border-black/5 bg-[#ECE9E4] px-4 pb-4 pt-3">
           <div className="mb-3 flex items-center justify-between">
             <div>
-              <p className="text-[16px] font-semibold leading-tight text-neutral-fg1">Annual planning</p>
-              <p className="text-[11px] text-neutral-fg2">Year timeline</p>
+              <p className="text-[16px] font-semibold leading-tight text-neutral-fg1">{t("dashboard.annualPlanning")}</p>
+              <p className="text-[11px] text-neutral-fg2">{t("dashboard.yearTimeline")}</p>
             </div>
             <span className="rounded-full border border-stroke bg-neutral-bg2 px-2 py-1 text-[10px] text-neutral-fg2">
               {PLANNING_YEAR.year}
@@ -157,13 +170,13 @@ export function DashboardPage() {
       </section>
 
       <div className="flex min-h-0 flex-col gap-3">
-        <section className={`${CARD_CLASS} flex min-h-0 flex-col p-4 sm:p-5 xl:min-h-[360px]`}>
+        <section className={`${CARD_CLASS} flex min-h-0 flex-col p-4 sm:p-5 xl:min-h-[360px] animate-fade-up stagger-2`}>
           <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <h2 className="text-[38px] font-semibold leading-[0.94] tracking-[-0.03em] text-neutral-fg1 sm:text-[44px] xl:text-[56px]">
-                Tasks by status
+                {t("dashboard.tasksByStatus")}
               </h2>
-              <p className="text-[12px] text-neutral-fg2">Overview of current workload</p>
+              <p className="text-[12px] text-neutral-fg2">{t("dashboard.workloadOverview")}</p>
             </div>
             <span className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-[11px] font-semibold ${systemStyle}`}>
               <span className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -201,14 +214,14 @@ export function DashboardPage() {
             <div className="mt-1 grid grid-cols-5 gap-2 sm:gap-3">
               {STATUS_BARS.map((bar) => (
                 <p key={`${bar.key}-label`} className="text-center text-[10px] font-medium text-neutral-fg3">
-                  {bar.label}
+                  {t(bar.labelKey)}
                 </p>
               ))}
             </div>
 
             <div className="mt-3 flex flex-col gap-3 border-t border-black/5 pt-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-[11px] text-neutral-fg3">Completion today</p>
+                <p className="text-[11px] text-neutral-fg3">{t("dashboard.completionToday")}</p>
                 <p className="text-[38px] font-semibold leading-none text-neutral-fg1 sm:text-[44px]">
                   {DASHBOARD_COMPLETION_TODAY}
                   <span className="text-[24px] text-neutral-fg2">%</span>
@@ -219,7 +232,7 @@ export function DashboardPage() {
                 type="button"
                 className="inline-flex items-center justify-center gap-1 rounded-xl border border-stroke bg-neutral-bg2 px-3 py-1.5 text-[12px] font-medium text-neutral-fg1 hover:bg-neutral-bg3"
               >
-                View report
+                {t("dashboard.viewReport")}
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -227,11 +240,11 @@ export function DashboardPage() {
         </section>
 
         <div className="grid min-h-0 grid-cols-1 gap-3 lg:grid-cols-[0.58fr_0.42fr] xl:h-[252px] xl:min-h-[252px]">
-          <section className={`${CARD_CLASS} min-h-[210px] overflow-hidden p-4`}>
+          <section className={`${CARD_CLASS} min-h-[210px] overflow-hidden p-4 animate-fade-up stagger-3`}>
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-[24px] font-semibold tracking-[-0.02em] text-neutral-fg1 sm:text-[33px]">Agents activity</h3>
+              <h3 className="text-[24px] font-semibold tracking-[-0.02em] text-neutral-fg1 sm:text-[33px]">{t("dashboard.agentsActivity")}</h3>
               <span className="rounded-full border border-stroke bg-neutral-bg2 px-2 py-1 text-[10px] text-neutral-fg2">
-                Live activity feed
+                {t("dashboard.liveActivityFeed")}
               </span>
             </div>
 
@@ -251,7 +264,7 @@ export function DashboardPage() {
                   </div>
                   <div className="flex shrink-0 items-center gap-1.5">
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${ACTIVITY_COLORS[row.status]}`}>
-                      {row.status}
+                      {t(STATUS_TRANSLATION_KEY[row.status] ?? row.status)}
                     </span>
                     {row.status === "Running" ? (
                       <LoaderCircle className="h-3.5 w-3.5 animate-spin text-brand" />
@@ -269,29 +282,29 @@ export function DashboardPage() {
             </div>
           </section>
 
-          <section className={`${CARD_CLASS} flex min-h-[210px] flex-col overflow-hidden p-4`}>
+          <section className={`${CARD_CLASS} flex min-h-[210px] flex-col overflow-hidden p-4 animate-fade-up stagger-4`}>
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <h3 className="text-[24px] font-semibold tracking-[-0.02em] text-neutral-fg1 sm:text-[33px]">Last task</h3>
-                <p className="text-[11px] text-neutral-fg2">Most recent execution</p>
+                <h3 className="text-[24px] font-semibold tracking-[-0.02em] text-neutral-fg1 sm:text-[33px]">{t("dashboard.lastTask")}</h3>
+                <p className="text-[11px] text-neutral-fg2">{t("dashboard.mostRecentExecution")}</p>
               </div>
               <span className="rounded-full border border-stroke bg-neutral-bg2 px-2 py-1 text-[10px] text-neutral-fg2">
-                Task details · {lastExecution.logs_count} logs
+                {t("dashboard.taskDetails")} - {lastExecution.logs_count} {t("dashboard.logs")}
               </span>
             </div>
 
             <div className="space-y-2.5">
               <div>
-                <p className="text-[10px] uppercase tracking-wide text-neutral-fg3">Task</p>
+                <p className="text-[10px] uppercase tracking-wide text-neutral-fg3">{t("dashboard.task")}</p>
                 <p className="text-[13px] font-semibold text-neutral-fg1">Resumo diário dos agentes</p>
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-wide text-neutral-fg3">Agent</p>
+                <p className="text-[10px] uppercase tracking-wide text-neutral-fg3">{t("dashboard.agent")}</p>
                 <p className="text-[13px] font-semibold text-neutral-fg1">Nova</p>
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-wide text-neutral-fg3">Result</p>
-                <p className="text-[13px] font-semibold text-info">Success</p>
+                <p className="text-[10px] uppercase tracking-wide text-neutral-fg3">{t("dashboard.result")}</p>
+                <p className="text-[13px] font-semibold text-info">{t("dashboard.success")}</p>
               </div>
             </div>
 
@@ -305,7 +318,7 @@ export function DashboardPage() {
                 type="button"
                 className="w-full rounded-xl border border-stroke bg-neutral-bg2 py-1.5 text-[12px] font-medium text-neutral-fg1 hover:bg-neutral-bg3"
               >
-                Open logs
+                {t("dashboard.openLogs")}
               </button>
             </div>
           </section>

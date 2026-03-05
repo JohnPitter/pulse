@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { FileText, Filter, Headphones, Image, Layers3, Table2 } from "lucide-react";
 import { FILES, PROJECTS, type FileRecord } from "./mockData";
 import { useShellQuery } from "./useShellQuery";
+import { useI18n } from "../../i18n";
 
 const CARD_CLASS =
   "rounded-[20px] border border-black/6 bg-[#F1EFEC] shadow-[0_8px_18px_rgba(0,0,0,0.06)]";
@@ -15,10 +16,19 @@ const ICONS = {
   dataset: Table2,
 } as const;
 
+const KIND_LABEL_KEY: Record<FileRecord["kind"] | "all", string> = {
+  all: "filesPage.all",
+  image: "filesPage.image",
+  document: "filesPage.document",
+  audio: "filesPage.audio",
+  dataset: "filesPage.dataset",
+};
+
 export function FilesPage() {
   const query = useShellQuery();
   const [kind, setKind] = useState<FileRecord["kind"] | "all">("all");
   const [selectedFileId, setSelectedFileId] = useState(FILES[0]?.id ?? "");
+  const { t } = useI18n();
 
   const filteredFiles = useMemo(
     () =>
@@ -35,12 +45,12 @@ export function FilesPage() {
   const selectedProject = PROJECTS.find((project) => project.id === selectedFile?.project_id) ?? null;
 
   return (
-    <div className="grid h-full min-h-[520px] grid-cols-1 gap-3 xl:grid-cols-[0.66fr_0.34fr]">
-      <section className={`${CARD_CLASS} min-h-0 p-4`}>
+    <div className="grid h-full min-h-[520px] grid-cols-1 gap-3 xl:grid-cols-[0.66fr_0.34fr] animate-fade-in">
+      <section className={`${CARD_CLASS} min-h-0 p-4 animate-fade-up stagger-1`}>
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-[24px] font-semibold tracking-[-0.02em] text-neutral-fg1">Files</h2>
-            <p className="text-[12px] text-neutral-fg2">file_grid + file_filters</p>
+            <h2 className="text-[24px] font-semibold tracking-[-0.02em] text-neutral-fg1">{t("routes.files")}</h2>
+            <p className="text-[12px] text-neutral-fg2">{t("filesPage.fileGridFilters")}</p>
           </div>
           <Filter className="h-4 w-4 text-neutral-fg3" />
         </div>
@@ -51,13 +61,13 @@ export function FilesPage() {
               key={candidate}
               type="button"
               onClick={() => setKind(candidate)}
-              className={`rounded-full px-2.5 py-1 text-[11px] font-medium capitalize ${
+              className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
                 kind === candidate
                   ? "bg-neutral-fg1 text-white"
                   : "border border-stroke bg-neutral-bg2 text-neutral-fg2 hover:bg-neutral-bg3"
               }`}
             >
-              {candidate}
+              {t(KIND_LABEL_KEY[candidate])}
             </button>
           ))}
         </div>
@@ -81,7 +91,7 @@ export function FilesPage() {
                 </div>
                 <p className="truncate text-[12px] font-semibold text-neutral-fg1">{file.name}</p>
                 <p className="mt-1 text-[10px] text-neutral-fg3">
-                  {file.size} · {file.kind}
+                  {file.size} - {t(KIND_LABEL_KEY[file.kind])}
                 </p>
               </button>
             );
@@ -89,12 +99,12 @@ export function FilesPage() {
         </div>
       </section>
 
-      <section className={`${CARD_CLASS} flex min-h-0 flex-col p-4`}>
+      <section className={`${CARD_CLASS} flex min-h-0 flex-col p-4 animate-fade-up stagger-2`}>
         <div className="mb-3 flex items-center gap-2">
           <Layers3 className="h-4 w-4 text-neutral-fg3" />
           <div>
-            <h3 className="text-[20px] font-semibold tracking-[-0.02em] text-neutral-fg1">Preview panel</h3>
-            <p className="text-[12px] text-neutral-fg2">preview_panel</p>
+            <h3 className="text-[20px] font-semibold tracking-[-0.02em] text-neutral-fg1">{t("filesPage.previewPanel")}</h3>
+            <p className="text-[12px] text-neutral-fg2">{t("filesPage.previewPanelSubtitle")}</p>
           </div>
         </div>
 
@@ -107,22 +117,22 @@ export function FilesPage() {
             </div>
 
             <div className="space-y-2 rounded-2xl border border-black/5 bg-[#ECE9E4] p-3">
-              <InfoRow label="File" value={selectedFile.name} />
-              <InfoRow label="Type" value={selectedFile.kind} />
-              <InfoRow label="Size" value={selectedFile.size} />
-              <InfoRow label="Project" value={selectedProject?.name ?? "Unlinked"} />
+              <InfoRow label={t("filesPage.file")} value={selectedFile.name} />
+              <InfoRow label={t("filesPage.type")} value={t(KIND_LABEL_KEY[selectedFile.kind])} />
+              <InfoRow label={t("filesPage.size")} value={selectedFile.size} />
+              <InfoRow label={t("filesPage.project")} value={selectedProject?.name ?? t("filesPage.unlinked")} />
             </div>
 
             <button
               type="button"
               className="mt-auto rounded-xl border border-stroke bg-neutral-bg2 py-2 text-[12px] font-medium text-neutral-fg1 hover:bg-neutral-bg3"
             >
-              Open file
+              {t("filesPage.openFile")}
             </button>
           </div>
         ) : (
           <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-stroke bg-neutral-bg2/70">
-            <p className="text-[12px] text-neutral-fg3">No file matches current filters.</p>
+            <p className="text-[12px] text-neutral-fg3">{t("filesPage.noFileMatch")}</p>
           </div>
         )}
       </section>

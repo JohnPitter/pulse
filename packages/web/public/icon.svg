@@ -1,5 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#0c0a09"/>
-  <circle cx="256" cy="256" r="160" fill="#f97316"/>
-  <text x="256" y="320" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="280" font-weight="bold" fill="#0c0a09">P</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="pulseGradient" x1="96" y1="96" x2="416" y2="416" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF9A3C" />
+      <stop offset="1" stop-color="#4F7DF3" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="#101218"/>
+  <rect x="104" y="104" width="304" height="304" rx="88" stroke="url(#pulseGradient)" stroke-width="28"/>
+  <path d="M178 184h118c38.66 0 70 31.34 70 70s-31.34 70-70 70h-66" stroke="url(#pulseGradient)" stroke-width="34" stroke-linecap="round"/>
+  <path d="M178 240h102" stroke="#FF9A3C" stroke-width="34" stroke-linecap="round"/>
+  <path d="M178 296h78" stroke="#4F7DF3" stroke-width="34" stroke-linecap="round"/>
+  <circle cx="332" cy="303" r="23" fill="#4F7DF3"/>
 </svg>

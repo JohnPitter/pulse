@@ -12,8 +12,12 @@ import { ProjectsPage } from "./pages/app/ProjectsPage";
 import { SkillsPage } from "./pages/app/SkillsPage";
 import { ChatPage } from "./pages/app/ChatPage";
 import { FilesPage } from "./pages/app/FilesPage";
+import { PulseLogo } from "./components/brand/PulseLogo";
+import { useI18n } from "./i18n";
 
 function LoadingSpinner() {
+  const { t } = useI18n();
+
   return (
     <div className="min-h-screen bg-neutral-bg1 flex flex-col items-center justify-center gap-6">
       <div className="relative flex items-center justify-center">
@@ -22,11 +26,11 @@ function LoadingSpinner() {
         <div className="absolute -inset-4 rounded-[2rem] border-[1.5px] border-brand/8 animate-[splash-ring_2s_ease-in-out_infinite_0.4s]" />
         {/* Logo */}
         <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-2xl border border-stroke bg-neutral-bg1">
-          <span className="text-[28px] font-bold text-brand">P</span>
+          <PulseLogo className="h-8 w-8" />
         </div>
       </div>
-      <div className="text-lg font-semibold text-neutral-fg1 tracking-tight">Pulse</div>
-      <div className="text-[13px] text-neutral-fg3 -mt-3">Remote Agent Manager</div>
+      <div className="text-lg font-semibold text-neutral-fg1 tracking-tight">{t("common.productName")}</div>
+      <div className="text-[13px] text-neutral-fg3 -mt-3">{t("splash.subtitle")}</div>
       <div className="flex gap-1.5 mt-2">
         <span className="h-[5px] w-[5px] rounded-full bg-brand animate-[splash-dot_1.4s_ease-in-out_infinite]" />
         <span className="h-[5px] w-[5px] rounded-full bg-brand animate-[splash-dot_1.4s_ease-in-out_infinite_0.2s]" />

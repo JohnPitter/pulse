@@ -12,6 +12,8 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuthStore } from "../stores/auth";
+import { LanguageSwitcher } from "../components/common/LanguageSwitcher";
+import { useI18n } from "../i18n";
 
 // --------------------------------------------------------------------------
 // Types
@@ -29,6 +31,7 @@ interface AuthStatus {
 export function Settings() {
   const navigate = useNavigate();
   const logout = useAuthStore((s) => s.logout);
+  const { t } = useI18n();
 
   const handleLogout = async () => {
     await logout();
@@ -39,7 +42,8 @@ export function Settings() {
     <div className="min-h-screen bg-app-bg">
       <div className="max-w-2xl mx-auto py-8 px-6 space-y-4">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
           <Link
             to="/app/dashboard"
             className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-neutral-bg3 text-neutral-fg3 hover:text-neutral-fg1 border border-stroke transition-all duration-150"
@@ -47,7 +51,9 @@ export function Settings() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <h1 className="text-[24px] font-bold text-neutral-fg1 tracking-tight">Settings</h1>
+            <h1 className="text-[24px] font-bold text-neutral-fg1 tracking-tight">{t("topbar.settings")}</h1>
+          </div>
+          <LanguageSwitcher compact />
         </div>
 
         {/* Sections */}

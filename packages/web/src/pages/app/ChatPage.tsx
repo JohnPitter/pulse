@@ -2,13 +2,21 @@ import { useMemo, useState } from "react";
 import { MessageSquare, SendHorizontal, Users } from "lucide-react";
 import { AGENTS, CHAT_THREADS, formatRelativeTime } from "./mockData";
 import { useShellQuery } from "./useShellQuery";
+import { useI18n } from "../../i18n";
 
 const CARD_CLASS =
   "rounded-[20px] border border-black/6 bg-[#F1EFEC] shadow-[0_8px_18px_rgba(0,0,0,0.06)]";
 
+const AGENT_STATE_KEY: Record<string, string> = {
+  running: "statuses.running",
+  offline: "statuses.offline",
+  idle: "statuses.idle",
+};
+
 export function ChatPage() {
   const query = useShellQuery();
   const [selectedThreadId, setSelectedThreadId] = useState(CHAT_THREADS[0]?.id ?? "");
+  const { t } = useI18n();
 
   const filteredThreads = useMemo(
     () =>
@@ -23,11 +31,11 @@ export function ChatPage() {
     filteredThreads.find((thread) => thread.id === selectedThreadId) ?? filteredThreads[0] ?? null;
 
   return (
-    <div className="grid h-full min-h-[520px] grid-cols-1 gap-3 xl:grid-cols-[0.24fr_0.51fr_0.25fr]">
-      <section className={`${CARD_CLASS} min-h-0 p-4`}>
+    <div className="grid h-full min-h-[520px] grid-cols-1 gap-3 xl:grid-cols-[0.24fr_0.51fr_0.25fr] animate-fade-in">
+      <section className={`${CARD_CLASS} min-h-0 p-4 animate-fade-up stagger-1`}>
         <div className="mb-3">
-          <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-neutral-fg1">Threads</h2>
-          <p className="text-[12px] text-neutral-fg2">thread_list</p>
+          <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-neutral-fg1">{t("chatPage.threads")}</h2>
+          <p className="text-[12px] text-neutral-fg2">{t("chatPage.threadList")}</p>
         </div>
 
         <div className="space-y-1.5">
@@ -49,10 +57,10 @@ export function ChatPage() {
         </div>
       </section>
 
-      <section className={`${CARD_CLASS} flex min-h-0 flex-col p-4`}>
+      <section className={`${CARD_CLASS} flex min-h-0 flex-col p-4 animate-fade-up stagger-2`}>
         <div className="mb-3">
-          <h3 className="text-[22px] font-semibold tracking-[-0.02em] text-neutral-fg1">Chat panel</h3>
-          <p className="text-[12px] text-neutral-fg2">chat_panel</p>
+          <h3 className="text-[22px] font-semibold tracking-[-0.02em] text-neutral-fg1">{t("chatPage.chatPanel")}</h3>
+          <p className="text-[12px] text-neutral-fg2">{t("chatPage.chatPanelSubtitle")}</p>
         </div>
 
         <div className="flex-1 space-y-2 overflow-auto rounded-2xl border border-black/5 bg-[#ECE9E4] p-3">
@@ -72,7 +80,7 @@ export function ChatPage() {
             ))
           ) : (
             <div className="flex h-full items-center justify-center">
-              <p className="text-[12px] text-neutral-fg3">No thread matches current search.</p>
+              <p className="text-[12px] text-neutral-fg3">{t("chatPage.noThreadMatch")}</p>
             </div>
           )}
         </div>
@@ -81,7 +89,7 @@ export function ChatPage() {
           <MessageSquare className="h-4 w-4 text-neutral-fg3" />
           <input
             type="text"
-            placeholder="Type message..."
+            placeholder={t("chatPage.typeMessage")}
             className="w-full bg-transparent text-[12px] text-neutral-fg1 placeholder:text-neutral-fg3 focus:outline-none"
           />
           <button type="button" className="rounded-lg bg-brand p-1.5 text-white hover:bg-brand-hover">
@@ -90,12 +98,12 @@ export function ChatPage() {
         </div>
       </section>
 
-      <section className={`${CARD_CLASS} min-h-0 p-4`}>
+      <section className={`${CARD_CLASS} min-h-0 p-4 animate-fade-up stagger-3`}>
         <div className="mb-3 flex items-center gap-2">
           <Users className="h-4 w-4 text-neutral-fg3" />
           <div>
-            <h3 className="text-[18px] font-semibold tracking-[-0.02em] text-neutral-fg1">Agent selector</h3>
-            <p className="text-[12px] text-neutral-fg2">agent_selector</p>
+            <h3 className="text-[18px] font-semibold tracking-[-0.02em] text-neutral-fg1">{t("chatPage.agentSelector")}</h3>
+            <p className="text-[12px] text-neutral-fg2">{t("chatPage.agentSelectorSubtitle")}</p>
           </div>
         </div>
 
@@ -119,7 +127,7 @@ export function ChatPage() {
                       : "bg-neutral-bg3 text-neutral-fg2"
                 }`}
               >
-                {agent.state}
+                {t(AGENT_STATE_KEY[agent.state] ?? agent.state)}
               </span>
             </button>
           ))}

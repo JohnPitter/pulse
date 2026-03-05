@@ -4,8 +4,8 @@ import { AppTopbar } from "./AppTopbar";
 
 export function AppLayout() {
   return (
-    <div className="min-h-screen bg-[#2E2E31] p-3 sm:p-6">
-      <div className="mx-auto flex h-[calc(100vh-1.5rem)] max-w-[1460px] overflow-hidden rounded-[22px] bg-[#E7E5E2] shadow-[0_26px_70px_rgba(0,0,0,0.45)] sm:h-[calc(100vh-3rem)]">
+    <div className="h-screen w-screen overflow-hidden bg-[#2E2E31]">
+      <div className="flex h-full w-full overflow-hidden bg-[#E7E5E2] shadow-[0_26px_70px_rgba(0,0,0,0.45)]">
         <AppSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <AppTopbar />
