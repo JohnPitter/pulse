@@ -28,19 +28,19 @@ const IMAGE_SECTIONS = [
     titleKey: "landing.imageCard1Title",
     textKey: "landing.imageCard1Text",
     src: "/images/home-live-orchestration.svg",
-    alt: "Product live orchestration view",
+    alt: "Agents activity feed with running tasks",
   },
   {
     titleKey: "landing.imageCard2Title",
     textKey: "landing.imageCard2Text",
     src: "/images/home-execution-evidence.svg",
-    alt: "Product execution evidence view",
+    alt: "Last task execution details and logs",
   },
   {
     titleKey: "landing.imageCard3Title",
     textKey: "landing.imageCard3Text",
     src: "/images/home-decision-dashboard.svg",
-    alt: "Product decision ready dashboard",
+    alt: "Tasks by status analytics and completion metrics",
   },
 ] as const;
 
@@ -115,7 +115,7 @@ export function Landing() {
             <div className="grid gap-2 md:grid-cols-[0.68fr_0.32fr]">
               <img
                 src="/images/home-hero-dashboard.svg"
-                alt="Pulse dashboard preview"
+                alt="Pulse dashboard with Backlog, Tasks by status, Agents activity and Last task cards"
                 className="h-[232px] w-full rounded-2xl border border-black/5 bg-[#ECE9E4] object-cover animate-float-soft"
                 loading="eager"
               />
