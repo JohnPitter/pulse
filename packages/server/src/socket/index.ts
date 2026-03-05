@@ -3,7 +3,7 @@ import type { Server } from "socket.io";
 import { verifyToken } from "../services/auth.js";
 import type { AgentManager } from "../services/agent-manager.js";
 import { setupChatHandlers } from "./chat.js";
-import { setupTerminalHandlers } from "./terminal.js";
+import { registerTerminalEvents } from "./terminal.js";
 import * as logger from "../lib/logger.js";
 
 const CONTEXT = "socket";
@@ -66,7 +66,7 @@ export function setupSocket(io: Server, agentManager: AgentManager): void {
     });
 
     setupChatHandlers(socket, io, agentManager);
-    setupTerminalHandlers(socket, io);
+    registerTerminalEvents(io, socket);
 
     socket.on("disconnect", (reason) => {
       logger.info("Socket disconnected", CONTEXT, {

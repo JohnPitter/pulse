@@ -1,5 +1,5 @@
 import type { Socket, Server } from "socket.io";
-import { v4 as uuidv4 } from "uuid";
+import { eq } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { chatMessages } from "../db/schema.js";
@@ -20,8 +20,8 @@ const CONTEXT = "socket:chat";
  */
 export function setupChatHandlers(
   socket: Socket,
-  io: Server,
-  agentManager: AgentManager,
+  _io: Server,
+  _agentManager: AgentManager,
 ): void {
   socket.on("chat:send", async (data: { agentId: string; content: string; imageBase64?: string }) => {
     logger.info("Chat message received", CONTEXT, {
@@ -30,15 +30,6 @@ export function setupChatHandlers(
     });
 
     try {
-      // Save user message to chat_messages
-      await db.insert(chatMessages).values({
-        id: uuidv4(),
-        agentId: data.agentId,
-        role: "user",
-        content: data.content,
-        timestamp: new Date().toISOString(),
-      });
-
       // Delegate to agentSessionManager — stops any running session and starts a new one
       await agentSessionManager.sendMessage(data.agentId, data.content, data.imageBase64);
     } catch (err) {
@@ -65,7 +56,7 @@ export function setupChatHandlers(
     });
 
     try {
-      await agentManager.stopAgent(data.agentId, io);
+      await agentSessionManager.stop(data.agentId);
     } catch (err) {
       logger.error("Failed to stop agent", CONTEXT, {
         agentId: data.agentId,
@@ -82,10 +73,13 @@ export function setupChatHandlers(
       socketId: socket.id,
     });
 
-    // Send DB chat history for this agent
+    // Send DB chat history for this agent as a fallback for clients that miss SSE events
     try {
-      const history = await db.select().from(chatMessages).all();
-      const agentHistory = history.filter((m) => m.agentId === data.agentId);
+      const agentHistory = await db
+        .select()
+        .from(chatMessages)
+        .where(eq(chatMessages.agentId, data.agentId))
+        .all();
       if (agentHistory.length > 0) {
         socket.emit("chat:history", { agentId: data.agentId, messages: agentHistory });
       }

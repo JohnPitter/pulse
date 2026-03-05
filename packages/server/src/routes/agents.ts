@@ -4,6 +4,7 @@ import { eq, desc } from "drizzle-orm";
 
 import type { AgentManager } from "../services/agent-manager.js";
 import { requireAuth } from "../middleware/auth.js";
+import { agentSessionManager } from "../services/agent-session.js";
 import { db } from "../db/index.js";
 import { chatMessages } from "../db/schema.js";
 import * as logger from "../lib/logger.js";
@@ -168,6 +169,39 @@ export function createAgentRouter(agentManager: AgentManager): Router {
     } catch (err) {
       logger.error("Failed to delete agent", CONTEXT, { error: String(err), agentId: getParamId(req) });
       res.status(500).json({ error: "Failed to delete agent" });
+    }
+  });
+
+  /**
+   * POST /:id/message — send a message to the agent session
+   */
+  router.post("/:id/message", async (req: Request, res: Response) => {
+    const id = getParamId(req);
+    const { content, imageBase64 } = req.body as { content: string; imageBase64?: string };
+    if (!content?.trim() && !imageBase64) {
+      res.status(400).json({ error: "content or image required" });
+      return;
+    }
+    try {
+      await agentSessionManager.sendMessage(id, content ?? "", imageBase64);
+      res.json({ ok: true });
+    } catch (err) {
+      logger.error("Failed to send message to agent", CONTEXT, { error: String(err), agentId: id });
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  /**
+   * POST /:id/stop — stop the agent session
+   */
+  router.post("/:id/stop", async (req: Request, res: Response) => {
+    const id = getParamId(req);
+    try {
+      await agentSessionManager.stop(id);
+      res.json({ ok: true });
+    } catch (err) {
+      logger.error("Failed to stop agent session", CONTEXT, { error: String(err), agentId: id });
+      res.status(500).json({ error: String(err) });
     }
   });
 

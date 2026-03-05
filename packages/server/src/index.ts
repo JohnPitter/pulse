@@ -16,7 +16,10 @@ import { db } from "./db/index.js";
 import { AgentManager } from "./services/agent-manager.js";
 import { exchangeCode } from "./services/oauth.js";
 import { authRouter } from "./routes/auth.js";
+import { streamRouter } from "./routes/stream.js";
 import { createAgentRouter } from "./routes/agents.js";
+import { skillsRouter } from "./routes/skills.js";
+import { memoryRouter } from "./routes/memory.js";
 import { settingsRouter, getSetting, upsertSetting, deleteSetting } from "./routes/settings.js";
 import { filesystemRouter } from "./routes/filesystem.js";
 import { setupSocket } from "./socket/index.js";
@@ -146,7 +149,11 @@ app.get("/api/oauth/callback", async (req: Request, res: Response) => {
 });
 
 app.use("/api/auth", authRouter);
+// mount stream router before main agents router to avoid /:id conflict
+app.use("/api/agents", streamRouter);
 app.use("/api/agents", createAgentRouter(agentManager));
+app.use("/api/skills", skillsRouter);
+app.use("/api/memory", memoryRouter);
 app.use("/api/settings", settingsRouter);
 app.use("/api/filesystem", filesystemRouter);
 
