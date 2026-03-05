@@ -65,6 +65,51 @@ export const agentSkills = sqliteTable("agent_skills", {
   pk: primaryKey({ columns: [t.agentId, t.skillId] }),
 }));
 
+export const projects = sqliteTable("projects", {
+  id: text("id").primaryKey().notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  color: text("color").notNull().default("#FF9A3C"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const tasks = sqliteTable(
+  "tasks",
+  {
+    id: text("id").primaryKey().notNull(),
+    title: text("title").notNull(),
+    description: text("description"),
+    status: text("status").notNull().default("backlog"),
+    priority: text("priority").notNull().default("medium"),
+    dueAt: text("due_at"),
+    scheduledAt: text("scheduled_at"),
+    agentId: text("agent_id").references(() => agents.id, { onDelete: "set null" }),
+    projectId: text("project_id").references(() => projects.id, { onDelete: "set null" }),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [
+    index("idx_tasks_status").on(t.status),
+    index("idx_tasks_agent").on(t.agentId),
+  ]
+);
+
+export const taskExecutions = sqliteTable(
+  "task_executions",
+  {
+    id: text("id").primaryKey().notNull(),
+    taskId: text("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+    agentId: text("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
+    result: text("result"),
+    summary: text("summary"),
+    logsCount: integer("logs_count").notNull().default(0),
+    startedAt: text("started_at").notNull(),
+    endedAt: text("ended_at"),
+  },
+  (t) => [index("idx_executions_task").on(t.taskId)]
+);
+
 export const sharedMemory = sqliteTable("shared_memory", {
   id: integer("id").primaryKey().default(1),
   content: text("content").notNull().default("# Shared Memory\n\nWrite notes here that all agents will read.\n"),
