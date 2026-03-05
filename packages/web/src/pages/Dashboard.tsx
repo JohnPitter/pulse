@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Loader2, Cpu, Plus, Terminal, Menu } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Loader2, Plus, Menu, BookOpen, Zap, Square } from "lucide-react";
 import { useAgentsStore, type Agent } from "../stores/agents";
-import { onEvent, emitEvent } from "../stores/socket";
+import { useSessionStore } from "../stores/session";
 import { AgentSidebar } from "../components/sidebar/AgentSidebar";
-import { TerminalView } from "../components/terminal/TerminalView";
-import { TerminalInfoBar } from "../components/terminal/TerminalInfoBar";
-import { TerminalStatusBar } from "../components/terminal/TerminalStatusBar";
+import { AgentCanvas } from "../components/canvas/AgentCanvas";
+import { ChatSidebar } from "../components/chat/ChatSidebar";
+import { ChatInput } from "../components/chat/ChatInput";
+import { SharedMemoryPanel } from "../components/memory/SharedMemoryPanel";
+import { SkillPicker } from "../components/skills/SkillPicker";
 import { AgentFormDialog } from "../components/agents/AgentFormDialog";
-
-const CONTEXT_RE = /context:\s*([\d.]+k?)\s*\/\s*([\d.]+k?)/i;
 
 export function Dashboard() {
   const agents = useAgentsStore((s) => s.agents);
@@ -16,19 +16,23 @@ export function Dashboard() {
   const fetchAgents = useAgentsStore((s) => s.fetchAgents);
   const connectSocket = useAgentsStore((s) => s.connectSocket);
   const disconnectSocket = useAgentsStore((s) => s.disconnectSocket);
-  const createAgent = useAgentsStore((s) => s.createAgent);
+
+  const connectSSE = useSessionStore((s) => s.connectSSE);
+  const disconnectSSE = useSessionStore((s) => s.disconnectSSE);
+  const sendMessage = useSessionStore((s) => s.sendMessage);
+  const stopAgent = useSessionStore((s) => s.stopAgent);
+  const loadMessages = useSessionStore((s) => s.loadMessages);
+  const blocks = useSessionStore((s) => s.blocks);
+  const streamingText = useSessionStore((s) => s.streamingText);
+  const messages = useSessionStore((s) => s.messages);
+  const isStreaming = useSessionStore((s) => s.isStreaming);
 
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-  const [secondAgentId, setSecondAgentId] = useState<string | null>(null);
-  const [splitMode, setSplitMode] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editAgent, setEditAgent] = useState<Agent | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [cliVersion, setCliVersion] = useState<string | null>(null);
-  const [contextUsage, setContextUsage] = useState<string | null>(null);
-  const [secondContextUsage, setSecondContextUsage] = useState<string | null>(null);
-
-  const prevAgentRef = useRef<string | null>(null);
+  const [memoryOpen, setMemoryOpen] = useState(false);
+  const [skillPickerOpen, setSkillPickerOpen] = useState(false);
 
   useEffect(() => {
     fetchAgents();
@@ -36,203 +40,138 @@ export function Dashboard() {
     return () => disconnectSocket();
   }, [fetchAgents, connectSocket, disconnectSocket]);
 
-  useEffect(() => {
-    fetch("/api/system/version", { credentials: "include" })
-      .then((r) => r.json())
-      .then((data: { version: string }) => setCliVersion(data.version))
-      .catch(() => setCliVersion("unknown"));
-  }, []);
-
-  useEffect(() => {
-    if (!selectedAgentId) return;
-    if (prevAgentRef.current !== selectedAgentId) {
-      setContextUsage(null);
-      prevAgentRef.current = selectedAgentId;
-    }
-    const unsub = onEvent("terminal:output", (data: unknown) => {
-      const payload = data as { agentId: string; data: string };
-      if (payload.agentId !== selectedAgentId) return;
-      const match = CONTEXT_RE.exec(payload.data);
-      if (match) setContextUsage(`${match[1]} / ${match[2]}`);
-    });
-    return unsub;
-  }, [selectedAgentId]);
-
-  useEffect(() => {
-    if (!secondAgentId) return;
-    setSecondContextUsage(null);
-    const unsub = onEvent("terminal:output", (data: unknown) => {
-      const payload = data as { agentId: string; data: string };
-      if (payload.agentId !== secondAgentId) return;
-      const match = CONTEXT_RE.exec(payload.data);
-      if (match) setSecondContextUsage(`${match[1]} / ${match[2]}`);
-    });
-    return unsub;
-  }, [secondAgentId]);
-
-  const handleSelectAgent = useCallback((id: string) => {
-    if (splitMode) {
-      if (id === selectedAgentId) return;
-      if (id === secondAgentId) {
-        setSecondAgentId(selectedAgentId);
-        setSelectedAgentId(id);
-        return;
-      }
-      if (selectedAgentId && !secondAgentId) {
-        setSecondAgentId(id);
-      } else if (selectedAgentId && secondAgentId) {
-        setSecondAgentId(id);
-      } else {
-        setSelectedAgentId(id);
-      }
-    } else {
-      setSelectedAgentId(id);
-    }
-    setSidebarOpen(false);
-  }, [splitMode, selectedAgentId, secondAgentId]);
-
-  const handleToggleSplit = useCallback(() => {
-    setSplitMode((prev) => {
-      if (prev) {
-        setSecondAgentId(null);
-        setSecondContextUsage(null);
-      }
-      return !prev;
-    });
-  }, []);
-
+  // Auto-select first agent
   useEffect(() => {
     if (!selectedAgentId && agents.length > 0) {
       setSelectedAgentId(agents[0].id);
     }
   }, [agents, selectedAgentId]);
 
+  // Connect SSE + load messages when agent changes
+  useEffect(() => {
+    if (!selectedAgentId) return;
+    connectSSE(selectedAgentId);
+    loadMessages(selectedAgentId);
+    return () => disconnectSSE(selectedAgentId);
+  }, [selectedAgentId, connectSSE, disconnectSSE, loadMessages]);
+
   const selectedAgent = agents.find((a) => a.id === selectedAgentId) ?? null;
-  const secondAgent = agents.find((a) => a.id === secondAgentId) ?? null;
 
-  const makeToggleHandler = useCallback((agent: typeof selectedAgent) => () => {
-    if (!agent) return;
-    const isRunning = agent.status === "running" || agent.status === "waiting";
-    emitEvent(isRunning ? "agent:stop" : "agent:start", { agentId: agent.id });
+  const handleSend = useCallback(async (content: string, imageBase64?: string) => {
+    if (!selectedAgentId) return;
+    await sendMessage(selectedAgentId, content, imageBase64);
+  }, [selectedAgentId, sendMessage]);
+
+  const handleStop = useCallback(async () => {
+    if (!selectedAgentId) return;
+    await stopAgent(selectedAgentId);
+  }, [selectedAgentId, stopAgent]);
+
+  const handleSelectAgent = useCallback((id: string) => {
+    setSelectedAgentId(id);
+    setSidebarOpen(false);
   }, []);
 
-  const makeStopHandler = useCallback((agent: typeof selectedAgent) => () => {
-    if (!agent) return;
-    emitEvent("agent:stop", { agentId: agent.id });
-  }, []);
-
-  const makeDuplicateHandler = useCallback((agent: typeof selectedAgent) => async () => {
-    if (!agent) return;
-    const duplicate = await createAgent({
-      name: `${agent.name} (copy)`,
-      projectPath: agent.projectPath,
-      model: agent.model,
-      thinkingEnabled: agent.thinkingEnabled === 1,
-      permissionMode: agent.permissionMode,
-      claudeMd: agent.claudeMd ?? undefined,
-      initialPrompt: agent.initialPrompt ?? undefined,
-    });
-    if (duplicate) setSelectedAgentId(duplicate.id);
-  }, [createAgent]);
-
-  const makeEditHandler = useCallback((agent: typeof selectedAgent) => () => {
-    if (agent) setEditAgent(agent);
-  }, []);
-
-  const handleDialogClose = useCallback(() => {
-    setDialogOpen(false);
-    setEditAgent(null);
-  }, []);
+  const agentBlocks = selectedAgentId ? (blocks[selectedAgentId] ?? []) : [];
+  const agentMessages = selectedAgentId ? (messages[selectedAgentId] ?? []) : [];
+  const agentStreamingText = selectedAgentId ? (streamingText[selectedAgentId] ?? "") : "";
+  const agentIsStreaming = selectedAgentId ? (isStreaming[selectedAgentId] ?? false) : false;
 
   return (
     <div className="flex h-screen flex-col bg-app-bg md:flex-row md:p-3 md:gap-3">
       {/* Mobile header */}
-      <div className="flex items-center h-12 px-4 bg-neutral-bg2 border-b border-stroke shrink-0 md:hidden">
+      <div className="flex items-center h-12 px-4 bg-white border-b border-stroke shrink-0 md:hidden">
         <button
           type="button"
           onClick={() => setSidebarOpen(true)}
-          className="rounded-lg p-1.5 text-neutral-fg2 transition-colors duration-200 hover:text-neutral-fg1"
+          className="rounded-lg p-1.5 text-neutral-fg2 hover:text-neutral-fg1"
           aria-label="Open menu"
         >
           <Menu className="h-5 w-5" />
         </button>
-        <div className="flex items-center gap-2 ml-3">
-          <div className="h-2 w-2 rounded-full bg-brand" />
-          <span className="text-sm font-semibold text-neutral-fg1 tracking-tight">Pulse</span>
-        </div>
-        <div className="ml-auto flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setDialogOpen(true)}
-            className="rounded-lg p-1.5 text-neutral-fg2 transition-colors duration-200 hover:text-brand"
-            aria-label="Create agent"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
-        </div>
+        <span className="text-sm font-semibold text-neutral-fg1 tracking-tight ml-3">Pulse</span>
+        <button
+          type="button"
+          onClick={() => setDialogOpen(true)}
+          className="ml-auto rounded-lg p-1.5 text-neutral-fg2 hover:text-brand"
+          aria-label="Create agent"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
       </div>
 
       <AgentSidebar
         agents={agents}
         selectedAgentId={selectedAgentId}
-        secondAgentId={secondAgentId}
-        splitMode={splitMode}
+        secondAgentId={null}
+        splitMode={false}
         onSelectAgent={handleSelectAgent}
         onCreateAgent={() => { setDialogOpen(true); setSidebarOpen(false); }}
-        onToggleSplit={handleToggleSplit}
+        onToggleSplit={() => {}}
         mobileOpen={sidebarOpen}
         onCloseMobile={() => setSidebarOpen(false)}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col bg-neutral-bg2 md:border md:border-stroke md:rounded-2xl md:shadow-2 overflow-hidden">
+      {/* Main area */}
+      <div className="flex min-w-0 flex-1 flex-col bg-white md:border md:border-stroke md:rounded-2xl md:shadow-2 overflow-hidden">
         {loading ? (
           <div className="flex flex-1 items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-brand" />
+            <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
           </div>
         ) : selectedAgent ? (
-          <div className="flex flex-1 min-h-0">
-            <div className="flex min-w-0 flex-1 flex-col min-h-0">
-              <TerminalInfoBar
-                agent={selectedAgent}
-                contextUsage={contextUsage}
-                onToggleAgent={makeToggleHandler(selectedAgent)}
-                onEditAgent={makeEditHandler(selectedAgent)}
-                onDuplicateAgent={makeDuplicateHandler(selectedAgent)}
-                onStopAgent={makeStopHandler(selectedAgent)}
-              />
-              <TerminalView agentId={selectedAgent.id} />
-              <TerminalStatusBar cliVersion={cliVersion} />
+          <>
+            {/* Topbar */}
+            <div className="flex items-center gap-3 px-5 h-[52px] border-b border-stroke shrink-0 bg-white">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-[14px] font-semibold text-neutral-fg1 truncate">{selectedAgent.name}</span>
+                <span className="text-[11px] text-neutral-fg3 bg-neutral-bg3 px-2 py-0.5 rounded-full capitalize">
+                  {selectedAgent.status ?? "idle"}
+                </span>
+              </div>
+              <div className="ml-auto flex items-center gap-1.5">
+                {agentIsStreaming && (
+                  <button
+                    type="button"
+                    onClick={handleStop}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] text-red-600 hover:bg-red-50 transition-colors border border-red-200"
+                  >
+                    <Square className="h-3 w-3" />
+                    Stop
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setSkillPickerOpen(true)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] text-neutral-fg2 hover:bg-neutral-bg3 transition-colors border border-stroke"
+                >
+                  <Zap className="h-3.5 w-3.5 text-amber-500" />
+                  Skills
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMemoryOpen(true)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] text-neutral-fg2 hover:bg-neutral-bg3 transition-colors border border-stroke"
+                >
+                  <BookOpen className="h-3.5 w-3.5 text-amber-500" />
+                  Memory
+                </button>
+              </div>
             </div>
 
-            {splitMode && secondAgent && (
-              <>
-                <div className="w-px bg-stroke shrink-0" />
-                <div className="flex min-w-0 flex-1 flex-col min-h-0">
-                  <TerminalInfoBar
-                    agent={secondAgent}
-                    contextUsage={secondContextUsage}
-                    onToggleAgent={makeToggleHandler(secondAgent)}
-                    onEditAgent={makeEditHandler(secondAgent)}
-                    onDuplicateAgent={makeDuplicateHandler(secondAgent)}
-                    onStopAgent={makeStopHandler(secondAgent)}
-                  />
-                  <TerminalView agentId={secondAgent.id} />
-                  <TerminalStatusBar cliVersion={cliVersion} />
-                </div>
-              </>
-            )}
+            {/* Canvas + Chat layout */}
+            <div className="flex flex-1 min-h-0">
+              {/* Canvas */}
+              <div className="flex flex-col flex-1 min-w-0 min-h-0 bg-neutral-bg3/30">
+                <AgentCanvas blocks={agentBlocks} isStreaming={agentIsStreaming} />
+              </div>
 
-            {splitMode && !secondAgent && (
-              <>
-                <div className="w-px bg-stroke shrink-0" />
-                <div className="flex min-w-0 flex-1 flex-col min-h-0 items-center justify-center">
-                  <p className="text-[13px] text-neutral-fg-disabled">
-                    Select a second agent
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
+              {/* Chat sidebar */}
+              <div className="flex flex-col w-[360px] shrink-0 border-l border-stroke min-h-0">
+                <ChatSidebar messages={agentMessages} streamingContent={agentStreamingText} />
+                <ChatInput onSend={handleSend} disabled={agentIsStreaming} />
+              </div>
+            </div>
+          </>
         ) : agents.length === 0 ? (
           <NoAgentsState onCreateAgent={() => setDialogOpen(true)} />
         ) : (
@@ -240,9 +179,18 @@ export function Dashboard() {
         )}
       </div>
 
+      {/* Modals */}
+      <SharedMemoryPanel open={memoryOpen} onClose={() => setMemoryOpen(false)} />
+      {selectedAgentId && (
+        <SkillPicker
+          agentId={selectedAgentId}
+          open={skillPickerOpen}
+          onClose={() => setSkillPickerOpen(false)}
+        />
+      )}
       <AgentFormDialog
         open={dialogOpen || !!editAgent}
-        onClose={handleDialogClose}
+        onClose={() => { setDialogOpen(false); setEditAgent(null); }}
         agent={editAgent}
       />
     </div>
@@ -252,17 +200,18 @@ export function Dashboard() {
 function NoAgentsState({ onCreateAgent }: { onCreateAgent: () => void }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6">
-      <div className="bg-neutral-bg2 border border-stroke rounded-2xl p-10 flex flex-col items-center gap-6 max-w-md w-full shadow-4">
-        <div className="rounded-2xl bg-brand-light p-5">
-          <Cpu className="h-10 w-10 text-brand" />
+      <div className="bg-white border border-stroke rounded-2xl p-10 flex flex-col items-center gap-6 max-w-md w-full shadow-4">
+        <div className="rounded-2xl bg-amber-50 p-5">
+          <Zap className="h-10 w-10 text-amber-500" />
         </div>
         <div className="text-center space-y-2">
           <h2 className="text-[22px] font-bold text-neutral-fg1 tracking-tight">No agents yet</h2>
           <p className="text-[14px] text-neutral-fg2 leading-relaxed max-w-xs">
-            Create your first Claude agent to get started. Each agent runs in its own terminal session.
+            Create your first agent to get started.
           </p>
         </div>
         <button
+          type="button"
           onClick={onCreateAgent}
           className="btn-primary flex items-center gap-2 px-6 py-2.5 text-[14px]"
         >
@@ -277,17 +226,7 @@ function NoAgentsState({ onCreateAgent }: { onCreateAgent: () => void }) {
 function SelectAgentState() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6">
-      <div className="bg-neutral-bg2 border border-stroke rounded-2xl p-8 flex flex-col items-center gap-4 max-w-sm w-full shadow-2">
-        <div className="rounded-xl bg-neutral-bg3 p-4">
-          <Terminal className="h-7 w-7 text-neutral-fg3" />
-        </div>
-        <div className="text-center space-y-1">
-          <p className="text-[15px] font-semibold text-neutral-fg1">Select an agent</p>
-          <p className="text-[13px] text-neutral-fg2 leading-relaxed">
-            Choose an agent from the sidebar to view its terminal output
-          </p>
-        </div>
-      </div>
+      <p className="text-[13px] text-neutral-fg3">Select an agent from the sidebar</p>
     </div>
   );
 }
