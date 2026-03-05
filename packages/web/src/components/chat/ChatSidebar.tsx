@@ -26,22 +26,26 @@ export function ChatSidebar({ messages, streamingContent }: ChatSidebarProps) {
   return (
     <div className="flex flex-col flex-1 min-h-0">
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-stroke shrink-0">
-        <MessageSquare className="h-3.5 w-3.5 text-neutral-fg3" />
-        <span className="text-[12px] font-semibold text-neutral-fg2 uppercase tracking-wider">Chat</span>
+      <div className="module-header shrink-0">
+        <MessageSquare className="h-3.5 w-3.5 text-text-disabled" />
+        <span className="module-label">Chat</span>
         {messages.length > 0 && (
-          <span className="ml-auto text-[11px] text-neutral-fg-disabled">{messages.length} messages</span>
+          <span className="ml-auto text-[11px] text-text-disabled tabular-nums">
+            {messages.length}
+          </span>
         )}
       </div>
 
       {/* Messages */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-3">
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-3 bg-surface">
         {isEmpty ? (
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-12">
-            <div className="h-10 w-10 rounded-xl bg-neutral-bg3 flex items-center justify-center">
-              <MessageSquare className="h-5 w-5 text-neutral-fg-disabled" />
+          <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-16">
+            <div className="h-10 w-10 rounded-xl border border-border flex items-center justify-center">
+              <MessageSquare className="h-4.5 w-4.5 text-text-disabled" />
             </div>
-            <p className="text-[12px] text-neutral-fg3">No messages yet.<br />Send one to start.</p>
+            <p className="text-[12px] text-text-disabled leading-relaxed">
+              No messages yet.<br />Send one to start.
+            </p>
           </div>
         ) : (
           <>

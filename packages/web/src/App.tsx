@@ -9,22 +9,17 @@ import { Settings } from "./pages/Settings";
 
 function LoadingSpinner() {
   return (
-    <div className="min-h-screen bg-neutral-bg1 flex flex-col items-center justify-center gap-6">
-      <div className="relative flex items-center justify-center">
-        {/* Pulsing rings */}
-        <div className="absolute -inset-2 rounded-3xl border-2 border-brand/15 animate-[splash-ring_2s_ease-in-out_infinite]" />
-        <div className="absolute -inset-4 rounded-[2rem] border-[1.5px] border-brand/8 animate-[splash-ring_2s_ease-in-out_infinite_0.4s]" />
-        {/* Logo */}
-        <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-2xl border border-stroke bg-neutral-bg1">
-          <span className="text-[28px] font-bold text-brand">P</span>
+    <div className="min-h-screen bg-bg flex flex-col items-center justify-center gap-4">
+      <div className="flex items-center gap-3">
+        <div className="h-9 w-9 rounded-xl bg-orange flex items-center justify-center">
+          <span className="text-[15px] font-bold text-white tracking-tight">P</span>
         </div>
+        <span className="text-[17px] font-semibold text-text-primary tracking-tight">Pulse</span>
       </div>
-      <div className="text-lg font-semibold text-neutral-fg1 tracking-tight">Pulse</div>
-      <div className="text-[13px] text-neutral-fg3 -mt-3">Remote Agent Manager</div>
-      <div className="flex gap-1.5 mt-2">
-        <span className="h-[5px] w-[5px] rounded-full bg-brand animate-[splash-dot_1.4s_ease-in-out_infinite]" />
-        <span className="h-[5px] w-[5px] rounded-full bg-brand animate-[splash-dot_1.4s_ease-in-out_infinite_0.2s]" />
-        <span className="h-[5px] w-[5px] rounded-full bg-brand animate-[splash-dot_1.4s_ease-in-out_infinite_0.4s]" />
+      <div className="flex gap-1.5 mt-1">
+        <span className="h-[5px] w-[5px] rounded-full bg-orange animate-[pulse-dot_1.4s_ease-in-out_infinite]" />
+        <span className="h-[5px] w-[5px] rounded-full bg-orange animate-[pulse-dot_1.4s_ease-in-out_infinite_0.2s]" />
+        <span className="h-[5px] w-[5px] rounded-full bg-orange animate-[pulse-dot_1.4s_ease-in-out_infinite_0.4s]" />
       </div>
     </div>
   );
@@ -57,21 +52,15 @@ export function App() {
         />
         <Route
           path="/"
-          element={
-            isAuthenticated ? <Navigate to="/dashboard" /> : <Landing />
-          }
+          element={isAuthenticated ? <Navigate to="/dashboard" /> : <Landing />}
         />
         <Route
           path="/dashboard"
-          element={
-            isAuthenticated ? <Dashboard /> : <Navigate to="/login" />
-          }
+          element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />}
         />
         <Route
           path="/settings"
-          element={
-            isAuthenticated ? <Settings /> : <Navigate to="/login" />
-          }
+          element={isAuthenticated ? <Settings /> : <Navigate to="/login" />}
         />
       </Routes>
     </BrowserRouter>

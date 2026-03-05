@@ -17,22 +17,47 @@ interface AgentSidebarProps {
   onCloseMobile: () => void;
 }
 
-function Tooltip({ label, children }: { label: string; children: React.ReactNode }) {
-  const [visible, setVisible] = useState(false);
+function IconButton({
+  label,
+  children,
+  onClick,
+  className = "",
+  as: Tag = "button",
+  to,
+}: {
+  label: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  as?: React.ElementType;
+  to?: string;
+}) {
+  const [tip, setTip] = useState(false);
+
+  const props: Record<string, unknown> = {
+    className: `relative flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue ${className}`,
+    onMouseEnter: () => setTip(true),
+    onMouseLeave: () => setTip(false),
+    "aria-label": label,
+  };
+
+  if (Tag === "button") {
+    props.type = "button";
+    props.onClick = onClick;
+  } else if (Tag === Link) {
+    props.to = to;
+  }
+
   return (
-    <div
-      className="relative flex"
-      onMouseEnter={() => setVisible(true)}
-      onMouseLeave={() => setVisible(false)}
-    >
+    <Tag {...props}>
       {children}
-      {visible && (
-        <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 whitespace-nowrap rounded-lg bg-neutral-fg1 px-2.5 py-1.5 text-[12px] font-medium text-white shadow-8 pointer-events-none">
+      {tip && (
+        <span className="pointer-events-none absolute left-full ml-2.5 top-1/2 -translate-y-1/2 z-50 whitespace-nowrap rounded-md bg-text-primary px-2.5 py-1.5 text-[11px] font-medium text-white shadow-lg">
           {label}
-          <div className="absolute right-full top-1/2 -translate-y-1/2 border-[5px] border-transparent border-r-neutral-fg1" />
-        </div>
+          <span className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-text-primary" />
+        </span>
       )}
-    </div>
+    </Tag>
   );
 }
 
@@ -55,47 +80,43 @@ export function AgentSidebar({
 
   return (
     <>
-      {/* Mobile backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-30 bg-black/30 md:hidden"
           onClick={onCloseMobile}
         />
       )}
 
       <aside
         className={`
-          fixed inset-y-0 left-0 z-40 flex flex-col items-center py-4 gap-2
-          bg-white border-r border-stroke w-[72px] shrink-0
-          transform transition-transform duration-300 ease-in-out
+          fixed inset-y-0 left-0 z-40 flex flex-col items-center py-3 gap-1
+          bg-surface border-r border-border w-[72px] shrink-0
+          transform transition-transform duration-250 ease-in-out
           md:relative md:z-auto md:transform-none md:transition-none
-          md:rounded-2xl md:shadow-[0_6px_20px_rgba(0,0,0,0.05)] md:border
+          md:rounded-2xl md:shadow-[var(--shadow-card)] md:border
           ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
       >
         {/* Logo */}
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand shrink-0">
-          <Cpu className="h-5 w-5 text-white" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange shrink-0 mb-1">
+          <Cpu className="h-[18px] w-[18px] text-white" />
         </div>
 
-        <div className="w-8 h-px bg-stroke my-1" />
+        <div className="w-8 h-px bg-border my-1" />
 
-        {/* Create agent button */}
-        <Tooltip label="New Agent">
-          <button
-            type="button"
-            onClick={onCreateAgent}
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-fg3 hover:bg-neutral-bg3 hover:text-brand transition-all duration-150 active:scale-[0.95]"
-            aria-label="Create new agent"
-          >
-            <Plus className="h-5 w-5" />
-          </button>
-        </Tooltip>
+        {/* New agent */}
+        <IconButton
+          label="New Agent"
+          onClick={onCreateAgent}
+          className="text-text-disabled hover:bg-surface-muted hover:text-text-primary"
+        >
+          <Plus className="h-4 w-4" />
+        </IconButton>
 
-        {agents.length > 0 && <div className="w-8 h-px bg-stroke my-1" />}
+        {agents.length > 0 && <div className="w-8 h-px bg-border my-1" />}
 
-        {/* Agent avatar list */}
-        <div className="flex flex-col gap-2 flex-1 overflow-y-auto items-center w-full px-2 pb-2 scrollbar-hide">
+        {/* Agent list */}
+        <div className="flex flex-col gap-1.5 flex-1 overflow-y-auto items-center w-full px-2 scrollbar-hide">
           {agents.map((agent) => (
             <AgentSidebarItem
               key={agent.id}
@@ -106,27 +127,22 @@ export function AgentSidebar({
           ))}
         </div>
 
-        {/* Bottom actions */}
-        <div className="flex flex-col items-center gap-1.5 mt-auto">
-          <Tooltip label="Settings">
-            <Link
-              to="/settings"
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-fg3 hover:bg-neutral-bg3 hover:text-neutral-fg1 transition-all duration-150"
-              aria-label="Settings"
-            >
-              <Settings className="h-[18px] w-[18px]" />
-            </Link>
-          </Tooltip>
-          <Tooltip label="Sign out">
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-fg3 hover:bg-danger-light hover:text-danger transition-all duration-150"
-              aria-label="Logout"
-            >
-              <LogOut className="h-[18px] w-[18px]" />
-            </button>
-          </Tooltip>
+        <div className="flex flex-col items-center gap-1 mt-auto pt-2">
+          <IconButton
+            label="Settings"
+            as={Link}
+            to="/settings"
+            className="text-text-disabled hover:bg-surface-muted hover:text-text-primary"
+          >
+            <Settings className="h-4 w-4" />
+          </IconButton>
+          <IconButton
+            label="Sign out"
+            onClick={handleLogout}
+            className="text-text-disabled hover:bg-danger-light hover:text-danger"
+          >
+            <LogOut className="h-4 w-4" />
+          </IconButton>
         </div>
       </aside>
     </>

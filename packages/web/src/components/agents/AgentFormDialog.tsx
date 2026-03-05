@@ -16,9 +16,9 @@ interface AgentFormDialogProps {
 }
 
 const MODELS = [
-  { value: "haiku", label: "Haiku", description: "Fast & efficient", borderColor: "border-info", bgColor: "bg-info/8", textColor: "text-info" },
-  { value: "sonnet", label: "Sonnet", description: "Balanced", borderColor: "border-brand", bgColor: "bg-brand-light", textColor: "text-brand" },
-  { value: "opus", label: "Opus", description: "Most capable", borderColor: "border-purple", bgColor: "bg-purple-light", textColor: "text-purple" },
+  { value: "haiku", label: "Haiku", description: "Fast & efficient", accent: "text-blue" },
+  { value: "sonnet", label: "Sonnet", description: "Balanced", accent: "text-orange" },
+  { value: "opus", label: "Opus", description: "Most capable", accent: "text-purple" },
 ] as const;
 
 const PERMISSION_MODES = [
@@ -27,6 +27,17 @@ const PERMISSION_MODES = [
   { value: "default", label: "Default", description: "Ask for each action" },
   { value: "plan", label: "Plan", description: "Require plan approval" },
 ] as const;
+
+function FieldLabel({ htmlFor, children }: { htmlFor?: string; children: React.ReactNode }) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="block text-[11px] font-semibold text-text-secondary mb-1.5 uppercase tracking-wider"
+    >
+      {children}
+    </label>
+  );
+}
 
 export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) {
   const createAgent = useAgentsStore((s) => s.createAgent);
@@ -46,7 +57,6 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
   const [error, setError] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  // Populate form when editing
   useEffect(() => {
     if (agent) {
       setName(agent.name);
@@ -62,15 +72,9 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
   }, [agent?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const resetForm = () => {
-    setName("");
-    setProjectPath("");
-    setRole("");
-    setModel("sonnet");
-    setThinkingEnabled(false);
-    setPermissionMode("bypassPermissions");
-    setClaudeMd("");
-    setInitialPrompt("");
-    setError(null);
+    setName(""); setProjectPath(""); setRole(""); setModel("sonnet");
+    setThinkingEnabled(false); setPermissionMode("bypassPermissions");
+    setClaudeMd(""); setInitialPrompt(""); setError(null);
   };
 
   const handleClose = () => {
@@ -81,46 +85,29 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !projectPath.trim() || isSubmitting) return;
-
-    setIsSubmitting(true);
-    setError(null);
+    setIsSubmitting(true); setError(null);
 
     if (isEditMode && agent) {
       const payload: UpdateAgentPayload = {
-        name: name.trim(),
-        role: role.trim() || null,
-        model,
-        thinkingEnabled,
-        permissionMode,
-        claudeMd: claudeMd.trim() || null,
-        initialPrompt: initialPrompt.trim() || null,
+        name: name.trim(), role: role.trim() || null, model, thinkingEnabled,
+        permissionMode, claudeMd: claudeMd.trim() || null, initialPrompt: initialPrompt.trim() || null,
       };
       const updated = await updateAgent(agent.id, payload);
       setIsSubmitting(false);
-      if (updated) {
-        handleClose();
-      } else {
-        setError("Failed to update agent. Check the server logs.");
-      }
+      if (updated) handleClose();
+      else setError("Failed to update agent. Check the server logs.");
     } else {
       const payload: CreateAgentPayload = {
-        name: name.trim(),
-        projectPath: projectPath.trim(),
-        role: role.trim() || undefined,
-        model,
-        thinkingEnabled,
-        permissionMode,
+        name: name.trim(), projectPath: projectPath.trim(), role: role.trim() || undefined,
+        model, thinkingEnabled, permissionMode,
       };
       if (claudeMd.trim()) payload.claudeMd = claudeMd.trim();
       if (initialPrompt.trim()) payload.initialPrompt = initialPrompt.trim();
 
       const created = await createAgent(payload);
       setIsSubmitting(false);
-      if (created) {
-        handleClose();
-      } else {
-        setError("Failed to create agent. Check the server logs.");
-      }
+      if (created) handleClose();
+      else setError("Failed to create agent. Check the server logs.");
     }
   };
 
@@ -131,45 +118,40 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.15 }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4"
           onClick={handleClose}
           role="dialog"
           aria-modal="true"
-          aria-label={isEditMode ? "Edit agent" : "Create new agent"}
+          aria-label={isEditMode ? "Edit agent" : "Create agent"}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            initial={{ opacity: 0, scale: 0.97, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ duration: 0.2 }}
-            className="bg-neutral-bg2 border border-stroke rounded-2xl shadow-16 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            exit={{ opacity: 0, scale: 0.97, y: 8 }}
+            transition={{ duration: 0.18 }}
+            className="bg-surface border border-border rounded-2xl shadow-[var(--shadow-modal)] w-full max-w-2xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-stroke">
-              <h2 className="text-[18px] font-bold text-neutral-fg1 tracking-tight">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <h2 className="text-[16px] font-bold text-text-primary tracking-tight">
                 {isEditMode ? "Edit Agent" : "Create Agent"}
               </h2>
               <button
                 type="button"
                 onClick={handleClose}
-                aria-label="Close dialog"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-fg3 hover:bg-neutral-bg3 hover:text-neutral-fg1 transition-all duration-150"
+                aria-label="Close"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-text-disabled hover:bg-surface-muted hover:text-text-primary transition-all"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form id="agent-form" onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
+            <form id="agent-form" onSubmit={handleSubmit} className="px-5 py-5 space-y-5">
               {/* Name */}
               <div>
-                <label
-                  htmlFor="agent-name"
-                  className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block"
-                >
-                  Name
-                </label>
+                <FieldLabel htmlFor="agent-name">Name</FieldLabel>
                 <input
                   id="agent-name"
                   type="text"
@@ -177,18 +159,13 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                   onChange={(e) => setName(e.target.value)}
                   placeholder="My Agent"
                   required
-                  className="input-fluent w-full"
+                  className="input"
                 />
               </div>
 
               {/* Project Path */}
               <div>
-                <label
-                  htmlFor="agent-path"
-                  className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block"
-                >
-                  Project Path
-                </label>
+                <FieldLabel htmlFor="agent-path">Project Path</FieldLabel>
                 <div className="flex gap-2">
                   <input
                     id="agent-path"
@@ -198,14 +175,14 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                     placeholder="/home/user/project"
                     required
                     readOnly={isEditMode}
-                    className={`input-fluent flex-1 ${isEditMode ? "opacity-60 cursor-not-allowed" : ""}`}
+                    className={`input flex-1 ${isEditMode ? "opacity-55 cursor-not-allowed" : ""}`}
                   />
                   {!isEditMode && (
                     <button
                       type="button"
                       onClick={() => setPickerOpen(true)}
-                      className="btn-secondary shrink-0 px-3 py-2.5"
-                      aria-label="Browse directories"
+                      className="btn btn-secondary shrink-0 px-3"
+                      aria-label="Browse"
                     >
                       <FolderSearch className="h-4 w-4" />
                     </button>
@@ -221,40 +198,37 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                 )}
               </div>
 
-              {/* Role / System Prompt */}
+              {/* Role */}
               <div>
-                <label
-                  htmlFor="agent-role"
-                  className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block"
-                >
+                <FieldLabel htmlFor="agent-role">
                   Role / System Prompt{" "}
-                  <span className="text-neutral-fg-disabled">(optional)</span>
-                </label>
+                  <span className="text-text-disabled normal-case font-normal tracking-normal">(optional)</span>
+                </FieldLabel>
                 <textarea
                   id="agent-role"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  placeholder="You are a helpful assistant focused on..."
+                  placeholder="You are a helpful assistant focused on…"
                   rows={3}
-                  className="input-fluent w-full resize-none"
+                  className="input resize-none"
                 />
               </div>
 
-              <div className="border-b border-stroke/50" />
+              <div className="h-px bg-border" />
 
               {/* Model */}
               <fieldset>
-                <legend className="text-[11px] font-semibold uppercase tracking-wider text-neutral-fg3 mb-2">
+                <legend className="text-[11px] font-semibold uppercase tracking-wider text-text-disabled mb-2">
                   Model
                 </legend>
                 <div className="flex gap-2">
                   {MODELS.map((m) => (
                     <label
                       key={m.value}
-                      className={`flex-1 cursor-pointer rounded-xl border px-3 py-3 text-center transition-all duration-200 ${
+                      className={`flex-1 cursor-pointer rounded-xl border px-3 py-3 text-center transition-all ${
                         model === m.value
-                          ? `border-brand/40 bg-brand-light ${m.textColor}`
-                          : "border-stroke bg-neutral-bg3 text-neutral-fg2 hover:border-[var(--card-hover-border)]"
+                          ? "border-orange/40 bg-orange-light"
+                          : "border-border bg-surface-muted hover:border-border-strong"
                       }`}
                     >
                       <input
@@ -265,8 +239,10 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                         onChange={() => setModel(m.value)}
                         className="sr-only"
                       />
-                      <span className="block text-[13px] font-bold">{m.label}</span>
-                      <span className={`block text-[10px] mt-0.5 ${model === m.value ? "opacity-80" : "text-neutral-fg3"}`}>
+                      <span className={`block text-[13px] font-bold ${model === m.value ? m.accent : "text-text-primary"}`}>
+                        {m.label}
+                      </span>
+                      <span className="block text-[10px] mt-0.5 text-text-disabled">
                         {m.description}
                       </span>
                     </label>
@@ -275,10 +251,10 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
               </fieldset>
 
               {/* Thinking toggle */}
-              <div className="flex items-center justify-between p-3 rounded-xl bg-neutral-bg3 border border-stroke">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-surface-muted border border-border">
                 <div>
-                  <p className="text-[13px] font-medium text-neutral-fg1">Extended thinking</p>
-                  <p className="text-[11px] text-neutral-fg3">Enables deeper reasoning (Sonnet/Opus only)</p>
+                  <p className="text-[13px] font-semibold text-text-primary">Extended thinking</p>
+                  <p className="text-[11px] text-text-disabled">Deeper reasoning (Sonnet/Opus only)</p>
                 </div>
                 <label className="relative cursor-pointer shrink-0">
                   <input
@@ -287,26 +263,27 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                     onChange={(e) => setThinkingEnabled(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="h-5 w-9 rounded-full bg-neutral-bg2 border border-stroke transition-colors duration-200 peer-checked:bg-brand peer-checked:border-brand" />
-                  <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 peer-checked:translate-x-4" />
+                  <div className={`toggle-track ${thinkingEnabled ? "active" : ""}`}>
+                    <div className="toggle-thumb" />
+                  </div>
                 </label>
               </div>
 
-              <div className="border-b border-stroke/50" />
+              <div className="h-px bg-border" />
 
-              {/* Permission Mode */}
+              {/* Permission */}
               <fieldset>
-                <legend className="text-[11px] font-semibold uppercase tracking-wider text-neutral-fg3 mb-2">
+                <legend className="text-[11px] font-semibold uppercase tracking-wider text-text-disabled mb-2">
                   Permission Level
                 </legend>
                 <div className="grid grid-cols-2 gap-2">
                   {PERMISSION_MODES.map((p) => (
                     <label
                       key={p.value}
-                      className={`cursor-pointer rounded-xl border px-3 py-3 transition-all duration-200 ${
+                      className={`cursor-pointer rounded-xl border px-3 py-3 transition-all ${
                         permissionMode === p.value
-                          ? "border-brand/40 bg-brand-light text-brand"
-                          : "border-stroke bg-neutral-bg3 text-neutral-fg2 hover:border-[var(--card-hover-border)]"
+                          ? "border-orange/40 bg-orange-light"
+                          : "border-border bg-surface-muted hover:border-border-strong"
                       }`}
                     >
                       <input
@@ -317,81 +294,70 @@ export function AgentFormDialog({ open, onClose, agent }: AgentFormDialogProps) 
                         onChange={() => setPermissionMode(p.value)}
                         className="sr-only"
                       />
-                      <span className="block text-[13px] font-bold">{p.label}</span>
-                      <span className={`block text-[10px] mt-0.5 ${permissionMode === p.value ? "opacity-80" : "text-neutral-fg3"}`}>
-                        {p.description}
+                      <span className={`block text-[12px] font-bold ${permissionMode === p.value ? "text-orange" : "text-text-primary"}`}>
+                        {p.label}
                       </span>
+                      <span className="block text-[10px] mt-0.5 text-text-disabled">{p.description}</span>
                     </label>
                   ))}
                 </div>
               </fieldset>
 
-              <div className="border-b border-stroke/50" />
+              <div className="h-px bg-border" />
 
               {/* CLAUDE.md */}
               <div>
-                <label
-                  htmlFor="agent-claudemd"
-                  className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block"
-                >
+                <FieldLabel htmlFor="agent-claudemd">
                   CLAUDE.md{" "}
-                  <span className="text-neutral-fg-disabled">(optional)</span>
-                </label>
+                  <span className="text-text-disabled normal-case font-normal tracking-normal">(optional)</span>
+                </FieldLabel>
                 <textarea
                   id="agent-claudemd"
                   value={claudeMd}
                   onChange={(e) => setClaudeMd(e.target.value)}
-                  placeholder="Custom instructions for this agent..."
+                  placeholder="Custom instructions for this agent…"
                   rows={3}
-                  className="input-fluent w-full resize-none"
+                  className="input resize-none"
                 />
               </div>
 
               {/* Initial Prompt */}
               <div>
-                <label
-                  htmlFor="agent-prompt"
-                  className="text-[12px] font-medium text-neutral-fg2 mb-1.5 block"
-                >
+                <FieldLabel htmlFor="agent-prompt">
                   Initial Prompt{" "}
-                  <span className="text-neutral-fg-disabled">(optional)</span>
-                </label>
+                  <span className="text-text-disabled normal-case font-normal tracking-normal">(optional)</span>
+                </FieldLabel>
                 <textarea
                   id="agent-prompt"
                   value={initialPrompt}
                   onChange={(e) => setInitialPrompt(e.target.value)}
                   placeholder="What should the agent work on?"
                   rows={3}
-                  className="input-fluent w-full resize-none"
+                  className="input resize-none"
                 />
               </div>
 
-              {/* Error */}
               {error && (
-                <div className="flex items-center gap-2 rounded-lg border border-danger/20 bg-danger/10 px-3 py-2">
+                <div className="flex items-center gap-2 rounded-lg border border-danger/20 bg-danger-light px-3 py-2.5">
                   <AlertCircle className="h-4 w-4 shrink-0 text-danger" />
-                  <p className="text-sm text-danger">{error}</p>
+                  <p className="text-[13px] text-danger">{error}</p>
                 </div>
               )}
             </form>
 
             {/* Footer */}
-            <div className="flex justify-end gap-2 px-6 py-4 border-t border-stroke">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="btn-secondary px-4 py-2 text-[14px]"
-              >
+            <div className="flex justify-end gap-2 px-5 py-4 border-t border-border">
+              <button type="button" onClick={handleClose} className="btn btn-secondary px-4 py-2">
                 Cancel
               </button>
               <button
                 type="submit"
                 form="agent-form"
                 disabled={isSubmitting || !name.trim() || !projectPath.trim()}
-                className="btn-primary px-4 py-2 text-[14px]"
+                className="btn btn-primary px-4 py-2"
               >
                 {isSubmitting ? (
-                  <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : isEditMode ? (
                   "Save Changes"
                 ) : (
