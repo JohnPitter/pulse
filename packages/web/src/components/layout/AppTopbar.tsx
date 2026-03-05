@@ -135,7 +135,7 @@ export function AppTopbar() {
           </button>
 
           {notificationsOpen && (
-            <div className="absolute right-[162px] top-11 z-30 w-[310px] rounded-2xl border border-stroke bg-neutral-bg2 p-3 shadow-8 animate-fade-up">
+            <div className="absolute right-[162px] top-11 z-50 w-[310px] rounded-2xl border border-stroke bg-neutral-bg2 p-3 shadow-8 animate-fade-up">
               <p className="mb-2 px-1 text-[11px] font-semibold text-neutral-fg2">{t("topbar.notifications")}</p>
               <div className="space-y-1.5">
                 {notifications.map((notification) => (
@@ -157,7 +157,7 @@ export function AppTopbar() {
           )}
 
           {profileOpen && (
-            <div className="absolute right-0 top-11 z-30 w-[236px] rounded-2xl border border-stroke bg-neutral-bg2 p-2 shadow-8 animate-fade-up">
+            <div className="absolute right-0 top-11 z-50 w-[236px] rounded-2xl border border-stroke bg-neutral-bg2 p-2 shadow-8 animate-fade-up">
               <div className="mb-2 rounded-xl border border-stroke/80 bg-neutral-bg3 px-2 py-2">
                 <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-neutral-fg3">
                   {t("topbar.languageSelectorLabel")}

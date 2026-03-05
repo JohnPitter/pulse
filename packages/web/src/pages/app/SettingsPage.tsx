@@ -1,5 +1,9 @@
 import { Settings } from "../Settings";
 
 export function SettingsPage() {
-  return <Settings embedded />;
+  return (
+    <div className="animate-fade-in">
+      <Settings embedded />
+    </div>
+  );
 }

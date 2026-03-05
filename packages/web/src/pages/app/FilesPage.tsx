@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Filter, FolderOpen, Layers3 } from "lucide-react";
 import { useProjectsStore } from "../../stores/projects";
 import { useShellQuery } from "./useShellQuery";
 import { useI18n } from "../../i18n";
+import { clampParentPath } from "../../lib/pathGuard";
 
 const CARD_CLASS =
   "rounded-[20px] border border-black/6 bg-[#F1EFEC] shadow-[0_8px_18px_rgba(0,0,0,0.06)]";
@@ -23,6 +24,7 @@ export function FilesPage() {
   const [parentPath, setParentPath] = useState<string | null>(null);
   const [directories, setDirectories] = useState<BrowseEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const rootPathRef = useRef<string | null>(null);
 
   useEffect(() => {
     fetchProjects();
@@ -35,8 +37,15 @@ export function FilesPage() {
       const res = await fetch(url, { credentials: "include" });
       if (res.ok) {
         const data = await res.json() as { currentPath: string; parentPath: string | null; directories: BrowseEntry[] };
+        // Lock the root path to the initial directory
+        if (rootPathRef.current === null) {
+          rootPathRef.current = data.currentPath;
+        }
         setCurrentPath(data.currentPath);
-        setParentPath(data.parentPath);
+        const clampedParent = data.parentPath && rootPathRef.current
+          ? clampParentPath(data.parentPath, rootPathRef.current)
+          : null;
+        setParentPath(clampedParent);
         setDirectories(data.directories);
       }
     } finally {
