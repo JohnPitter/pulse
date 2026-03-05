@@ -79,6 +79,48 @@ const createSharedMemory = `
     updated_at INTEGER NOT NULL
   )`;
 
+const createProjects = `
+  CREATE TABLE IF NOT EXISTS projects (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    color TEXT NOT NULL DEFAULT '#FF9A3C',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )`;
+
+const createTasks = `
+  CREATE TABLE IF NOT EXISTS tasks (
+    id TEXT PRIMARY KEY NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    status TEXT NOT NULL DEFAULT 'backlog',
+    priority TEXT NOT NULL DEFAULT 'medium',
+    due_at TEXT,
+    scheduled_at TEXT,
+    agent_id TEXT REFERENCES agents(id) ON DELETE SET NULL,
+    project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )`;
+
+const createTasksIndex = `CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)`;
+const createTasksAgentIndex = `CREATE INDEX IF NOT EXISTS idx_tasks_agent ON tasks(agent_id)`;
+
+const createTaskExecutions = `
+  CREATE TABLE IF NOT EXISTS task_executions (
+    id TEXT PRIMARY KEY NOT NULL,
+    task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+    result TEXT,
+    summary TEXT,
+    logs_count INTEGER NOT NULL DEFAULT 0,
+    started_at TEXT NOT NULL,
+    ended_at TEXT
+  )`;
+
+const createTaskExecutionsIndex = `CREATE INDEX IF NOT EXISTS idx_executions_task ON task_executions(task_id)`;
+
 // Auto-create tables if they don't exist
 sqlite.prepare(createAgents).run();
 sqlite.prepare(createAgentsIndex).run();
@@ -88,6 +130,12 @@ sqlite.prepare(createSettings).run();
 sqlite.prepare(createSkills).run();
 sqlite.prepare(createAgentSkills).run();
 sqlite.prepare(createSharedMemory).run();
+sqlite.prepare(createProjects).run();
+sqlite.prepare(createTasks).run();
+sqlite.prepare(createTasksIndex).run();
+sqlite.prepare(createTasksAgentIndex).run();
+sqlite.prepare(createTaskExecutions).run();
+sqlite.prepare(createTaskExecutionsIndex).run();
 
 // Migration guard: add started_at column if missing (for existing DBs created before this column was inlined above)
 try {
