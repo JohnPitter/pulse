@@ -116,7 +116,7 @@ export function Dashboard() {
       <div className="flex min-w-0 flex-1 flex-col bg-white md:border md:border-stroke md:rounded-2xl md:shadow-2 overflow-hidden">
         {loading ? (
           <div className="flex flex-1 items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+            <Loader2 className="h-6 w-6 animate-spin text-brand" />
           </div>
         ) : selectedAgent ? (
           <>
@@ -144,7 +144,7 @@ export function Dashboard() {
                   onClick={() => setSkillPickerOpen(true)}
                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] text-neutral-fg2 hover:bg-neutral-bg3 transition-colors border border-stroke"
                 >
-                  <Zap className="h-3.5 w-3.5 text-amber-500" />
+                  <Zap className="h-3.5 w-3.5 text-brand" />
                   Skills
                 </button>
                 <button
@@ -152,7 +152,7 @@ export function Dashboard() {
                   onClick={() => setMemoryOpen(true)}
                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] text-neutral-fg2 hover:bg-neutral-bg3 transition-colors border border-stroke"
                 >
-                  <BookOpen className="h-3.5 w-3.5 text-amber-500" />
+                  <BookOpen className="h-3.5 w-3.5 text-brand" />
                   Memory
                 </button>
               </div>
@@ -201,8 +201,8 @@ function NoAgentsState({ onCreateAgent }: { onCreateAgent: () => void }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6">
       <div className="bg-white border border-stroke rounded-2xl p-10 flex flex-col items-center gap-6 max-w-md w-full shadow-4">
-        <div className="rounded-2xl bg-amber-50 p-5">
-          <Zap className="h-10 w-10 text-amber-500" />
+        <div className="rounded-2xl bg-brand-light p-5">
+          <Zap className="h-10 w-10 text-brand" />
         </div>
         <div className="text-center space-y-2">
           <h2 className="text-[22px] font-bold text-neutral-fg1 tracking-tight">No agents yet</h2>

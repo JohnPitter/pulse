@@ -40,14 +40,14 @@ export function SharedMemoryPanel({ open, onClose }: SharedMemoryPanelProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col overflow-hidden" style={{ maxHeight: "80vh" }}>
         <div className="flex items-center gap-3 px-5 py-4 border-b border-stroke shrink-0">
-          <BookOpen className="h-4 w-4 text-amber-500" />
+          <BookOpen className="h-4 w-4 text-brand" />
           <span className="text-[15px] font-semibold text-neutral-fg1">Shared Memory</span>
           <span className="text-[12px] text-neutral-fg3 ml-1">· visible to all agents</span>
           <div className="ml-auto flex items-center gap-2">
             <button
               onClick={save}
               disabled={saved || loading}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white text-[12px] font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand hover:bg-brand-dark disabled:opacity-40 text-white text-[12px] font-medium transition-colors"
               type="button"
             >
               <Save className="h-3 w-3" />

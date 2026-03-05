@@ -141,13 +141,13 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
           rows={1}
           placeholder="Message… (Ctrl+Enter to send)"
           disabled={disabled}
-          className="flex-1 resize-none rounded-xl border border-stroke bg-neutral-bg3 px-3 py-2 text-[13px] text-neutral-fg1 placeholder-neutral-fg3 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400 transition-colors max-h-32 overflow-auto"
+          className="flex-1 resize-none rounded-xl border border-stroke bg-neutral-bg3 px-3 py-2 text-[13px] text-neutral-fg1 placeholder-neutral-fg3 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors max-h-32 overflow-auto"
           style={{ minHeight: "36px" }}
         />
         <button
           onClick={send}
           disabled={disabled || (!text.trim() && !imageBase64)}
-          className="shrink-0 h-8 w-8 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+          className="shrink-0 h-8 w-8 rounded-lg bg-brand hover:bg-brand-dark disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
           type="button"
         >
           <Send className="h-3.5 w-3.5 text-white" />
